@@ -61,7 +61,29 @@ GET /
 ```
 Returns: `Hello World!` (temporary placeholder)
 
+
+### Added Image Model and health check route
+Work Completed Till Now
+
+Server Setup
+Created server.js using Express.
+Added middleware: express.json, cors.
+Implemented health check route:
+GET /api/health → { "status": "ok", "message": "Server is running" }
+
+
+Image Schema
+Basic schema: title, subtitle, filePath.
+Extended schema: Added width, height, format, tenant, section.
+Added Timestamps
+
+
+### Seeder Utility
+Created utils/seedImage.js for inserting test image data into MongoDB.
+Debugged validation errors for required fields.
+Verified DB connectivity by inserting dummy images.
+
 ### Next Steps (Phase 1 continuation)
-- Add Image model, upload route, controller, and service for AVIF conversion.
+- Add upload route, controller, and service for AVIF conversion.
 - Enforce upload constraints (max 2MB, jpg/png only).
 - CRUD endpoints: `POST/GET/GET/:id/PUT/:id/DELETE/:id` under `/api/:module`.
