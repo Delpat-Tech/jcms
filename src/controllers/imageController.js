@@ -1,149 +1,90 @@
 const Image = require('../models/image');
+const { processAndSaveImage } = require('../services/imageService'); // <-- use your service
 
-/**
- * Create a new image
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
+// POST /api/images OR /api/images/:section (see router notes below)
 const createImage = async (req, res) => {
   try {
-    // TODO: Implement image creation logic
-    // - Validate request body
-    // - Handle file upload if needed
-    // - Create new image document
-    // - Return success response
-    
-    res.status(201).json({
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "Image file is required (field name: 'image')" });
+    }
+
+    // Where do tenant/section come from?
+    // Option A: section in URL param, tenant in body (recommended)
+    const section = req.params.section || req.body.section || 'general';
+    const tenant  = req.body.tenant || 'default';
+
+    const title    = req.body.title || '';
+    const subtitle = req.body.subtitle || '';
+
+    // This service converts to AVIF + WebP, extracts width/height,
+    // writes files under /uploads/{tenant}/{section}/, and saves to Mongo.
+    const savedImages = await processAndSaveImage(
+      req.file.buffer,
+      tenant,
+      section,
+      title,
+      subtitle,
+      req.file.originalname
+    );
+
+    return res.status(201).json({
       success: true,
-      message: 'Image created successfully',
-      data: {}
+      message: 'Image processed & saved successfully',
+      data: savedImages, // two docs: one AVIF, one WebP
     });
   } catch (error) {
-    res.status(500).json({
+    console.error('createImage error:', error);
+    return res.status(500).json({
       success: false,
       message: 'Error creating image',
-      error: error.message
+      error: error.message,
     });
   }
 };
 
-/**
- * Get all images with optional filtering
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
+// (Optional) will implement the rest when Im ready
 const getImages = async (req, res) => {
   try {
-    // TODO: Implement image retrieval logic
-    // - Handle query parameters (tenant, section, pagination)
-    // - Apply filters based on request
-    // - Return paginated results
-    
-    res.status(200).json({
-      success: true,
-      message: 'Images retrieved successfully',
-      data: [],
-      pagination: {}
-    });
+    const { tenant, section } = req.query;
+    const filter = {};
+    if (tenant)  filter.tenant  = tenant;
+    if (section) filter.section = section;
+
+    const images = await Image.find(filter).sort({ createdAt: -1 });
+    res.status(200).json({ success: true, message: 'Images retrieved', data: images });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error retrieving images',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: 'Error retrieving images', error: error.message });
   }
 };
 
-/**
- * Get image by ID
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
 const getImageById = async (req, res) => {
   try {
-    const { id } = req.params;
-    
-    // TODO: Implement image retrieval by ID logic
-    // - Validate ID format
-    // - Find image by ID
-    // - Return image data or 404 if not found
-    
-    res.status(200).json({
-      success: true,
-      message: 'Image retrieved successfully',
-      data: {}
-    });
+    const img = await Image.findById(req.params.id);
+    if (!img) return res.status(404).json({ success: false, message: 'Not found' });
+    res.status(200).json({ success: true, data: img });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error retrieving image',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: 'Error retrieving image', error: error.message });
   }
 };
 
-/**
- * Update image by ID
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
 const updateImage = async (req, res) => {
   try {
-    const { id } = req.params;
-    
-    // TODO: Implement image update logic
-    // - Validate ID format
-    // - Validate request body
-    // - Find and update image
-    // - Return updated image data
-    
-    res.status(200).json({
-      success: true,
-      message: 'Image updated successfully',
-      data: {}
-    });
+    const updated = await Image.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!updated) return res.status(404).json({ success: false, message: 'Not found' });
+    res.status(200).json({ success: true, message: 'Updated', data: updated });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error updating image',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: 'Error updating image', error: error.message });
   }
 };
 
-/**
- * Delete image by ID
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
 const deleteImage = async (req, res) => {
   try {
-    const { id } = req.params;
-    
-    // TODO: Implement image deletion logic
-    // - Validate ID format
-    // - Find and delete image
-    // - Handle file deletion if needed
-    // - Return success response
-    
-    res.status(200).json({
-      success: true,
-      message: 'Image deleted successfully',
-      data: {}
-    });
+    const deleted = await Image.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ success: false, message: 'Not found' });
+    res.status(200).json({ success: true, message: 'Deleted', data: deleted });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error deleting image',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: 'Error deleting image', error: error.message });
   }
 };
 
-module.exports = {
-  createImage,
-  getImages,
-  getImageById,
-  updateImage,
-  deleteImage
-};
+module.exports = { createImage, getImages, getImageById, updateImage, deleteImage };
