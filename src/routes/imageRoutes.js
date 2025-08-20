@@ -1,7 +1,5 @@
 const express = require('express');
-const multer = require('multer');
 const router = express.Router();
-
 const {
   createImage,
   getImages,
@@ -10,14 +8,8 @@ const {
   deleteImage
 } = require('../controllers/imageController');
 
-// Multer setup (store in memory so Sharp can process it)
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
-
-
 // POST /api/images - Create a new image
-router.post('/', upload.single('image'), createImage);
-
+router.post('/', createImage);
 
 // GET /api/images - Get all images
 router.get('/', getImages);
