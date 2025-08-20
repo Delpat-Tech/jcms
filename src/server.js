@@ -8,16 +8,22 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Connect to MongoDB
-connectDB();
+connectDB(); // Commented out for testing routes
 
 // Middleware
 app.use(express.json());
 app.use(cors());
 
+// Routes
+const imageRoutes = require('./routes/imageRoutes');
+
 // Health check route
 app.get("/api/health", (req, res) => {
   res.status(200).json({ status: "ok", message: "Server is running" });
 });
+
+// Image routes
+app.use('/api/images', imageRoutes);
 
 // Example route
 app.get("/", (req, res) => {
