@@ -2,21 +2,35 @@ const Image = require('../models/image');
 
 /**
  * Create a new image
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
  */
 const createImage = async (req, res) => {
   try {
-    // TODO: Implement image creation logic
-    // - Validate request body
-    // - Handle file upload if needed
-    // - Create new image document
-    // - Return success response
-    
+    // Check if file is uploaded
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please upload an image (JPG or PNG).'
+      });
+    }
+
+    const { title, subtitle, tenant, section } = req.body;
+
+    // Create new image document
+    const newImage = await Image.create({
+      title,
+      subtitle,
+      tenant,
+      section,
+      filePath: req.file.path,           // saved by Multer
+      format: req.file.mimetype.split('/')[1], // jpg/png
+      width: null,                       // Sharp will fill later
+      height: null
+    });
+
     res.status(201).json({
       success: true,
-      message: 'Image created successfully',
-      data: {}
+      message: 'Image uploaded successfully',
+      data: newImage
     });
   } catch (error) {
     res.status(500).json({
@@ -29,21 +43,22 @@ const createImage = async (req, res) => {
 
 /**
  * Get all images with optional filtering
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
  */
 const getImages = async (req, res) => {
   try {
-    // TODO: Implement image retrieval logic
-    // - Handle query parameters (tenant, section, pagination)
-    // - Apply filters based on request
-    // - Return paginated results
-    
+    const { tenant, section } = req.query;
+
+    // Build filter object
+    const filter = {};
+    if (tenant) filter.tenant = tenant;
+    if (section) filter.section = section;
+
+    const images = await Image.find(filter);
+
     res.status(200).json({
       success: true,
       message: 'Images retrieved successfully',
-      data: [],
-      pagination: {}
+      data: images
     });
   } catch (error) {
     res.status(500).json({
@@ -56,22 +71,23 @@ const getImages = async (req, res) => {
 
 /**
  * Get image by ID
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
  */
 const getImageById = async (req, res) => {
   try {
     const { id } = req.params;
-    
-    // TODO: Implement image retrieval by ID logic
-    // - Validate ID format
-    // - Find image by ID
-    // - Return image data or 404 if not found
-    
+
+    const image = await Image.findById(id);
+    if (!image) {
+      return res.status(404).json({
+        success: false,
+        message: 'Image not found'
+      });
+    }
+
     res.status(200).json({
       success: true,
       message: 'Image retrieved successfully',
-      data: {}
+      data: image
     });
   } catch (error) {
     res.status(500).json({
@@ -84,23 +100,35 @@ const getImageById = async (req, res) => {
 
 /**
  * Update image by ID
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
  */
 const updateImage = async (req, res) => {
   try {
     const { id } = req.params;
-    
-    // TODO: Implement image update logic
-    // - Validate ID format
-    // - Validate request body
-    // - Find and update image
-    // - Return updated image data
-    
+    const { title, subtitle, tenant, section } = req.body;
+
+    const updatedData = { title, subtitle, tenant, section };
+
+    // If new image uploaded, update filePath & format
+    if (req.file) {
+      updatedData.filePath = req.file.path;
+      updatedData.format = req.file.mimetype.split('/')[1];
+      updatedData.width = null;   // Sharp will update later
+      updatedData.height = null;
+    }
+
+    const updatedImage = await Image.findByIdAndUpdate(id, updatedData, { new: true });
+
+    if (!updatedImage) {
+      return res.status(404).json({
+        success: false,
+        message: 'Image not found'
+      });
+    }
+
     res.status(200).json({
       success: true,
       message: 'Image updated successfully',
-      data: {}
+      data: updatedImage
     });
   } catch (error) {
     res.status(500).json({
@@ -113,23 +141,27 @@ const updateImage = async (req, res) => {
 
 /**
  * Delete image by ID
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
  */
 const deleteImage = async (req, res) => {
   try {
     const { id } = req.params;
-    
-    // TODO: Implement image deletion logic
-    // - Validate ID format
-    // - Find and delete image
-    // - Handle file deletion if needed
-    // - Return success response
-    
+
+    const deletedImage = await Image.findByIdAndDelete(id);
+
+    if (!deletedImage) {
+      return res.status(404).json({
+        success: false,
+        message: 'Image not found'
+      });
+    }
+
+    // Optional: delete the file from uploads folder
+    // const fs = require('fs');
+    // fs.unlinkSync(deletedImage.filePath);
+
     res.status(200).json({
       success: true,
-      message: 'Image deleted successfully',
-      data: {}
+      message: 'Image deleted successfully'
     });
   } catch (error) {
     res.status(500).json({
