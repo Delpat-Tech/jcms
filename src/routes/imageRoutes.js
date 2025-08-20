@@ -1,4 +1,5 @@
 const express = require('express');
+const upload = require('../middlewares/upload');
 const router = express.Router();
 const {
   createImage,
@@ -7,6 +8,13 @@ const {
   updateImage,
   deleteImage
 } = require('../controllers/imageController');
+
+
+router.post('/', upload.single('image'), (req, res, next) => {
+  // Optional: simple debug
+  console.log('File uploaded:', req.file);
+  next(); // call the actual controller
+}, createImage);
 
 // POST /api/images - Create a new image
 router.post('/', createImage);
