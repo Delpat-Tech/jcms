@@ -1,11 +1,11 @@
 const Image = require('../models/image');
+const sharp = require('sharp');
 
 /**
  * Create a new image
  */
 const createImage = async (req, res) => {
   try {
-    // Check if file is uploaded
     if (!req.file) {
       return res.status(400).json({
         success: false,
@@ -15,16 +15,19 @@ const createImage = async (req, res) => {
 
     const { title, subtitle, tenant, section } = req.body;
 
+    // Use Sharp inside async function to get metadata
+    const metadata = await sharp(req.file.path).metadata();
+
     // Create new image document
     const newImage = await Image.create({
       title,
       subtitle,
       tenant,
       section,
-      filePath: req.file.path,           // saved by Multer
-      format: req.file.mimetype.split('/')[1], // jpg/png
-      width: null,                       // Sharp will fill later
-      height: null
+      filePath: req.file.path.replace(/\\/g, '/'), // normalize Windows path
+      format: metadata.format, // jpeg, png, webp, etc.
+      width: metadata.width,
+      height: metadata.height
     });
 
     res.status(201).json({
@@ -40,6 +43,7 @@ const createImage = async (req, res) => {
     });
   }
 };
+
 
 /**
  * Get all images with optional filtering
