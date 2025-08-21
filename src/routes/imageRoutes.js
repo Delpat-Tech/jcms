@@ -9,26 +9,19 @@ const {
   deleteImage
 } = require('../controllers/imageController');
 
+// POST /api/:section
+router.post('/:section', upload.single('image'), createImage);
 
-router.post('/', upload.single('image'), (req, res, next) => {
-  // Optional: simple debug
-  console.log('File uploaded:', req.file);
-  next(); // call the actual controller
-}, createImage);
-
-// POST /api/images - Create a new image
-router.post('/', createImage);
-
-// GET /api/images - Get all images
+// GET all
 router.get('/', getImages);
 
-// GET /api/images/:id - Get image by ID
+// GET by id
 router.get('/:id', getImageById);
 
-// PUT /api/images/:id - Update image by ID
-router.put('/:id', updateImage);
+// PUT /api/:section/:id
+router.put('/:section/:id', upload.single('image'), updateImage);
 
-// DELETE /api/images/:id - Delete image by ID
-router.delete('/:id', deleteImage);
+// DELETE /api/:section/:id
+router.delete('/:section/:id', deleteImage);
 
 module.exports = router;

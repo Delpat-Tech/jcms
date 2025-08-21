@@ -1,40 +1,21 @@
-// models/Image.js
-//Image Schema Extended version
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const imageSchema = new mongoose.Schema(
   {
-    title: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    subtitle: {
-      type: String,
-      trim: true,
-    },
-    filePath: {
-      type: String,
-      required: true, // path where the image is stored (local or cloud)
-    },
-    width: {
-      type: Number, // in pixels
-    },
-    height: {
-      type: Number, // in pixels
-    },
-    format: {
-      type: String, // e.g., jpg, png, webp
-    },
-    tenant: {
-      type: String, // to separate images by client/organization
-      required: true,
-    },
-    section: {
-      type: String, // e.g., "homepage", "gallery", "profile"
-    },
+    title: { type: String, required: true },
+    subtitle: { type: String },
+    tenant: { type: String, required: true },
+    section: { type: String, required: true },
+    filePath: { type: String, required: true }, // main file (we keep webp here)
+    format: { type: String },
+    width: { type: Number },
+    height: { type: Number },
+    convertedFiles: {
+      webp: { type: String, required: true },
+      avif: { type: String, required: true }
+    }
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Image", imageSchema);
+module.exports = mongoose.model('Image', imageSchema);
