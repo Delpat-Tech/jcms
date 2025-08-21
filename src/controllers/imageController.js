@@ -28,7 +28,9 @@ const createImage = async (req, res) => {
     const metadata = await sharp(webpPath).metadata();
 
     // Remove original uploaded file
-    fs.unlinkSync(req.file.path);
+    fs.unlink(req.file.path, (err) => {
+      if (err) console.error("Error deleting original uploaded file:", err);
+    });
 
     // Save to DB
     const newImage = await Image.create({
@@ -138,13 +140,19 @@ const updateImage = async (req, res) => {
       const metadata = await sharp(webpPath).metadata();
 
       // Remove original uploaded file
-      fs.unlinkSync(req.file.path);
+      fs.unlink(req.file.path, (err) => {
+        if (err) console.error("Error deleting new uploaded file:", err);
+      });
 
       // Delete old converted files
       const oldImage = await Image.findById(id);
       if (oldImage?.convertedFiles) {
         Object.values(oldImage.convertedFiles).forEach(file => {
-          if (fs.existsSync(file)) fs.unlinkSync(file);
+          if (fs.existsSync(file)) {
+            fs.unlink(file, (err) => {
+              if (err) console.error("Error deleting old converted file:", err);
+            });
+          }
         });
       }
 
@@ -193,7 +201,11 @@ const deleteImage = async (req, res) => {
     // Delete files
     if (deletedImage.convertedFiles) {
       Object.values(deletedImage.convertedFiles).forEach(file => {
-        if (fs.existsSync(file)) fs.unlinkSync(file);
+        if (fs.existsSync(file)) {
+          fs.unlink(file, (err) => {
+            if (err) console.error("Error deleting file:", err);
+          });
+        }
       });
     }
 

@@ -9,8 +9,8 @@ const {
   deleteImage
 } = require('../controllers/imageController');
 
-// POST /api/:section
-router.post('/:section', upload.single('image'), createImage);
+// POST /api/images
+router.post('/', upload.single('image'), createImage);
 
 // GET all
 router.get('/', getImages);
@@ -18,10 +18,10 @@ router.get('/', getImages);
 // GET by id
 router.get('/:id', getImageById);
 
-// PUT /api/:section/:id
-router.put('/:section/:id', upload.single('image'), updateImage);
+// PUT /api/images/:id
+router.put('/:id', upload.single('image'), updateImage);
 
-// DELETE /api/:section/:id
-router.delete('/:section/:id', deleteImage);
+// DELETE /api/images/:id
+router.delete('/:id', deleteImage);
 
 module.exports = router;
