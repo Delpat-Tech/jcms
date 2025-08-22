@@ -86,6 +86,45 @@ const getImages = async (req, res) => {
 };
 
 /**
+ * Get bulk images by section with query params
+ * GET /api/:section/bulk?tenant=xyz&limit=20&fields=title,avifUrl
+ */
+const getBulkImages = async (req, res) => {
+  try {
+    const { section } = req.params;
+    const { tenant, limit = 20, fields } = req.query;
+
+    const filter = { section };
+    if (tenant) filter.tenant = tenant;
+
+    // Projection (fields selection)
+    let projection = null;
+    if (fields) {
+      projection = fields.split(',').join(' ');
+    }
+
+    const images = await Image.find(filter, projection).limit(Number(limit));
+
+    // Build public URLs
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const data = images.map(img => {
+      const result = img.toObject();
+      if (result.convertedFiles) {
+        result.convertedFiles = {
+          webp: `${baseUrl}/${result.convertedFiles.webp}`,
+          avif: `${baseUrl}/${result.convertedFiles.avif}`
+        };
+      }
+      return result;
+    });
+
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error retrieving bulk images', error: error.message });
+  }
+};
+
+/**
  * Get image by ID
  */
 const getImageById = async (req, res) => {
@@ -122,6 +161,7 @@ const updateImage = async (req, res) => {
     const { id, section } = req.params;
     const { title, subtitle, tenant } = req.body;
 
+    // Always take section from params (not body)
     const updatedData = { title, subtitle, tenant, section };
 
     if (req.file) {
@@ -225,6 +265,7 @@ const deleteImage = async (req, res) => {
 module.exports = {
   createImage,
   getImages,
+  getBulkImages,
   getImageById,
   updateImage,
   deleteImage

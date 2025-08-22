@@ -4,6 +4,7 @@ const router = express.Router();
 const {
   createImage,
   getImages,
+  getBulkImages,
   getImageById,
   updateImage,
   deleteImage
@@ -12,14 +13,18 @@ const {
 // POST /api/images
 router.post('/', upload.single('image'), createImage);
 
-// GET all
+// GET all (optional ?tenant & ?section)
 router.get('/', getImages);
+
+// GET bulk by section with query params
+// /api/:section/bulk?tenant=xyz&limit=20&fields=title,avifUrl
+router.get('/:section/bulk', getBulkImages);
 
 // GET by id
 router.get('/:id', getImageById);
 
-// PUT /api/images/:id
-router.put('/:id', upload.single('image'), updateImage);
+// PUT /api/:section/:id
+router.put('/:section/:id', upload.single('image'), updateImage);
 
 // DELETE /api/images/:id
 router.delete('/:id', deleteImage);
