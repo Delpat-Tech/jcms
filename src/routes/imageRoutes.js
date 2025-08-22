@@ -1,6 +1,7 @@
 const express = require('express');
 const upload = require('../middlewares/upload');
 const router = express.Router();
+const validateImageDimensions = require('../middlewares/validateImageDimensions');
 const {
   createImage,
   getImages,
@@ -11,7 +12,12 @@ const {
 } = require('../controllers/imageController');
 
 // POST /api/images
-router.post('/', upload.single('image'), createImage);
+router.post(
+  '/',
+  upload.single('image'),
+  validateImageDimensions(200, 2000, 200, 2000), // minWidth, maxWidth, minHeight, maxHeight
+  createImage
+);
 
 // GET all (optional ?tenant & ?section)
 router.get('/', getImages);
@@ -24,7 +30,12 @@ router.get('/:section/bulk', getBulkImages);
 router.get('/:id', getImageById);
 
 // PUT /api/:section/:id
-router.put('/:section/:id', upload.single('image'), updateImage);
+router.put(
+  '/:id',
+  upload.single('image'),
+  validateImageDimensions(200, 2000, 200, 2000),
+  updateImage
+);
 
 // DELETE /api/images/:id
 router.delete('/:id', deleteImage);
