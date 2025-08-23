@@ -1,10 +1,7 @@
-const path = require('path');
-const fs = require('fs');
-const sharp = require('sharp');
+// controllers/updateImage.js
 const Image = require('../models/image');
 const { safeDeleteFile } = require('../utils/safeDeleteFile');
-
-sharp.cache(false);
+const { processImage } = require('../utils/imageProcessor');
 
 const updateImage = async (req, res) => {
   try {
@@ -12,22 +9,12 @@ const updateImage = async (req, res) => {
     const { title, subtitle, tenant, section } = req.body;
     const updatedData = { title, subtitle, tenant, section };
 
+    // If a new file is uploaded...
     if (req.file) {
-      const uploadDir = path.dirname(req.file.path);
-      const baseName = path.parse(req.file.filename).name;
-      const imageBuffer = fs.readFileSync(req.file.path);
-
-      const webpPath = path.join(uploadDir, `${baseName}.webp`);
-      const avifPath = path.join(uploadDir, `${baseName}.avif`);
-
-      await Promise.all([
-        sharp(imageBuffer).webp({ quality: 80 }).toFile(webpPath),
-        sharp(imageBuffer).avif({ quality: 50 }).toFile(avifPath)
-      ]);
-
-      const metadata = await sharp(webpPath).metadata();
-      await safeDeleteFile(req.file.path);
-
+      // Delegate all file handling to the utility
+      const { webpPath, avifPath, metadata } = await processImage(req.file, req.body);
+      
+      // Find the old image to delete its files
       const oldImage = await Image.findById(id);
       if (oldImage?.convertedFiles) {
         await Promise.all([
@@ -36,13 +23,14 @@ const updateImage = async (req, res) => {
         ]);
       }
 
-      updatedData.filePath = webpPath.replace(/\\/g, '/');
+      // Add new file data to the update object
+      updatedData.filePath = webpPath;
       updatedData.format = 'webp/avif';
       updatedData.width = metadata.width;
       updatedData.height = metadata.height;
       updatedData.convertedFiles = {
-        webp: webpPath.replace(/\\/g, '/'),
-        avif: avifPath.replace(/\\/g, '/')
+        webp: webpPath,
+        avif: avifPath
       };
     }
 

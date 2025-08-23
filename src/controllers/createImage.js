@@ -1,10 +1,6 @@
-const path = require('path');
-const fs = require('fs');
-const sharp = require('sharp');
+// controllers/createImage.js
 const Image = require('../models/image');
-const { safeDeleteFile } = require('../utils/safeDeleteFile');
-
-sharp.cache(false); // Disable sharp cache
+const { processImage } = require('../utils/imageProcessor');
 
 const createImage = async (req, res) => {
   try {
@@ -12,44 +8,31 @@ const createImage = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please upload an image (JPG or PNG).' });
     }
 
-    const { title, subtitle, tenant, section } = req.body;
-    const uploadDir = path.dirname(req.file.path);
-    const baseName = path.parse(req.file.filename).name;
-
-    const imageBuffer = fs.readFileSync(req.file.path);
-
-    const webpPath = path.join(uploadDir, `${baseName}.webp`);
-    const avifPath = path.join(uploadDir, `${baseName}.avif`);
-
-    await Promise.all([
-      sharp(imageBuffer).webp({ quality: 80 }).toFile(webpPath),
-      sharp(imageBuffer).avif({ quality: 50 }).toFile(avifPath)
-    ]);
-
-    const metadata = await sharp(webpPath).metadata();
-    await safeDeleteFile(req.file.path);
+    // Corrected this line to use req.file and req.body
+    const { webpPath, avifPath, metadata } = await processImage(req.file, req.body);
 
     const newImage = await Image.create({
-      title,
-      subtitle,
-      tenant,
-      section,
-      filePath: webpPath.replace(/\\/g, '/'),
+      title: req.body.title,
+      subtitle: req.body.subtitle,
+      tenant: req.body.tenant,
+      section: req.body.section,
+      filePath: webpPath, // main file
       format: 'webp/avif',
       width: metadata.width,
       height: metadata.height,
       convertedFiles: {
-        webp: webpPath.replace(/\\/g, '/'),
-        avif: avifPath.replace(/\\/g, '/')
+        webp: webpPath,
+        avif: avifPath
       }
     });
 
     res.status(201).json({
       success: true,
-      message: 'Image converted & saved (only WebP/AVIF)',
+      message: 'Image converted & saved successfully',
       data: newImage
     });
   } catch (error) {
+    // This will now catch errors from processImage as well
     res.status(500).json({ success: false, message: 'Error creating image', error: error.message });
   }
 };

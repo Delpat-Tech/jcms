@@ -6,19 +6,15 @@ const fs = require('fs');
 // Storage configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    // Folder structure: uploads/{tenant}/{section}/
-    const tenant = req.body.tenant || 'default';
-    const section = req.body.section || 'index';
-    const folderPath = `uploads/${tenant}/${section}`;
-
-    // Create folder if it doesn't exist
-    fs.mkdirSync(folderPath, { recursive: true });
-
-    cb(null, folderPath);
+    // 1. Save all uploads to a single temporary directory first.
+    const tempPath = 'uploads/temp';
+    fs.mkdirSync(tempPath, { recursive: true });
+    cb(null, tempPath);
   },
   filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname); // get file extension
-    const filename = `image-${Date.now()}${ext}`; // e.g., image-1692534567890.jpg
+    // Use a unique filename
+    const ext = path.extname(file.originalname);
+    const filename = `image-${Date.now()}${ext}`;
     cb(null, filename);
   }
 });
@@ -29,7 +25,10 @@ const fileFilter = (req, file, cb) => {
   if (allowedTypes.test(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error('Only JPG and PNG files are allowed'));
+    // Use a specific error object for better handling downstream
+    const err = new Error('Only JPG and PNG files are allowed');
+    err.code = 'INVALID_FILE_TYPE';
+    cb(err);
   }
 };
 
