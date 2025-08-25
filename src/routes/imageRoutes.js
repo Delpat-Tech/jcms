@@ -1,44 +1,53 @@
+// routes/imageRoutes.js
 const express = require('express');
 const upload = require('../middlewares/upload');
 const validateImageDimensions = require('../middlewares/validateImageDimensions');
+const auth = require('../middlewares/auth'); // 👈 Import the auth middleware
 
 const router = express.Router();
 
-// Import controllers (each in separate file now)
-const createImage = require('../controllers/createImage');
-const getImages = require('../controllers/getImages');
-const getBulkImages = require('../controllers/getBulkImages');
-const getImageById = require('../controllers/getImageById');
-const updateImage = require('../controllers/updateImage');
-const deleteImage = require('../controllers/deleteImage');
+// Import controllers
+const {
+  createImage,
+  getImages,
+  getBulkImages,
+  getImageById,
+  updateImage,
+  deleteImage,
+} = require('../controllers'); // Using index.js for cleaner imports
 
-// POST /api/images
+// POST /api/images (Protected)
 router.post(
   '/',
+  auth, // 👈 Apply auth middleware
   upload.single('image'),
-  validateImageDimensions(200, 2000, 200, 2000), // minWidth, maxWidth, minHeight, maxHeight
+  validateImageDimensions(200, 2000, 200, 2000),
   createImage
 );
 
-// GET all (optional ?tenant & ?section)
+// GET all (Public)
 router.get('/', getImages);
 
-// GET bulk by section with query params
-// /api/images/bulk?tenant=xyz&limit=20&fields=title,avifUrl
+// GET bulk by section (Public)
 router.get('/:section/bulk', getBulkImages);
 
-// GET by id
+// GET by id (Public)
 router.get('/:id', getImageById);
 
-// PUT /api/images/:id
+// PUT /api/images/:id (Protected)
 router.put(
   '/:id',
+  auth, // 👈 Apply auth middleware
   upload.single('image'),
   validateImageDimensions(200, 2000, 200, 2000),
   updateImage
 );
 
-// DELETE /api/images/:id
-router.delete('/:id', deleteImage);
+// DELETE /api/images/:id (Protected)
+router.delete(
+  '/:id',
+  auth, // 👈 Apply auth middleware
+  deleteImage
+);
 
 module.exports = router;

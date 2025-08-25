@@ -1,0 +1,236 @@
+{
+	"info": {
+		"_postman_id": "6f652c4a-25e5-4f9c-ba9b-5e3ee9ac2800",
+		"name": "Image API",
+		"description": "Collection to test Image Upload/Conversion API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "47300835",
+		"_collection_link": "https://rudranshshinde22-9410625.postman.co/workspace/Rudranshh's-Workspace~1445f9c4-d3e3-48b4-8882-311ff05b972f/collection/47300835-6f652c4a-25e5-4f9c-ba9b-5e3ee9ac2800?action=share&source=collection_link&creator=47300835"
+	},
+	"item": [
+		{
+			"name": "Upload Image",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "somerandomsecretkey123!@#",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "title",
+							"value": "Test1 Image",
+							"type": "text"
+						},
+						{
+							"key": "subtitle",
+							"value": "Subtitle here",
+							"type": "text"
+						},
+						{
+							"key": "tenant",
+							"value": "tenant2",
+							"type": "text"
+						},
+						{
+							"key": "section",
+							"value": "gallery",
+							"type": "text"
+						},
+						{
+							"key": "image",
+							"type": "file",
+							"src": "/C:/Users/Rudransh/Downloads/download_imresizer.jpg"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:5000/api/images?title=Red and Blue&subtitle=Optional&tenant=Unknown&image",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"images"
+					],
+					"query": [
+						{
+							"key": "title",
+							"value": "Red and Blue"
+						},
+						{
+							"key": "subtitle",
+							"value": "Optional"
+						},
+						{
+							"key": "tenant",
+							"value": "Unknown"
+						},
+						{
+							"key": "image",
+							"value": null
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Bulk Images",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5000/api/images/gallery/bulk?tenant=tenant3&limit=5&fields=title,convertedFiles",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"images",
+						"gallery",
+						"bulk"
+					],
+					"query": [
+						{
+							"key": "tenant",
+							"value": "tenant3"
+						},
+						{
+							"key": "limit",
+							"value": "5"
+						},
+						{
+							"key": "fields",
+							"value": "title,convertedFiles"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Image by ID",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5000/api/images/id",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"images",
+						"id"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update Image",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "title",
+							"value": "Updated Image",
+							"type": "text"
+						},
+						{
+							"key": "tenant",
+							"value": "tenant3",
+							"type": "text"
+						},
+						{
+							"key": "subtitle",
+							"value": "Updated subtitle",
+							"type": "text"
+						},
+						{
+							"key": "image",
+							"type": "file",
+							"src": "/C:/Users/Rudransh/Downloads/misurina-sunset_imresizer.jpg"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:5000/api/images/id",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"images",
+						"id"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Image",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5000/api/images/id",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"images",
+						"id"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get All Images",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5000/api/images",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"images"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "imageId",
+			"value": ""
+		}
+	]
+}
