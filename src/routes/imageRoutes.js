@@ -14,6 +14,7 @@ const {
   getImageById,
   updateImage,
   deleteImage,
+  genericPatch,
 } = require('../controllers'); // Using index.js for cleaner imports
 
 // POST /api/images (Protected)
@@ -49,5 +50,7 @@ router.delete(
   auth, // 👈 Apply auth middleware
   deleteImage
 );
+
+router.patch('/:id', auth, genericPatch);
 
 module.exports = router;

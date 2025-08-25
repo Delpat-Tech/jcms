@@ -2,11 +2,11 @@ const Image = require('../models/image');
 
 const getImages = async (req, res) => {
   try {
-    const { tenant, section } = req.query;
+    const { tenant } = req.query;
     const filter = {};
 
     if (tenant) filter.tenant = tenant;
-    if (section) filter.section = section;
+    
 
     const images = await Image.find(filter);
 

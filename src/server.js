@@ -19,7 +19,7 @@ app.use('/uploads', express.static('uploads'));
 // Routes
 const imageRoutes = require('./routes/imageRoutes');
 
-// Health check route
+// Health check routed
 app.get("/api/health", (req, res) => {
   res.status(200).json({ status: "ok", message: "Server is running" });
 });

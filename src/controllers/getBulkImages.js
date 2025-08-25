@@ -2,10 +2,10 @@ const Image = require('../models/image');
 
 const getBulkImages = async (req, res) => {
   try {
-    const { section } = req.params;
+    
     const { tenant, limit = 20, fields } = req.query;
 
-    const filter = { section };
+    
     if (tenant) filter.tenant = tenant;
 
     // Projection (fields selection)

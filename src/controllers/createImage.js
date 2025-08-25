@@ -13,7 +13,7 @@ const createImage = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please upload an image (JPG or PNG).' });
     }
 
-    const { title, subtitle, tenant, section } = req.body;
+    const { title, tenant } = req.body;
     // Get the desired format from the body, default to 'webp'
     const chosenFormat = req.body.format === 'avif' ? 'avif' : 'webp'; 
     
@@ -32,15 +32,19 @@ const createImage = async (req, res) => {
     const metadata = await sharp(outputPath).metadata();
     await safeDeleteFile(req.file.path);
 
+    const relativePath = outputPath.replace(/\\/g, '/');
+    const fileUrl = `${req.protocol}://${req.get('host')}/${relativePath}`;
+
     const newImage = await Image.create({
       title,
-      subtitle,
+      
       tenant,
-      section,
+      
       filePath: outputPath.replace(/\\/g, '/'),
+      fileUrl:`${req.protocol}://${req.get('host')}/${relativePath}`,
       format: chosenFormat,
-      width: metadata.width,
-      height: metadata.height
+      notes: {},
+
     });
 
     res.status(201).json({

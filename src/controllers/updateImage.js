@@ -10,8 +10,8 @@ sharp.cache(false);
 const updateImage = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, subtitle, tenant, section } = req.body;
-    const updatedData = { title, subtitle, tenant, section };
+    const { title, tenant } = req.body;
+    const updatedData = { title, tenant };
 
     if (req.file) {
       const chosenFormat = req.body.format === 'avif' ? 'avif' : 'webp';
@@ -35,9 +35,9 @@ const updateImage = async (req, res) => {
 
       // Add new file data to the update object
       updatedData.filePath = outputPath.replace(/\\/g, '/');
+      const fileUrl = `${req.protocol}://${req.get('host')}/${relativePath}`;
       updatedData.format = chosenFormat;
-      updatedData.width = metadata.width;
-      updatedData.height = metadata.height;
+
     }
 
     const updatedImage = await Image.findByIdAndUpdate(id, updatedData, { new: true });
