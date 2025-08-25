@@ -1,3 +1,4 @@
+// models/image.js
 const mongoose = require('mongoose');
 
 const imageSchema = new mongoose.Schema(
@@ -6,14 +7,14 @@ const imageSchema = new mongoose.Schema(
     subtitle: { type: String },
     tenant: { type: String, required: true },
     section: { type: String, required: true },
-    filePath: { type: String, required: true }, // main file (we keep webp here)
-    format: { type: String },
+    filePath: { type: String, required: true }, // The path to the single converted file
+    format: { 
+      type: String, 
+      required: true,
+      enum: ['webp', 'avif'] // Only allow these two formats
+    },
     width: { type: Number },
     height: { type: Number },
-    convertedFiles: {
-      webp: { type: String, required: true },
-      avif: { type: String, required: true }
-    }
   },
   { timestamps: true }
 );

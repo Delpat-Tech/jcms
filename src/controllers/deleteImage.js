@@ -1,3 +1,4 @@
+// controllers/deleteImage.js
 const Image = require('../models/image');
 const { safeDeleteFile } = require('../utils/safeDeleteFile');
 
@@ -10,15 +11,12 @@ const deleteImage = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Image not found' });
     }
 
-    if (deletedImage.convertedFiles) {
-      const { webp, avif } = deletedImage.convertedFiles;
-      await Promise.all([
-        safeDeleteFile(webp),
-        safeDeleteFile(avif)
-      ]);
+    // Delete the single file associated with the record
+    if (deletedImage.filePath) {
+      await safeDeleteFile(deletedImage.filePath);
     }
 
-    res.status(200).json({ success: true, message: 'Image and files deleted successfully' });
+    res.status(200).json({ success: true, message: 'Image and file deleted successfully' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error deleting image', error: error.message });
   }

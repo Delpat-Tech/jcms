@@ -1,3 +1,4 @@
+// controllers/updateImage.js
 const path = require('path');
 const fs = require('fs');
 const sharp = require('sharp');
@@ -13,37 +14,30 @@ const updateImage = async (req, res) => {
     const updatedData = { title, subtitle, tenant, section };
 
     if (req.file) {
+      const chosenFormat = req.body.format === 'avif' ? 'avif' : 'webp';
       const uploadDir = path.dirname(req.file.path);
       const baseName = path.parse(req.file.filename).name;
       const imageBuffer = fs.readFileSync(req.file.path);
 
-      const webpPath = path.join(uploadDir, `${baseName}.webp`);
-      const avifPath = path.join(uploadDir, `${baseName}.avif`);
-
-      await Promise.all([
-        sharp(imageBuffer).webp({ quality: 80 }).toFile(webpPath),
-        sharp(imageBuffer).avif({ quality: 50 }).toFile(avifPath)
-      ]);
-
-      const metadata = await sharp(webpPath).metadata();
-      await safeDeleteFile(req.file.path);
-
+      // Delete the old file first
       const oldImage = await Image.findById(id);
-      if (oldImage?.convertedFiles) {
-        await Promise.all([
-          safeDeleteFile(oldImage.convertedFiles.webp),
-          safeDeleteFile(oldImage.convertedFiles.avif)
-        ]);
+      if (oldImage?.filePath) {
+        await safeDeleteFile(oldImage.filePath);
       }
 
-      updatedData.filePath = webpPath.replace(/\\/g, '/');
-      updatedData.format = 'webp/avif';
+      // Process the new file
+      const outputPath = path.join(uploadDir, `${baseName}.${chosenFormat}`);
+      const quality = chosenFormat === 'webp' ? 80 : 50;
+      await sharp(imageBuffer)[chosenFormat]({ quality }).toFile(outputPath);
+
+      const metadata = await sharp(outputPath).metadata();
+      await safeDeleteFile(req.file.path);
+
+      // Add new file data to the update object
+      updatedData.filePath = outputPath.replace(/\\/g, '/');
+      updatedData.format = chosenFormat;
       updatedData.width = metadata.width;
       updatedData.height = metadata.height;
-      updatedData.convertedFiles = {
-        webp: webpPath.replace(/\\/g, '/'),
-        avif: avifPath.replace(/\\/g, '/')
-      };
     }
 
     const updatedImage = await Image.findByIdAndUpdate(id, updatedData, { new: true });

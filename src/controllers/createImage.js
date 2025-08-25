@@ -1,10 +1,11 @@
+// controllers/createImage.js
 const path = require('path');
 const fs = require('fs');
 const sharp = require('sharp');
 const Image = require('../models/image');
 const { safeDeleteFile } = require('../utils/safeDeleteFile');
 
-sharp.cache(false); // Disable sharp cache
+sharp.cache(false);
 
 const createImage = async (req, res) => {
   try {
@@ -13,20 +14,22 @@ const createImage = async (req, res) => {
     }
 
     const { title, subtitle, tenant, section } = req.body;
+    // Get the desired format from the body, default to 'webp'
+    const chosenFormat = req.body.format === 'avif' ? 'avif' : 'webp'; 
+    
     const uploadDir = path.dirname(req.file.path);
     const baseName = path.parse(req.file.filename).name;
-
     const imageBuffer = fs.readFileSync(req.file.path);
 
-    const webpPath = path.join(uploadDir, `${baseName}.webp`);
-    const avifPath = path.join(uploadDir, `${baseName}.avif`);
+    // Define the output path with the correct extension
+    const outputPath = path.join(uploadDir, `${baseName}.${chosenFormat}`);
 
-    await Promise.all([
-      sharp(imageBuffer).webp({ quality: 80 }).toFile(webpPath),
-      sharp(imageBuffer).avif({ quality: 50 }).toFile(avifPath)
-    ]);
+    // Process the image to the chosen format
+    const quality = chosenFormat === 'webp' ? 80 : 50;
+    await sharp(imageBuffer)[chosenFormat]({ quality }).toFile(outputPath);
 
-    const metadata = await sharp(webpPath).metadata();
+    // Get metadata and delete the original upload
+    const metadata = await sharp(outputPath).metadata();
     await safeDeleteFile(req.file.path);
 
     const newImage = await Image.create({
@@ -34,19 +37,15 @@ const createImage = async (req, res) => {
       subtitle,
       tenant,
       section,
-      filePath: webpPath.replace(/\\/g, '/'),
-      format: 'webp/avif',
+      filePath: outputPath.replace(/\\/g, '/'),
+      format: chosenFormat,
       width: metadata.width,
-      height: metadata.height,
-      convertedFiles: {
-        webp: webpPath.replace(/\\/g, '/'),
-        avif: avifPath.replace(/\\/g, '/')
-      }
+      height: metadata.height
     });
 
     res.status(201).json({
       success: true,
-      message: 'Image converted & saved (only WebP/AVIF)',
+      message: `Image saved successfully as ${chosenFormat.toUpperCase()}`,
       data: newImage
     });
   } catch (error) {
