@@ -53,7 +53,7 @@ const createImage = async (req, res) => {
       filePath: outputPath.replace(/\\/g, '/'),
       fileUrl:`${req.protocol}://${req.get('host')}/${relativePath}`,
       format: chosenFormat,
-      notes: {},
+      notes: req.body.notes || {},
 
     });
 
