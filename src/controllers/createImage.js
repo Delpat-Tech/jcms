@@ -5,62 +5,59 @@ const sharp = require('sharp');
 const Image = require('../models/image');
 const { safeDeleteFile } = require('../utils/safeDeleteFile');
 
-sharp.cache(false);
-
 const createImage = async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ success: false, message: 'Please upload an image (JPG or PNG).' });
+      return res.status(400).json({ success: false, message: 'Please upload an image.' });
     }
 
-    const { title, tenant } = req.body;
+    const { title } = req.body;
+    const userId = req.user.id; // Get user ID from auth middleware
 
     if (req.body.notes) {
       try {
         req.body.notes = JSON.parse(req.body.notes);
       } catch (error) {
+        await safeDeleteFile(req.file.path);
         return res.status(400).json({ success: false, error: "Invalid JSON format for notes" });
       }
     }
 
     const allowedFormats = ['jpg', 'jpeg', 'png', 'webp', 'avif'];
     let chosenFormat = (req.body.format || 'webp').toLowerCase();
-    if (!allowedFormats.includes(chosenFormat)) {
-      chosenFormat = 'webp';
-    }
+    if (!allowedFormats.includes(chosenFormat)) chosenFormat = 'webp';
+    if (chosenFormat === 'jpg') chosenFormat = 'jpeg';
 
-    const uploadDir = path.dirname(req.file.path);
-    const baseName = path.parse(req.file.filename).name;
+    const uploadDir = `uploads/${userId}`;
+    fs.mkdirSync(uploadDir, { recursive: true });
+
+    const baseName = path.parse(req.file.originalname).name + '-' + Date.now();
     const imageBuffer = fs.readFileSync(req.file.path);
+    await safeDeleteFile(req.file.path); // Delete the temporary multer upload
 
+    // 👈 This is the line that defines outputPath
     const outputPath = path.join(uploadDir, `${baseName}.${chosenFormat}`);
     
     // Process image
     const sharpInstance = sharp(imageBuffer);
     if (chosenFormat === 'webp') await sharpInstance.webp({ quality: 80 }).toFile(outputPath);
     else if (chosenFormat === 'avif') await sharpInstance.avif({ quality: 50 }).toFile(outputPath);
-    else if (['jpg', 'jpeg'].includes(chosenFormat)) await sharpInstance.jpeg({ quality: 80 }).toFile(outputPath);
+    else if (chosenFormat === 'jpeg') await sharpInstance.jpeg({ quality: 80 }).toFile(outputPath);
     else if (chosenFormat === 'png') await sharpInstance.png({ compressionLevel: 8 }).toFile(outputPath);
-
-    await safeDeleteFile(req.file.path);
 
     const internalPath = outputPath.replace(/\\/g, '/');
     const fileUrl = `${req.protocol}://${req.get('host')}/${internalPath}`;
 
     const newImage = await Image.create({
       title,
-      tenant,
+      user: userId,
       internalPath,
       fileUrl,
       format: chosenFormat,
       notes: req.body.notes || {},
     });
 
-    res.status(201).json({
-      success: true,
-      message: `Image saved successfully as ${chosenFormat.toUpperCase()}`,
-      data: newImage
-    });
+    res.status(201).json({ success: true, data: newImage });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error creating image', error: error.message });
   }

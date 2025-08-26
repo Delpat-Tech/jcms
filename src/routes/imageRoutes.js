@@ -1,27 +1,28 @@
 // routes/imageRoutes.js
 const express = require('express');
 const upload = require('../middlewares/upload');
-const validateImageDimensions = require('../middlewares/validateImageDimensions');
 const auth = require('../middlewares/auth');
 
-const router = express.Router();
-
+// Import ALL the controllers you need for your routes
 const {
   createImage,
   getImages,
-  getBulkImages,
-  getImageById,
-  updateImage,
-  deleteImage,
-  genericPatch,
+  getImageById,       // 👈 Add this
+  updateImage,        // 👈 Add this
+  deleteImage,        // 👈 Add this
+  genericPatch,       // 👈 Add this
+  getBulkImages       // 👈 Add this
 } = require('../controllers');
 
-router.post('/', auth, upload.single('image'), validateImageDimensions(200, 2000, 200, 2000), createImage);
-router.get('/', getImages);
-router.get('/bulk', getBulkImages); // Changed route
-router.get('/:id', getImageById);
-router.put('/:id', auth, upload.single('image'), validateImageDimensions(200, 2000, 200, 2000), updateImage);
-router.delete('/:id', auth, deleteImage);
+const router = express.Router();
+
+// All image routes are now protected by JWT authentication
+router.post('/', auth, upload.single('image'), createImage);
+router.get('/', auth, getImages);
+router.get('/bulk', auth, getBulkImages); // Added auth to bulk route
+router.get('/:id', auth, getImageById);
+router.put('/:id', auth, upload.single('image'), updateImage);
 router.patch('/:id', auth, genericPatch);
+router.delete('/:id', auth, deleteImage);
 
 module.exports = router;

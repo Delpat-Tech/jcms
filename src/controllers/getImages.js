@@ -1,18 +1,25 @@
+// controllers/getImages.js
 const Image = require('../models/image');
 
 const getImages = async (req, res) => {
   try {
-    const { tenant } = req.query;
-    const filter = {};
+    // Get the logged-in user's ID from the auth middleware
+    const userId = req.user.id;
+    const { limit = 20, fields } = req.query;
 
-    if (tenant) filter.tenant = tenant;
-    
+    // The base filter now automatically scopes to the logged-in user
+    const filter = { user: userId };
 
-    const images = await Image.find(filter);
+    // Handle field selection
+    let projection = null;
+    if (fields) {
+      projection = fields.split(',').join(' ');
+    }
+
+    const images = await Image.find(filter, projection).limit(Number(limit));
 
     res.status(200).json({
       success: true,
-      message: 'Images retrieved successfully',
       data: images
     });
   } catch (error) {

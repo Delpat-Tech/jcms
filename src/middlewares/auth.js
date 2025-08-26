@@ -1,19 +1,21 @@
 // middlewares/auth.js
-const auth = (req, res, next) => {
-  const apiKey = req.header('X-API-Key');
+const jwt = require('jsonwebtoken');
 
-  // Check if API key is provided in the header
-  if (!apiKey) {
-    return res.status(401).json({ success: false, message: 'Unauthorized: API Key is missing' });
+module.exports = function(req, res, next) {
+  // Get token from Authorization header
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+
+  // Check if no token is present
+  if (!token) {
+    return res.status(401).json({ message: 'No token, authorization denied' });
   }
 
-  // Check if the provided API key is valid
-  if (apiKey !== process.env.API_KEY) {
-    return res.status(401).json({ success: false, message: 'Unauthorized: Invalid API Key' });
+  // Verify the token
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded.user; // Add user payload to the request object
+    next();
+  } catch (err) {
+    res.status(401).json({ message: 'Token is not valid' });
   }
-
-  // If the key is valid, proceed to the next middleware or route handler
-  next();
 };
-
-module.exports = auth;

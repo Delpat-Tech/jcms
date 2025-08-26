@@ -5,17 +5,14 @@ const fs = require('fs');
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    // Simplified folder structure: uploads/{tenant}/
-    const tenant = req.body.tenant || 'default';
-    const folderPath = `uploads/${tenant}`;
-
-    fs.mkdirSync(folderPath, { recursive: true });
-
-    cb(null, folderPath);
+    // Save all initial uploads to a single temporary directory
+    const tempPath = 'uploads/temp';
+    fs.mkdirSync(tempPath, { recursive: true });
+    cb(null, tempPath);
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
-    const filename = `image-${Date.now()}${ext}`;
+    const filename = `temp-${Date.now()}${ext}`;
     cb(null, filename);
   }
 });
