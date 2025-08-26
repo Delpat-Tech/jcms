@@ -2,11 +2,10 @@
 const express = require('express');
 const upload = require('../middlewares/upload');
 const validateImageDimensions = require('../middlewares/validateImageDimensions');
-const auth = require('../middlewares/auth'); // 👈 Import the auth middleware
+const auth = require('../middlewares/auth');
 
 const router = express.Router();
 
-// Import controllers
 const {
   createImage,
   getImages,
@@ -15,42 +14,14 @@ const {
   updateImage,
   deleteImage,
   genericPatch,
-} = require('../controllers'); // Using index.js for cleaner imports
+} = require('../controllers');
 
-// POST /api/images (Protected)
-router.post(
-  '/',
-  auth, // 👈 Apply auth middleware
-  upload.single('image'),
-  validateImageDimensions(200, 2000, 200, 2000),
-  createImage
-);
-
-// GET all (Public)
+router.post('/', auth, upload.single('image'), validateImageDimensions(200, 2000, 200, 2000), createImage);
 router.get('/', getImages);
-
-// GET bulk by section (Public)
-router.get('/:section/bulk', getBulkImages);
-
-// GET by id (Public)
+router.get('/bulk', getBulkImages); // Changed route
 router.get('/:id', getImageById);
-
-// PUT /api/images/:id (Protected)
-router.put(
-  '/:id',
-  auth, // 👈 Apply auth middleware
-  upload.single('image'),
-  validateImageDimensions(200, 2000, 200, 2000),
-  updateImage
-);
-
-// DELETE /api/images/:id (Protected)
-router.delete(
-  '/:id',
-  auth, // 👈 Apply auth middleware
-  deleteImage
-);
-
+router.put('/:id', auth, upload.single('image'), validateImageDimensions(200, 2000, 200, 2000), updateImage);
+router.delete('/:id', auth, deleteImage);
 router.patch('/:id', auth, genericPatch);
 
 module.exports = router;

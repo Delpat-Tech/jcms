@@ -11,9 +11,8 @@ const deleteImage = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Image not found' });
     }
 
-    // Delete the single file associated with the record
-    if (deletedImage.filePath) {
-      await safeDeleteFile(deletedImage.filePath);
+    if (deletedImage.internalPath) {
+      await safeDeleteFile(deletedImage.internalPath);
     }
 
     res.status(200).json({ success: true, message: 'Image and file deleted successfully' });

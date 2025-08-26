@@ -8,15 +8,15 @@ const seedImage = async () => {
   await connectDB();
 
   try {
+    const internalPath = "uploads/dummy.jpg";
+    const fileUrl = `http://localhost:5000/${internalPath}`; // Example URL
+
     const img = await Image.create({
-      title: "Dummy Banner",             // required
-      subtitle: "Test image for seeding",
-      filePath: "/uploads/dummy.jpg",    // required
-      width: 1920,
-      height: 1080,
+      title: "Dummy Banner",
+      internalPath: internalPath,
+      fileUrl: fileUrl,
       format: "jpg",
       tenant: "tenant123",
-      section: "homepage",
     });
 
     console.log("✅ Dummy Image Inserted:", img);

@@ -2,29 +2,24 @@
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-// For PATCH request
 
-// Storage configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    // Folder structure: uploads/{tenant}/{section}/
+    // Simplified folder structure: uploads/{tenant}/
     const tenant = req.body.tenant || 'default';
-    const section = req.body.section || 'index';
-    const folderPath = `uploads/${tenant}/${section}`;
+    const folderPath = `uploads/${tenant}`;
 
-    // Create folder if it doesn't exist
     fs.mkdirSync(folderPath, { recursive: true });
 
     cb(null, folderPath);
   },
   filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname); // get file extension
-    const filename = `image-${Date.now()}${ext}`; // e.g., image-1692534567890.jpg
+    const ext = path.extname(file.originalname);
+    const filename = `image-${Date.now()}${ext}`;
     cb(null, filename);
   }
 });
 
-// File type validation (allow only JPG/PNG)
 const fileFilter = (req, file, cb) => {
   const allowedTypes = /jpeg|jpg|png/;
   if (allowedTypes.test(file.mimetype)) {
@@ -34,7 +29,6 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// Export multer instance
 const upload = multer({
   storage: storage,
   limits: { fileSize: 2 * 1024 * 1024 }, // 2MB

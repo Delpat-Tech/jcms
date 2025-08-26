@@ -23,7 +23,6 @@ const createImage = async (req, res) => {
       }
     }
 
-    // ✅ Allow jpg, png, webp, avif (default = webp)
     const allowedFormats = ['jpg', 'jpeg', 'png', 'webp', 'avif'];
     let chosenFormat = (req.body.format || 'webp').toLowerCase();
     if (!allowedFormats.includes(chosenFormat)) {
@@ -34,32 +33,24 @@ const createImage = async (req, res) => {
     const baseName = path.parse(req.file.filename).name;
     const imageBuffer = fs.readFileSync(req.file.path);
 
-    // Define the output path with the chosen extension
     const outputPath = path.join(uploadDir, `${baseName}.${chosenFormat}`);
-
-    // ✅ Process image based on format
+    
+    // Process image
     const sharpInstance = sharp(imageBuffer);
-    if (chosenFormat === 'webp') {
-      await sharpInstance.webp({ quality: 80 }).toFile(outputPath);
-    } else if (chosenFormat === 'avif') {
-      await sharpInstance.avif({ quality: 50 }).toFile(outputPath);
-    } else if (chosenFormat === 'jpg' || chosenFormat === 'jpeg') {
-      await sharpInstance.jpeg({ quality: 80 }).toFile(outputPath);
-    } else if (chosenFormat === 'png') {
-      await sharpInstance.png({ compressionLevel: 8 }).toFile(outputPath);
-    }
+    if (chosenFormat === 'webp') await sharpInstance.webp({ quality: 80 }).toFile(outputPath);
+    else if (chosenFormat === 'avif') await sharpInstance.avif({ quality: 50 }).toFile(outputPath);
+    else if (['jpg', 'jpeg'].includes(chosenFormat)) await sharpInstance.jpeg({ quality: 80 }).toFile(outputPath);
+    else if (chosenFormat === 'png') await sharpInstance.png({ compressionLevel: 8 }).toFile(outputPath);
 
-    // Get metadata and delete the original upload
-    const metadata = await sharp(outputPath).metadata();
     await safeDeleteFile(req.file.path);
 
-    const relativePath = outputPath.replace(/\\/g, '/');
-    const fileUrl = `${req.protocol}://${req.get('host')}/${relativePath}`;
+    const internalPath = outputPath.replace(/\\/g, '/');
+    const fileUrl = `${req.protocol}://${req.get('host')}/${internalPath}`;
 
     const newImage = await Image.create({
       title,
       tenant,
-      filePath: outputPath.replace(/\\/g, '/'),
+      internalPath,
       fileUrl,
       format: chosenFormat,
       notes: req.body.notes || {},
