@@ -15,6 +15,7 @@ connectDB(); // Commented out for testing routes
 app.use(express.json());
 app.use(cors());
 app.use('/uploads', express.static('uploads'));
+app.use(express.urlencoded({ extended: true }));
 
 // Routes
 const imageRoutes = require('./routes/imageRoutes');

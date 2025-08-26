@@ -5,7 +5,7 @@ const getBulkImages = async (req, res) => {
     
     const { tenant, limit = 20, fields } = req.query;
 
-    
+    const filter = {}; // <--- initialize filter
     if (tenant) filter.tenant = tenant;
 
     // Projection (fields selection)

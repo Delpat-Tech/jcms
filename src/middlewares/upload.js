@@ -2,6 +2,7 @@
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+// For PATCH request
 
 // Storage configuration
 const storage = multer.diskStorage({

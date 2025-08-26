@@ -12,6 +12,19 @@ const updateImage = async (req, res) => {
     const { id } = req.params;
     const { title, tenant } = req.body;
     const updatedData = { title, tenant };
+        if (req.body.notes) {
+      try {
+        updatedData.notes = typeof req.body.notes === 'string'
+          ? JSON.parse(req.body.notes)
+          : req.body.notes;
+      } catch (err) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid JSON format for notes"
+        });
+      }
+    }
+
 
     if (req.file) {
       const chosenFormat = req.body.format === 'avif' ? 'avif' : 'webp';
@@ -34,9 +47,10 @@ const updateImage = async (req, res) => {
       await safeDeleteFile(req.file.path);
 
       // Add new file data to the update object
-      updatedData.filePath = outputPath.replace(/\\/g, '/');
-      const fileUrl = `${req.protocol}://${req.get('host')}/${relativePath}`;
-      updatedData.format = chosenFormat;
+const relativePath = outputPath.replace(/\\/g, '/');  // define relativePath
+updatedData.filePath = relativePath;                 // save relative path
+updatedData.fileUrl = `${req.protocol}://${req.get('host')}/${relativePath}`; // save file URL
+updatedData.format = chosenFormat;                   // save format
 
     }
 
@@ -57,3 +71,4 @@ const updateImage = async (req, res) => {
 };
 
 module.exports = updateImage;
+

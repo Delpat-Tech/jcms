@@ -14,6 +14,16 @@ const createImage = async (req, res) => {
     }
 
     const { title, tenant } = req.body;
+
+    if (req.body.notes) {
+      try {
+        req.body.notes = JSON.parse(req.body.notes);
+      } catch (error) {
+        return res.status(400).json({ success: false, error: "Invalid JSON format for notes" });
+      }
+    }
+
+
     // Get the desired format from the body, default to 'webp'
     const chosenFormat = req.body.format === 'avif' ? 'avif' : 'webp'; 
     
