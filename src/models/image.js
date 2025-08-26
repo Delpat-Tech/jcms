@@ -12,7 +12,7 @@ const imageSchema = new mongoose.Schema(
     format: { 
       type: String, 
       required: true,
-      enum: ['webp', 'avif'] // Only allow these two formats
+      enum: ['webp', 'avif', 'jpg', 'png','jpeg'],// Only allow these two formats
     },
 
     // ✅ New Notes Field (JSON)

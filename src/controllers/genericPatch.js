@@ -1,5 +1,18 @@
 // controllers/genericPatch.js
+const path = require('path');
+const fs = require('fs');
+const sharp = require('sharp');
 const Image = require('../models/image');
+const { safeDeleteFile } = require('../utils/safeDeleteFile');
+
+sharp.cache(false);
+
+const formatOptions = {
+  jpeg: { quality: 80 },
+  png: { compressionLevel: 9 },
+  webp: { quality: 80 },
+  avif: { quality: 50 },
+};
 
 const genericPatch = async (req, res) => {
   try {
@@ -9,55 +22,63 @@ const genericPatch = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Request body is missing' });
     }
 
-    // Destructure form-data or JSON fields
-    let { title, tenant, notes, metadata } = req.body;
+    let { format } = req.body;
 
-    // Parse notes if sent as string (from form-data)
-    if (notes && typeof notes === 'string') {
-      try {
-        notes = JSON.parse(notes);
-      } catch (err) {
-        return res.status(400).json({ success: false, message: 'Invalid JSON format for notes' });
-      }
+    // Fetch existing image
+    const existingImage = await Image.findById(id);
+    if (!existingImage) {
+      return res.status(404).json({ success: false, message: 'Image not found' });
     }
 
-    // Parse metadata if sent as string (from form-data)
-    if (metadata && typeof metadata === 'string') {
-      try {
-        metadata = JSON.parse(metadata);
-      } catch (err) {
-        return res.status(400).json({ success: false, message: 'Invalid JSON format for metadata' });
-      }
-    }
-
-    // Build the update object
+    // Initialize update object
     const updatedData = {};
-    if (title) updatedData.title = title;
-    if (tenant) updatedData.tenant = tenant;
-    if (notes && typeof notes === 'object') updatedData.notes = notes;
-    if (metadata && typeof metadata === 'object') updatedData.metadata = metadata;
+
+    // Process format conversion if provided
+    if (format) {
+      format = format.toLowerCase();
+      if (format === 'jpg') format = 'jpeg';
+      const allowedFormats = ['webp', 'avif', 'jpeg', 'png'];
+      if (!allowedFormats.includes(format)) {
+        return res.status(400).json({ success: false, message: 'Invalid format provided' });
+      }
+
+      const oldPath = existingImage.filePath;
+      const uploadDir = path.dirname(oldPath);
+      const baseName = path.parse(oldPath).name;
+      const imageBuffer = fs.readFileSync(oldPath);
+
+      const outputPath = path.join(uploadDir, `${baseName}.${format}`);
+
+      // Convert image
+      await sharp(imageBuffer)
+        .toFormat(format, formatOptions[format])
+        .toFile(outputPath);
+
+      // Delete old file safely
+      await safeDeleteFile(oldPath);
+
+      const relativePath = outputPath.replace(/\\/g, '/');
+      updatedData.filePath = relativePath;
+      updatedData.fileUrl = `${req.protocol}://${req.get('host')}/${relativePath}`;
+      updatedData.format = format;
+    }
 
     if (Object.keys(updatedData).length === 0) {
       return res.status(400).json({ success: false, message: 'No valid fields provided to update' });
     }
 
-    // Update the image in DB
     const updatedImage = await Image.findByIdAndUpdate(id, updatedData, { new: true });
-
-    if (!updatedImage) {
-      return res.status(404).json({ success: false, message: 'Image not found' });
-    }
 
     res.status(200).json({
       success: true,
       message: 'Image updated successfully',
-      data: updatedImage
+      data: updatedImage,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       message: 'Error updating image',
-      error: error.message
+      error: error.message,
     });
   }
 };

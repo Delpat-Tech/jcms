@@ -23,20 +23,31 @@ const createImage = async (req, res) => {
       }
     }
 
+    // ✅ Allow jpg, png, webp, avif (default = webp)
+    const allowedFormats = ['jpg', 'jpeg', 'png', 'webp', 'avif'];
+    let chosenFormat = (req.body.format || 'webp').toLowerCase();
+    if (!allowedFormats.includes(chosenFormat)) {
+      chosenFormat = 'webp';
+    }
 
-    // Get the desired format from the body, default to 'webp'
-    const chosenFormat = req.body.format === 'avif' ? 'avif' : 'webp'; 
-    
     const uploadDir = path.dirname(req.file.path);
     const baseName = path.parse(req.file.filename).name;
     const imageBuffer = fs.readFileSync(req.file.path);
 
-    // Define the output path with the correct extension
+    // Define the output path with the chosen extension
     const outputPath = path.join(uploadDir, `${baseName}.${chosenFormat}`);
 
-    // Process the image to the chosen format
-    const quality = chosenFormat === 'webp' ? 80 : 50;
-    await sharp(imageBuffer)[chosenFormat]({ quality }).toFile(outputPath);
+    // ✅ Process image based on format
+    const sharpInstance = sharp(imageBuffer);
+    if (chosenFormat === 'webp') {
+      await sharpInstance.webp({ quality: 80 }).toFile(outputPath);
+    } else if (chosenFormat === 'avif') {
+      await sharpInstance.avif({ quality: 50 }).toFile(outputPath);
+    } else if (chosenFormat === 'jpg' || chosenFormat === 'jpeg') {
+      await sharpInstance.jpeg({ quality: 80 }).toFile(outputPath);
+    } else if (chosenFormat === 'png') {
+      await sharpInstance.png({ compressionLevel: 8 }).toFile(outputPath);
+    }
 
     // Get metadata and delete the original upload
     const metadata = await sharp(outputPath).metadata();
@@ -47,14 +58,11 @@ const createImage = async (req, res) => {
 
     const newImage = await Image.create({
       title,
-      
       tenant,
-      
       filePath: outputPath.replace(/\\/g, '/'),
-      fileUrl:`${req.protocol}://${req.get('host')}/${relativePath}`,
+      fileUrl,
       format: chosenFormat,
       notes: req.body.notes || {},
-
     });
 
     res.status(201).json({
