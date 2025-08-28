@@ -115,10 +115,30 @@ const updateUserRole = async (req, res) => {
     res.status(500).json({ success: false, message: 'Error updating role', error: err.message });
   }
 };
-  
+const deleteUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    // Prevent self-deletion if needed
+    if (req.user.id === userId) {
+      return res.status(403).json({ success: false, message: "You cannot delete yourself" });
+    }
+
+    const user = await User.findByIdAndDelete(userId);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    res.json({ success: true, message: "User deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Error deleting user", error: err.message });
+  }
+};
 module.exports = {
   createUser,
   getImagesByUser,
   getAllUsers,
-  updateUserRole
+  updateUserRole,
+  deleteUser
 };
