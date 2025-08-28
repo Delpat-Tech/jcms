@@ -1,28 +1,34 @@
-// routes/imageRoutes.js
 const express = require('express');
 const upload = require('../middlewares/upload');
 const auth = require('../middlewares/auth');
+const permit = require('../middlewares/rbac'); // 👈 Import RBAC middleware
 
-// Import ALL the controllers you need for your routes
+// Import all controllers
 const {
   createImage,
   getImages,
-  getImageById,       // 👈 Add this
-  updateImage,        // 👈 Add this
-  deleteImage,        // 👈 Add this
-  genericPatch,       // 👈 Add this
-  getBulkImages       // 👈 Add this
+  getBulkImages,
+  getImageById,
+  updateImage,
+  deleteImage,
+  genericPatch
 } = require('../controllers');
 
 const router = express.Router();
 
-// All image routes are now protected by JWT authentication
-router.post('/', auth, upload.single('image'), createImage);
-router.get('/', auth, getImages);
-router.get('/bulk', auth, getBulkImages); // Added auth to bulk route
-router.get('/:id', auth, getImageById);
-router.put('/:id', auth, upload.single('image'), updateImage);
-router.patch('/:id', auth, genericPatch);
-router.delete('/:id', auth, deleteImage);
+// Admin & editor can create images
+router.post('/', auth, permit('admin', 'editor'), upload.single('image'), createImage);
+
+// All roles can view images
+router.get('/', auth, permit('admin', 'editor', 'viewer'), getImages);
+router.get('/bulk', auth, permit('admin', 'editor', 'viewer'), getBulkImages);
+router.get('/:id', auth, permit('admin', 'editor', 'viewer'), getImageById);
+
+// Admin & editor can update images
+router.put('/:id', auth, permit('admin', 'editor'), upload.single('image'), updateImage);
+router.patch('/:id', auth, permit('admin', 'editor'), genericPatch);
+
+// Only admin can delete images
+router.delete('/:id', auth, permit('admin'), deleteImage);
 
 module.exports = router;
