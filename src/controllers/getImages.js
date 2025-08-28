@@ -3,12 +3,24 @@ const Image = require('../models/image');
 
 const getImages = async (req, res) => {
   try {
-    // Get the logged-in user's ID from the auth middleware
     const userId = req.user.id;
+    const userRole = req.user.role;
+    const userTenant = req.user.tenant;
     const { limit = 20, fields } = req.query;
 
-    // The base filter now automatically scopes to the logged-in user
-    const filter = { user: userId };
+    let filter = {};
+
+    // Role-based filter
+    if (userRole === "super-admin") {
+      // Super admin sees all images
+      filter = {};
+    } else if (userRole === "admin") {
+      // Admin sees all images from their tenant
+      filter = { tenant: userTenant };
+    } else {
+      // Normal user sees only their own images
+      filter = { user: userId };
+    }
 
     // Handle field selection
     let projection = null;
@@ -20,10 +32,15 @@ const getImages = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: images
+      count: images.length,
+      data: images,
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Error retrieving images', error: error.message });
+    res.status(500).json({
+      success: false,
+      message: "Error retrieving images",
+      error: error.message,
+    });
   }
 };
 
