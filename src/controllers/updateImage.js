@@ -10,8 +10,20 @@ sharp.cache(false);
 const updateImage = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, tenant, notes } = req.body;
-    const updatedData = { title, tenant };
+    const { title, notes } = req.body;
+    
+    const existingImage = await Image.findById(id);
+    if (!existingImage) {
+      return res.status(404).json({ success: false, message: 'Image not found' });
+    }
+
+    // 🛡️ New Permission Logic:
+    // Check if the user is an admin or the owner of the image.
+    if (req.user.role !== 'admin' && existingImage.user.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Not authorized to modify this image' });
+    }
+
+    const updatedData = { title };
 
     if (notes) {
       try {
@@ -19,11 +31,6 @@ const updateImage = async (req, res) => {
       } catch {
         return res.status(400).json({ success: false, message: 'Invalid JSON format for notes' });
       }
-    }
-
-    const existingImage = await Image.findById(id);
-    if (!existingImage) {
-      return res.status(404).json({ success: false, message: 'Image not found' });
     }
 
     let chosenFormat = (req.body.format || existingImage.format).toLowerCase();
@@ -35,7 +42,7 @@ const updateImage = async (req, res) => {
     };
 
     if (req.file) {
-      const uploadDir = path.dirname(req.file.path);
+      const uploadDir = `uploads/${existingImage.user}`; // Use existing user ID for folder
       const baseName = path.parse(req.file.filename).name;
       const imageBuffer = fs.readFileSync(req.file.path);
 
@@ -47,6 +54,7 @@ const updateImage = async (req, res) => {
       updatedData.format = chosenFormat;
 
     } else if (chosenFormat !== existingImage.format) {
+      // Re-processing logic if only format is changed
       const oldPath = existingImage.internalPath;
       const uploadDir = path.dirname(oldPath);
       const baseName = path.parse(oldPath).name;

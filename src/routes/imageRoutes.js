@@ -1,34 +1,32 @@
+// src/routes/imageRoutes.js
 const express = require('express');
 const upload = require('../middlewares/upload');
 const auth = require('../middlewares/auth');
-const permit = require('../middlewares/rbac'); // 👈 Import RBAC middleware
+const permit = require('../middlewares/rbac');
 
-// Import all controllers
 const {
   createImage,
   getImages,
-  getBulkImages,
   getImageById,
   updateImage,
   deleteImage,
-  genericPatch
+  genericPatch,
 } = require('../controllers');
 
 const router = express.Router();
 
-// Admin & editor can create images
+// Admin & editor can create
 router.post('/', auth, permit('admin', 'editor'), upload.single('image'), createImage);
 
-// All roles can view images
+// All roles can view
 router.get('/', auth, permit('admin', 'editor', 'viewer'), getImages);
-router.get('/bulk', auth, permit('admin', 'editor', 'viewer'), getBulkImages);
 router.get('/:id', auth, permit('admin', 'editor', 'viewer'), getImageById);
 
-// Admin & editor can update images
+// Admin & editor can update
 router.put('/:id', auth, permit('admin', 'editor'), upload.single('image'), updateImage);
 router.patch('/:id', auth, permit('admin', 'editor'), genericPatch);
 
-// Only admin can delete images
-router.delete('/:id', auth, permit('admin'), deleteImage);
+// Admin & editor can access the delete endpoint
+router.delete('/:id', auth, permit('admin', 'editor'), deleteImage);
 
 module.exports = router;
