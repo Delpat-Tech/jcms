@@ -1,7 +1,8 @@
 // middlewares/auth.js
 const jwt = require('jsonwebtoken');
+const User = require('../models/user');
 
-module.exports = function(req, res, next) {
+module.exports = async function(req, res, next) {
   // Get token from Authorization header
   const token = req.header('Authorization')?.replace('Bearer ', '');
 
@@ -13,7 +14,19 @@ module.exports = function(req, res, next) {
   // Verify the token
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = { id: decoded.id, role: decoded.role, tenant: decoded.tenant };
+    
+    // Fetch user details including username
+    const user = await User.findById(decoded.id).select('username role tenant');
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' });
+    }
+    
+    req.user = { 
+      id: user._id, 
+      username: user.username, 
+      role: user.role, 
+      tenant: user.tenant 
+    };
     
     next();
   } catch (err) {

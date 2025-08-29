@@ -59,6 +59,20 @@ const createImage = async (req, res) => {
       notes: req.body.notes || {},
     });
 
+    // Emit real-time event
+    const realtime = req.app.get('realtime');
+    if (realtime) {
+      realtime.imageUploaded(tenantId, {
+        id: newImage._id,
+        title: newImage.title,
+        fileUrl: newImage.fileUrl,
+        format: newImage.format
+      }, {
+        id: userId,
+        username: req.user.username
+      });
+    }
+
     res.status(201).json({ success: true, data: newImage });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error creating image', error: error.message });

@@ -162,32 +162,40 @@ const getDashboard = async (req, res) => {
 
     const mostActiveTenant = tenants[0] || null;
 
+    const dashboardData = {
+      summary: {
+        totalTenants: await Tenant.countDocuments(),
+        totalUsers: await User.countDocuments(),
+        totalImages: await Image.countDocuments(),
+        activeTenants: await Tenant.countDocuments({ isActive: true })
+      },
+      mostActiveTenant: mostActiveTenant ? {
+        name: mostActiveTenant.name,
+        subdomain: mostActiveTenant.subdomain,
+        imageCount: mostActiveTenant.imageCount
+      } : null,
+      recentActivity: {
+        newTenantsToday: await Tenant.countDocuments({ 
+          createdAt: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) }
+        }),
+        newUsersToday: await User.countDocuments({ 
+          createdAt: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) }
+        }),
+        newImagesToday: await Image.countDocuments({ 
+          createdAt: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) }
+        })
+      }
+    };
+
+    // Emit real-time analytics update
+    const realtime = req.app.get('realtime');
+    if (realtime) {
+      realtime.analyticsUpdate(dashboardData);
+    }
+
     res.json({
       success: true,
-      data: {
-        summary: {
-          totalTenants: await Tenant.countDocuments(),
-          totalUsers: await User.countDocuments(),
-          totalImages: await Image.countDocuments(),
-          activeTenants: await Tenant.countDocuments({ isActive: true })
-        },
-        mostActiveTenant: mostActiveTenant ? {
-          name: mostActiveTenant.name,
-          subdomain: mostActiveTenant.subdomain,
-          imageCount: mostActiveTenant.imageCount
-        } : null,
-        recentActivity: {
-          newTenantsToday: await Tenant.countDocuments({ 
-            createdAt: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) }
-          }),
-          newUsersToday: await User.countDocuments({ 
-            createdAt: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) }
-          }),
-          newImagesToday: await Image.countDocuments({ 
-            createdAt: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) }
-          })
-        }
-      }
+      data: dashboardData
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error fetching dashboard', error: error.message });
