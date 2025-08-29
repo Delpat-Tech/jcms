@@ -12,9 +12,9 @@ uploads/
 # Logs
 *.log
 
-# Test and development files
-src/utils/test-*.html
-src/utils/*-test.*
+# Test and development files (allow HTML test clients for team)
+# src/utils/test-*.html - commented out to allow team testing
+src/utils/*-test.js
 
 # IDE files
 .vscode/
