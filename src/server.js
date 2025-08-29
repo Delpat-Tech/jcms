@@ -22,12 +22,14 @@ const userRoutes = require('./routes/userRoutes');
 const imageRoutes = require('./routes/imageRoutes');
 const authRoutes = require('./routes/authRoutes');
 const tenantRoutes = require('./routes/tenantRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
 
 // Mount routes
 app.use('/api/users', userRoutes);
 app.use('/api/images', imageRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/tenants', tenantRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {
