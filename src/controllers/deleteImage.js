@@ -30,18 +30,6 @@ const deleteImage = async (req, res) => {
       await safeDeleteFile(image.internalPath);
     }
 
-    // Emit real-time event
-    const realtime = req.app.get('realtime');
-    if (realtime) {
-      realtime.imageDeleted(req.user.tenant, {
-        id: image._id,
-        title: image.title
-      }, {
-        id: req.user.id,
-        username: req.user.username
-      });
-    }
-
     res.status(200).json({ success: true, message: 'Image and file deleted successfully' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error deleting image', error: error.message });

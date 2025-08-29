@@ -1,6 +1,4 @@
 const express = require("express");
-const http = require("http");
-const socketIo = require("socket.io");
 const cors = require("cors");
 const multer = require("multer");
 const path = require("path");
@@ -8,22 +6,7 @@ require("dotenv").config({ path: path.resolve(__dirname, '../.env') });
 const connectDB = require("./config/db");
 
 const app = express();
-const server = http.createServer(app);
-const io = socketIo(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
-  }
-});
 const PORT = process.env.PORT || 5000;
-
-// Initialize real-time service
-const RealtimeService = require('./services/realtimeService');
-const realtimeService = new RealtimeService(io);
-
-// Make io and realtime service available globally
-app.set('io', io);
-app.set('realtime', realtimeService);
 
 // Middleware (must come before routes)
 app.use(express.json());
@@ -80,22 +63,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Socket.IO connection handling
-io.on('connection', (socket) => {
-  console.log('👤 User connected:', socket.id);
-  
-  socket.on('join-tenant', (tenantId) => {
-    socket.join(`tenant-${tenantId}`);
-    console.log(`👥 User ${socket.id} joined tenant ${tenantId}`);
-  });
-  
-  socket.on('disconnect', () => {
-    console.log('👋 User disconnected:', socket.id);
-  });
-});
-
 // Start server
-server.listen(PORT, () => {
+app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`🔌 WebSocket server ready`);
 });
