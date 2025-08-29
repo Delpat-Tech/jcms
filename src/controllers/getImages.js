@@ -5,13 +5,12 @@ const getImages = async (req, res) => {
   try {
     const userId = req.user.id;
     const userRole = req.user.role;
+    const tenantId = req.user.tenant;
     const { limit = 20, fields } = req.query;
 
-    let filter = {};
+    let filter = { tenant: tenantId };
 
-    // 🛡️ New Permission Logic:
-    // If the user is an admin, the filter is empty (gets all images).
-    // Otherwise, the filter is set to only find images owned by the user.
+    // Role-based filtering within tenant
     if (userRole !== 'admin') {
       filter.user = userId;
     }

@@ -6,10 +6,11 @@ const deleteImage = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
-    const role = req.user.role; // admin, editor, viewer, etc.
+    const tenantId = req.user.tenant;
+    const role = req.user.role;
 
-    // Find the image
-    const image = await Image.findById(id);
+    // Find the image within tenant
+    const image = await Image.findOne({ _id: id, tenant: tenantId });
     if (!image) {
       return res.status(404).json({ success: false, message: 'Image not found' });
     }

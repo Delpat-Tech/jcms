@@ -21,11 +21,13 @@ connectDB();
 const userRoutes = require('./routes/userRoutes');
 const imageRoutes = require('./routes/imageRoutes');
 const authRoutes = require('./routes/authRoutes');
+const tenantRoutes = require('./routes/tenantRoutes');
 
 // Mount routes
 app.use('/api/users', userRoutes);
 app.use('/api/images', imageRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/tenants', tenantRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {

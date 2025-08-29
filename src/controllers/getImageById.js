@@ -3,7 +3,8 @@ const Image = require('../models/image');
 const getImageById = async (req, res) => {
   try {
     const { id } = req.params;
-    const image = await Image.findById(id);
+    const tenantId = req.user.tenant;
+    const image = await Image.findOne({ _id: id, tenant: tenantId });
 
     if (!image) {
       return res.status(404).json({ success: false, message: 'Image not found' });

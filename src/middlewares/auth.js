@@ -13,7 +13,7 @@ module.exports = function(req, res, next) {
   // Verify the token
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = { id: decoded.id, role: decoded.role }; // id + role
+    req.user = { id: decoded.id, role: decoded.role, tenant: decoded.tenant };
     
     next();
   } catch (err) {

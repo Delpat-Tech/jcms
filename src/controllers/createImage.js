@@ -12,7 +12,8 @@ const createImage = async (req, res) => {
     }
 
     const { title } = req.body;
-    const userId = req.user.id; // Get user ID from auth middleware
+    const userId = req.user.id;
+    const tenantId = req.user.tenant;
 
     if (req.body.notes) {
       try {
@@ -28,7 +29,7 @@ const createImage = async (req, res) => {
     if (!allowedFormats.includes(chosenFormat)) chosenFormat = 'webp';
     if (chosenFormat === 'jpg') chosenFormat = 'jpeg';
 
-    const uploadDir = `uploads/${userId}`;
+    const uploadDir = `uploads/${tenantId}`;
     fs.mkdirSync(uploadDir, { recursive: true });
 
     const baseName = path.parse(req.file.originalname).name + '-' + Date.now();
@@ -51,6 +52,7 @@ const createImage = async (req, res) => {
     const newImage = await Image.create({
       title,
       user: userId,
+      tenant: tenantId,
       internalPath,
       fileUrl,
       format: chosenFormat,

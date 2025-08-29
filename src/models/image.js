@@ -8,6 +8,11 @@ const imageSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  tenant: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Tenant',
+    required: true
+  },
   internalPath: { type: String, required: true },
   fileUrl: { type: String, required: true },
   format: {
