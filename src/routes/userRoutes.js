@@ -1,10 +1,12 @@
 // routes/userRoutes.js
 const express = require('express');
-const { createUser, getImagesByUser, getAllUsers, updateUserRole,deleteUser } = require('../controllers/userController');
+const { createUser, getImagesByUser, getAllUsers, updateUserRole,deleteUser, getTenantUsers } = require('../controllers/userController');
 const auth = require('../middlewares/auth');
 const permit = require('../middlewares/rbac');
 
 const router = express.Router();
+
+router.get('/tenant-users', auth, permit('admin'), getTenantUsers);
 
 // Admin-only routes should come first to avoid route conflicts
 router.get('/all-users', auth, permit('admin'), getAllUsers);

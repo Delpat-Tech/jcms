@@ -135,10 +135,35 @@ const deleteUser = async (req, res) => {
     res.status(500).json({ success: false, message: "Error deleting user", error: err.message });
   }
 };
+
+
+const getTenantUsers = async (req, res) => {
+  try {
+    // req.user is set by auth middleware
+    const tenantId = req.user.tenant;
+
+    // Only admin can access
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Forbidden: Only admin can view users' });
+    }
+
+    const users = await User.find({ tenant: tenantId }).select('username email role createdAt updatedAt');
+    
+    res.status(200).json({
+      success: true,
+      count: users.length,
+      users,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
 module.exports = {
   createUser,
   getImagesByUser,
   getAllUsers,
   updateUserRole,
-  deleteUser
+  deleteUser,
+  getTenantUsers
 };
