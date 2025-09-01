@@ -1,0 +1,123 @@
+{
+  "name": "JCMS Welcome Email Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "user-registration",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.event}}",
+              "operation": "equal",
+              "value2": "user_registered"
+            }
+          ]
+        }
+      },
+      "id": "filter-registration",
+      "name": "Filter Registration Events",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "noreply@jcms.com",
+        "toEmail": "={{$json.user.email}}",
+        "subject": "Welcome to {{$json.tenant.name}} - JCMS",
+        "emailType": "html",
+        "message": "<!DOCTYPE html>\n<html>\n<head>\n    <style>\n        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }\n        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; }\n        .header { text-align: center; color: #333; border-bottom: 2px solid #007bff; padding-bottom: 20px; }\n        .content { margin: 20px 0; line-height: 1.6; color: #555; }\n        .highlight { background: #e7f3ff; padding: 15px; border-radius: 5px; margin: 20px 0; }\n        .footer { text-align: center; margin-top: 30px; color: #888; font-size: 12px; }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <div class=\"header\">\n            <h1>🎉 Welcome to {{$json.tenant.name}}!</h1>\n        </div>\n        \n        <div class=\"content\">\n            <p>Hi <strong>{{$json.user.username}}</strong>,</p>\n            \n            <p>Welcome to the JCMS platform! Your account has been successfully created.</p>\n            \n            <div class=\"highlight\">\n                <h3>📋 Your Account Details:</h3>\n                <p><strong>Username:</strong> {{$json.user.username}}</p>\n                <p><strong>Email:</strong> {{$json.user.email}}</p>\n                <p><strong>Role:</strong> {{$json.user.role}}</p>\n                <p><strong>Organization:</strong> {{$json.tenant.name}}</p>\n                <p><strong>Subdomain:</strong> {{$json.tenant.subdomain}}.jcms.com</p>\n            </div>\n            \n            <p>🚀 <strong>Getting Started:</strong></p>\n            <ul>\n                <li>Upload and manage your images</li>\n                <li>Organize content by categories</li>\n                <li>Collaborate with your team</li>\n                <li>Track analytics and insights</li>\n            </ul>\n            \n            <p>If you have any questions, feel free to reach out to our support team.</p>\n            \n            <p>Best regards,<br>The JCMS Team</p>\n        </div>\n        \n        <div class=\"footer\">\n            <p>This email was sent automatically by JCMS. Please do not reply to this email.</p>\n        </div>\n    </div>\n</body>\n</html>",
+        "options": {}
+      },
+      "id": "send-email",
+      "name": "Send Welcome Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [680, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"success\": true,\n  \"message\": \"Welcome email sent successfully\",\n  \"timestamp\": \"{{new Date().toISOString()}}\"\n}"
+      },
+      "id": "webhook-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"success\": false,\n  \"message\": \"Invalid event type\",\n  \"received\": \"{{$json.event}}\"\n}"
+      },
+      "id": "invalid-event-response",
+      "name": "Invalid Event Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [680, 400]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Filter Registration Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Registration Events": {
+      "main": [
+        [
+          {
+            "node": "Send Welcome Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Invalid Event Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Welcome Email": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["jcms", "email", "automation", "welcome"],
+  "triggerCount": 0,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}
