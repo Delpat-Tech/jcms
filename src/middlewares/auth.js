@@ -17,8 +17,8 @@ module.exports = async function(req, res, next) {
     
     // Fetch user details including username
     const user = await User.findById(decoded.id).select('username role tenant');
-    if (!user) {
-      return res.status(401).json({ message: 'User not found' });
+    if (!user || !user.tenant) {
+      return res.status(401).json({ message: 'User not found or invalid tenant' });
     }
     
     req.user = { 

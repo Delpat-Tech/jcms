@@ -1,8 +1,9 @@
-// controllers/authController.js
+// controllers/authController.js - All authentication operations
 const User = require('../models/user');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+// Register user
 const registerUser = async (req, res) => {
   const { username, email, password, tenant } = req.body;
   try {
@@ -18,6 +19,7 @@ const registerUser = async (req, res) => {
   }
 };
 
+// Login user
 const loginUser = async (req, res) => {
   const { email, password, tenant } = req.body;
   try {

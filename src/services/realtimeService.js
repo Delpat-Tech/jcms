@@ -30,6 +30,11 @@ class RealtimeService {
     });
   }
 
+  // Alias for imageUploaded
+  imageCreated(tenantId, imageData, userData) {
+    this.imageUploaded(tenantId, imageData, userData);
+  }
+
   imageUpdated(tenantId, imageData, userData) {
     this.emitToTenant(tenantId, 'image:updated', {
       type: 'IMAGE_UPDATED',

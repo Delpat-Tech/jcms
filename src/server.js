@@ -28,7 +28,10 @@ app.set('realtime', realtimeService);
 // Middleware (must come before routes)
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+app.use(cors({
+  origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+  credentials: true
+}));
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // Connect to MongoDB
@@ -48,12 +51,15 @@ app.use('/api/auth', authRoutes);
 app.use('/api/tenants', tenantRoutes);
 app.use('/api/analytics', analyticsRoutes);
 
-// Health check
+// Protected auth middleware
+const auth = require('./middlewares/auth');
+
+// Health check (public)
 app.get("/api/health", (req, res) => {
   res.status(200).json({ status: "ok", message: "Server is running" });
 });
 
-// Example root route
+// Root route (public)
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
