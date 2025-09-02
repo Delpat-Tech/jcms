@@ -4,7 +4,8 @@ const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, trim: true },
-  email: { type: String, required: true, trim: true },
+  email: { type: String, trim: true },
+  phone: { type: String, trim: true },
   password: { type: String, required: true },
   role: { 
     type: String, 
@@ -15,12 +16,14 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Tenant',
     required: true
-  }
+  },
+  isVerified: { type: Boolean, default: false }
 }, { timestamps: true });
 
 // Compound unique index for username + tenant
 userSchema.index({ username: 1, tenant: 1 }, { unique: true });
-userSchema.index({ email: 1, tenant: 1 }, { unique: true });
+userSchema.index({ email: 1, tenant: 1 }, { unique: true, sparse: true });
+userSchema.index({ phone: 1, tenant: 1 }, { unique: true, sparse: true });
 
 // Hash password before saving the user
 userSchema.pre('save', async function(next) {

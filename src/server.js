@@ -43,6 +43,7 @@ const imageRoutes = require('./routes/imageRoutes');
 const authRoutes = require('./routes/authRoutes');
 const tenantRoutes = require('./routes/tenantRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
+const seedRoutes = require('./routes/seedRoutes');
 
 // Mount routes
 app.use('/api/users', userRoutes);
@@ -50,6 +51,7 @@ app.use('/api/images', imageRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/tenants', tenantRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/seeds', seedRoutes);
 
 // Protected auth middleware
 const auth = require('./middlewares/auth');
