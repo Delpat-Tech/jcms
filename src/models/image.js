@@ -8,17 +8,12 @@ const imageSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  tenant: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Tenant',
-    required: true
-  },
   internalPath: { type: String, required: true },
   fileUrl: { type: String, required: true },
   format: {
     type: String,
     required: true,
-    enum: ['webp', 'avif', 'jpg', 'jpeg', 'png'],
+    enum: ['webp', 'avif', 'jpg', 'jpeg', 'png', 'gif', 'tiff', 'bmp'],
   },
   notes: {
     type: mongoose.Schema.Types.Mixed,
