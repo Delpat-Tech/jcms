@@ -6,12 +6,31 @@ const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
 const connectDB = require("./config/db");
+const { runSeeds } = require('./seeds');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Connect to MongoDB
-connectDB();
+try {
+  connectDB();
+} catch (error) {
+  console.error('❌ Database connection failed:', error.message);
+  process.exit(1);
+}
+
+// Optional seeding on startup
+if (process.env.AUTO_SEED === 'true') {
+  setTimeout(async () => {
+    try {
+      const seedType = process.env.SEED_TYPE || 'core';
+      console.log(`🌱 Auto-seeding with type: ${seedType}`);
+      await runSeeds(seedType);
+    } catch (error) {
+      console.error('❌ Auto-seeding failed:', error.message);
+    }
+  }, 2000); // Wait 2 seconds for DB connection
+}
 
 // Middleware
 app.use(express.json());
@@ -33,10 +52,12 @@ app.get("/api/health", (req, res) => {
 const imageRoutes = require('./routes/imageRoutes');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
+const superadminRoutes = require('./routes/superadminRoutes');
 
 app.use('/api/images', imageRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/superadmin', superadminRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {

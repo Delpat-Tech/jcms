@@ -2,85 +2,128 @@
 const mongoose = require('mongoose');
 const seedCore = require('./seedCore');
 const User = require('../models/user');
-require('dotenv').config();
+const Image = require('../models/image');
 
-const seedDummyData = async () => {
+const seedMain = async () => {
   try {
-    console.log("🎭 Seeding Dummy Data...");
+    console.log("🌱 Starting Main Seeding...");
     
     // First run core seeding
-    await seedCore();
+    const { superAdminUser } = await seedCore();
     
-    // Get system tenant for dummy users
-    const systemTenant = await require('../models/tenant').findOne({ name: 'System' });
+    // Get roles for user creation
+    const Role = require('../models/role');
+    const roles = await Role.find({}).select('name _id');
+    const roleMap = new Map(roles.map(role => [role.name, role._id]));
     
-    // Create dummy users
-    const dummyUsers = [
+    console.log("👥 Seeding Sample Users...");
+    
+    // Create sample users
+    const sampleUsers = [
       {
-        username: 'editor1',
-        email: 'editor@example.com',
-        password: 'editor123',
-        role: 'editor',
-        tenant: systemTenant._id,
-        isVerified: true
+        username: 'john_admin',
+        email: 'john@example.com',
+        password: 'password123',
+        role: roleMap.get('admin')
       },
       {
-        username: 'viewer1',
-        email: 'viewer@example.com',
-        password: 'viewer123',
-        role: 'viewer',
-        tenant: systemTenant._id,
-        isVerified: true
+        username: 'jane_editor',
+        email: 'jane@example.com',
+        password: 'password123',
+        role: roleMap.get('editor')
+      },
+      {
+        username: 'mike_contributor',
+        email: 'mike@example.com',
+        password: 'password123',
+        role: roleMap.get('contributor')
+      },
+      {
+        username: 'bob_viewer',
+        email: 'bob@example.com',
+        password: 'password123',
+        role: roleMap.get('viewer')
+      },
+      {
+        username: 'guest_user',
+        email: 'guest@example.com',
+        password: 'password123',
+        role: roleMap.get('guest')
       }
     ];
 
-    for (const userData of dummyUsers) {
-      let user = await User.findOne({ email: userData.email, tenant: systemTenant._id });
+    const createdUsers = [];
+    for (const userData of sampleUsers) {
+      let user = await User.findOne({ email: userData.email });
       if (!user) {
         user = await User.create(userData);
-        console.log(`✅ Dummy user created: ${userData.email}`);
+        console.log(`✅ Sample user created: ${userData.username}`);
       } else {
-        console.log(`ℹ️ Dummy user already exists: ${userData.email}`);
+        console.log(`ℹ️ Sample user already exists: ${userData.username}`);
+      }
+      createdUsers.push(user);
+    }
+
+    console.log("🖼️ Seeding Sample Images...");
+    
+    // Create sample images for each user
+    const sampleImages = [
+      {
+        title: 'Sample Image 1',
+        description: 'This is a sample image for testing',
+        filename: 'sample1.jpg',
+        originalName: 'sample1.jpg',
+        mimetype: 'image/jpeg',
+        size: 1024000,
+        path: '/uploads/sample1.jpg',
+        user: createdUsers[0]._id
+      },
+      {
+        title: 'Sample Image 2',
+        description: 'Another sample image',
+        filename: 'sample2.png',
+        originalName: 'sample2.png',
+        mimetype: 'image/png',
+        size: 2048000,
+        path: '/uploads/sample2.png',
+        user: createdUsers[1]._id
+      }
+    ];
+
+    for (const imageData of sampleImages) {
+      let image = await Image.findOne({ filename: imageData.filename });
+      if (!image) {
+        image = await Image.create(imageData);
+        console.log(`✅ Sample image created: ${imageData.title}`);
+      } else {
+        console.log(`ℹ️ Sample image already exists: ${imageData.title}`);
       }
     }
 
-    console.log("🎉 Dummy data seeding completed!");
+    console.log("🎉 Main seeding completed!");
+    console.log(`👑 SuperAdmin: ${superAdminUser.username} (${superAdminUser.email})`);
+    console.log(`👥 Sample Users: ${createdUsers.length} created`);
+    console.log(`🖼️ Sample Images: ${sampleImages.length} created`);
+    console.log(`
+🔑 Login Credentials:
+- SuperAdmin: admin@system.com / admin123
+- Admin: john@example.com / password123
+- Editor: jane@example.com / password123
+- Contributor: mike@example.com / password123
+- Viewer: bob@example.com / password123
+- Guest: guest@example.com / password123`);
+    
+    return {
+      superAdminUser,
+      sampleUsers: createdUsers,
+      sampleImages,
+      roleMap
+    };
     
   } catch (error) {
-    console.error('❌ Dummy data seeding error:', error.message);
+    console.error('❌ Main seeding error:', error.message);
     throw error;
   }
 };
 
-const runMainSeeding = async () => {
-  try {
-    await mongoose.connect(process.env.MONGO_URI);
-    console.log("🌱 Starting Main Seeding (Development)...");
-    
-    await seedDummyData();
-    
-    console.log("🎊 Main seeding process completed successfully!");
-    
-  } catch (error) {
-    console.error('❌ Main seeding failed:', error.message);
-    throw error;
-  }
-};
-
-// Standalone execution function
-const runStandalone = async () => {
-  try {
-    await runMainSeeding();
-    process.exit(0);
-  } catch (error) {
-    console.error('❌ Main seeding failed:', error.message);
-    process.exit(1);
-  }
-};
-
-// Run if called directly
-if (require.main === module) {
-  runStandalone();
-}
-
-module.exports = seedDummyData;
+module.exports = seedMain;
