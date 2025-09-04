@@ -68,7 +68,13 @@ const createImage = async (req, res) => {
 
 const getImages = async (req, res) => {
   try {
-    const filter = { user: req.user.id };
+    let filter = {};
+    
+    // Admins can see all images, users only see their own
+    if (req.user.role !== 'admin') {
+      filter.user = req.user.id;
+    }
+    
     const images = await Image.find(filter);
     res.status(200).json({ success: true, data: images });
   } catch (error) {
@@ -79,7 +85,14 @@ const getImages = async (req, res) => {
 const getImageById = async (req, res) => {
   try {
     const { id } = req.params;
-    const image = await Image.findById(id);
+    let filter = { _id: id };
+    
+    // Users can only access their own images, admins can access any
+    if (req.user.role !== 'admin') {
+      filter.user = req.user.id;
+    }
+    
+    const image = await Image.findOne(filter);
     if (!image) {
       return res.status(404).json({ success: false, message: 'Image not found' });
     }
@@ -94,9 +107,16 @@ const updateImage = async (req, res) => {
     const { id } = req.params;
     const { title } = req.body;
     
-    const image = await Image.findByIdAndUpdate(id, { title }, { new: true });
+    let filter = { _id: id };
+    
+    // Users can only update their own images, admins can update any
+    if (req.user.role !== 'admin') {
+      filter.user = req.user.id;
+    }
+    
+    const image = await Image.findOneAndUpdate(filter, { title }, { new: true });
     if (!image) {
-      return res.status(404).json({ success: false, message: 'Image not found' });
+      return res.status(404).json({ success: false, message: 'Image not found or access denied' });
     }
     
     res.status(200).json({ success: true, data: image });
@@ -169,9 +189,16 @@ const deleteImage = async (req, res) => {
   try {
     const { id } = req.params;
     
-    const image = await Image.findByIdAndDelete(id);
+    let filter = { _id: id };
+    
+    // Users can only delete their own images, admins can delete any
+    if (req.user.role !== 'admin') {
+      filter.user = req.user.id;
+    }
+    
+    const image = await Image.findOneAndDelete(filter);
     if (!image) {
-      return res.status(404).json({ success: false, message: 'Image not found' });
+      return res.status(404).json({ success: false, message: 'Image not found or access denied' });
     }
     
     if (image.internalPath) {

@@ -12,7 +12,7 @@ module.exports = async function(req, res, next) {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    const user = await User.findById(decoded.user.id).select('username email');
+    const user = await User.findById(decoded.user.id).select('username email role');
     if (!user) {
       return res.status(401).json({ message: 'User not found' });
     }
@@ -20,7 +20,8 @@ module.exports = async function(req, res, next) {
     req.user = { 
       id: user._id, 
       username: user.username,
-      email: user.email
+      email: user.email,
+      role: user.role
     };
     
     next();
