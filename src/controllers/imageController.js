@@ -83,6 +83,16 @@ const getImageById = async (req, res) => {
     if (!image) {
       return res.status(404).json({ success: false, message: 'Image not found' });
     }
+    
+    // Check ownership (allow admin/superadmin to access all images)
+    const User = require('../models/user');
+    const currentUser = await User.findById(req.user.id).populate('role');
+    const isAdminOrAbove = ['admin', 'superadmin'].includes(currentUser.role.name);
+    
+    if (!isAdminOrAbove && image.user.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Access denied. You can only access your own images.' });
+    }
+    
     res.status(200).json({ success: true, data: image });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error retrieving image', error: error.message });
@@ -94,12 +104,22 @@ const updateImage = async (req, res) => {
     const { id } = req.params;
     const { title } = req.body;
     
-    const image = await Image.findByIdAndUpdate(id, { title }, { new: true });
+    const image = await Image.findById(id);
     if (!image) {
       return res.status(404).json({ success: false, message: 'Image not found' });
     }
     
-    res.status(200).json({ success: true, data: image });
+    // Check ownership (allow admin/superadmin to modify all images)
+    const User = require('../models/user');
+    const currentUser = await User.findById(req.user.id).populate('role');
+    const isAdminOrAbove = ['admin', 'superadmin'].includes(currentUser.role.name);
+    
+    if (!isAdminOrAbove && image.user.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Access denied. You can only modify your own images.' });
+    }
+    
+    const updatedImage = await Image.findByIdAndUpdate(id, { title }, { new: true });
+    res.status(200).json({ success: true, data: updatedImage });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error updating image', error: error.message });
   }
@@ -113,6 +133,15 @@ const patchImage = async (req, res) => {
     const image = await Image.findById(id);
     if (!image) {
       return res.status(404).json({ success: false, message: 'Image not found' });
+    }
+    
+    // Check ownership (allow admin/superadmin to modify all images)
+    const User = require('../models/user');
+    const currentUser = await User.findById(req.user.id).populate('role');
+    const isAdminOrAbove = ['admin', 'superadmin'].includes(currentUser.role.name);
+    
+    if (!isAdminOrAbove && image.user.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Access denied. You can only modify your own images.' });
     }
     
     const dataToUpdate = {};
@@ -169,10 +198,21 @@ const deleteImage = async (req, res) => {
   try {
     const { id } = req.params;
     
-    const image = await Image.findByIdAndDelete(id);
+    const image = await Image.findById(id);
     if (!image) {
       return res.status(404).json({ success: false, message: 'Image not found' });
     }
+    
+    // Check ownership (allow admin/superadmin to delete all images)
+    const User = require('../models/user');
+    const currentUser = await User.findById(req.user.id).populate('role');
+    const isAdminOrAbove = ['admin', 'superadmin'].includes(currentUser.role.name);
+    
+    if (!isAdminOrAbove && image.user.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Access denied. You can only delete your own images.' });
+    }
+    
+    await Image.findByIdAndDelete(id);
     
     if (image.internalPath) {
       await safeDeleteFile(image.internalPath);

@@ -23,17 +23,15 @@ const runSeeds = async (type = 'core') => {
 
     switch (type) {
       case 'core':
-        await seedCore();
+      case 'empty':
+        await seedCore('core');
         break;
       case 'main':
-        await seedMain();
+        await seedCore('main');
         break;
       case 'dev':
       case 'development':
-        await seedDevelopment();
-        break;
-      case 'empty':
-        await seedEmpty();
+        await seedCore('development');
         break;
       case 'roles':
         await seedRolesAndPermissions();

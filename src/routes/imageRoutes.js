@@ -1,7 +1,8 @@
 // routes/imageRoutes.js
 const express = require('express');
 const upload = require('../middlewares/upload');
-const auth = require('../middlewares/auth');
+const { authenticate } = require('../middlewares/auth');
+const auth = authenticate;
 
 const {
   createImage,

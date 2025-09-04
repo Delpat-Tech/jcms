@@ -51,13 +51,15 @@ app.get("/api/health", (req, res) => {
 // Import and mount API routes
 const imageRoutes = require('./routes/imageRoutes');
 const authRoutes = require('./routes/authRoutes');
-const userRoutes = require('./routes/userRoutes');
+const usersRoutes = require('./routes/usersRoutes'); // Unified users API
 const superadminRoutes = require('./routes/superadminRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 app.use('/api/images', imageRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
+app.use('/api/users', usersRoutes); // Unified users API
 app.use('/api/superadmin', superadminRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {

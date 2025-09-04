@@ -3,7 +3,7 @@ const User = require('../models/user');
 const Role = require('../models/role');
 const Image = require('../models/image');
 
-// Superadmin: Create user with role assignment
+// Create user with role assignment
 const createUserWithRole = async (req, res) => {
   try {
     const { username, email, password, role } = req.body;
@@ -15,18 +15,9 @@ const createUserWithRole = async (req, res) => {
       });
     }
 
-    // Find role by name
-    const validRoles = ['admin', 'editor', 'viewer'];
     const roleName = role || 'viewer';
-    
-    if (!validRoles.includes(roleName)) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Invalid role. Must be: admin, editor, or viewer' 
-      });
-    }
-
     const roleDoc = await Role.findOne({ name: roleName });
+    
     if (!roleDoc) {
       return res.status(400).json({ 
         success: false, 
@@ -41,8 +32,11 @@ const createUserWithRole = async (req, res) => {
       role: roleDoc._id
     });
 
-    // Populate role for response
-    await newUser.populate('role');
+    // Populate role for response (excluding permissions)
+    await newUser.populate({
+      path: 'role',
+      select: '-permissions'
+    });
     
     // Remove password from response
     const userResponse = newUser.toObject();
@@ -68,10 +62,24 @@ const createUserWithRole = async (req, res) => {
   }
 };
 
-// Superadmin: Get all users
+// Get all users with role-based filtering
 const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find({}, '-password').sort({ createdAt: -1 });
+    // Get current user role
+    const currentUser = await User.findById(req.user.id).populate('role');
+    const currentRole = currentUser.role.name;
+    
+    let query = {};
+    
+    // Role-based filtering
+    if (currentRole === 'admin') {
+      // Admin can only see non-superadmin users
+      const superadminRole = await Role.findOne({ name: 'superadmin' });
+      query = { role: { $ne: superadminRole._id } };
+    }
+    // SuperAdmin can see all users (no filter)
+    
+    const users = await User.find(query, '-password').populate('role').sort({ createdAt: -1 });
     res.status(200).json({ 
       success: true, 
       count: users.length,
@@ -86,16 +94,29 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-// Superadmin: Get user by ID
+// Get user by ID with role-based access control
 const getUserById = async (req, res) => {
   try {
     const { userId } = req.params;
-    const user = await User.findById(userId, '-password');
+    
+    // Get current user role
+    const currentUser = await User.findById(req.user.id).populate('role');
+    const currentRole = currentUser.role.name;
+    
+    const user = await User.findById(userId, '-password').populate('role');
     
     if (!user) {
       return res.status(404).json({ 
         success: false, 
         message: 'User not found' 
+      });
+    }
+    
+    // Role-based access control
+    if (currentRole === 'admin' && user.role.name === 'superadmin') {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Access denied. Cannot view superadmin details.' 
       });
     }
 
@@ -115,18 +136,52 @@ const updateUser = async (req, res) => {
     const { userId } = req.params;
     const { username, email, role, isActive } = req.body;
 
+    // Check current user permissions
+    const currentUser = await User.findById(req.user.id).populate('role');
+    const currentRole = currentUser.role.name;
+    
+    // Get target user to check if it's superadmin
+    const targetUser = await User.findById(userId).populate('role');
+    if (!targetUser) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
+    
+    // Prevent non-superadmin from updating superadmin
+    if (targetUser.role.name === 'superadmin' && currentRole !== 'superadmin') {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Cannot modify superadmin user' 
+      });
+    }
+
     const updateData = {};
     if (username) updateData.username = username;
     if (email) updateData.email = email;
     if (role) {
-      const validRoles = ['admin', 'editor', 'viewer'];
+      let validRoles;
+      if (currentRole === 'superadmin') {
+        validRoles = ['admin', 'editor', 'viewer'];
+      } else if (currentRole === 'admin') {
+        validRoles = ['admin', 'editor', 'viewer']; // Admin can assign admin roles
+      } else {
+        return res.status(403).json({ 
+          success: false, 
+          message: 'Insufficient permissions to change user roles' 
+        });
+      }
+      
       if (!validRoles.includes(role)) {
         return res.status(400).json({ 
           success: false, 
-          message: 'Invalid role. Must be: admin, editor, or viewer' 
+          message: `Invalid role. You can only assign: ${validRoles.join(', ')}` 
         });
       }
-      updateData.role = role;
+      
+      const roleDoc = await Role.findOne({ name: role });
+      updateData.role = roleDoc._id;
     }
     if (typeof isActive === 'boolean') updateData.isActive = isActive;
 
@@ -167,6 +222,35 @@ const updateUser = async (req, res) => {
 const deleteUser = async (req, res) => {
   try {
     const { userId } = req.params;
+    
+    // Check current user permissions
+    const currentUser = await User.findById(req.user.id).populate('role');
+    const currentRole = currentUser.role.name;
+    
+    // Get target user to check if it's superadmin
+    const targetUser = await User.findById(userId).populate('role');
+    if (!targetUser) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
+    
+    // Prevent deleting superadmin
+    if (targetUser.role.name === 'superadmin') {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Cannot delete superadmin user' 
+      });
+    }
+    
+    // Admin can delete editor/viewer, superadmin can delete anyone except superadmin
+    if (currentRole === 'admin' && targetUser.role.name === 'admin') {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Admin cannot delete other admin users' 
+      });
+    }
     
     const user = await User.findByIdAndDelete(userId);
     if (!user) {
