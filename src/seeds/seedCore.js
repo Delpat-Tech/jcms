@@ -76,7 +76,7 @@ const seedCore = async (type = 'core') => {
       const userData = type === 'development' ? [
         { username: 'dev_admin', email: 'dev.admin@test.com', password: 'dev123', role: 'admin' },
         { username: 'test_editor', email: 'editor@test.com', password: 'test123', role: 'editor' },
-        { username: 'qa_tester', email: 'qa@test.com', password: 'test123', role: 'viewer' }
+
       ] : [
         { username: 'john_admin', email: 'john@example.com', password: 'password123', role: 'admin' },
         { username: 'jane_editor', email: 'jane@example.com', password: 'password123', role: 'editor' }

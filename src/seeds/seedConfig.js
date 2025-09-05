@@ -61,13 +61,7 @@ const seedConfig = {
       ]
     },
 
-    viewer: {
-      description: 'Content Viewer - Read-only access',
-      permissions: [
-        'content.read', 'image.read', 'user.profile',
-        'analytics.view', 'api.read'
-      ]
-    },
+
 
   },
 
@@ -77,7 +71,7 @@ const seedConfig = {
       admin: { username: 'john_admin', email: 'john@example.com' },
       editor: { username: 'jane_editor', email: 'jane@example.com' },
       contributor: { username: 'mike_contributor', email: 'mike@example.com' },
-      viewer: { username: 'bob_viewer', email: 'bob@example.com' },
+
       guest: { username: 'guest_user', email: 'guest@example.com' }
     },
     devUsers: [
@@ -85,7 +79,7 @@ const seedConfig = {
       { username: 'test_editor1', email: 'editor1@test.com', role: 'editor' },
       { username: 'test_editor2', email: 'editor2@test.com', role: 'editor' },
       { username: 'content_writer', email: 'writer@test.com', role: 'contributor' },
-      { username: 'qa_tester', email: 'qa@test.com', role: 'viewer' },
+
       { username: 'demo_user', email: 'demo@test.com', role: 'guest' }
     ]
   },
@@ -246,17 +240,7 @@ const seedRolesAndPermissions = async () => {
         ]
       },
 
-      {
-        name: 'viewer',
-        description: 'Content Viewer - Read-only access',
-        permissions: [
-          permissionMap.get('content.read'),
-          permissionMap.get('image.read'),
-          permissionMap.get('user.profile'),
-          permissionMap.get('analytics.view'),
-          permissionMap.get('api.read')
-        ]
-      },
+
 
     ];
 

@@ -15,7 +15,7 @@ const createUserWithRole = async (req, res) => {
       });
     }
 
-    const roleName = role || 'viewer';
+    const roleName = role || 'editor';
     const roleDoc = await Role.findOne({ name: roleName });
     
     if (!roleDoc) {
@@ -169,9 +169,9 @@ const updateUser = async (req, res) => {
     if (role) {
       let validRoles;
       if (currentRole === 'superadmin') {
-        validRoles = ['admin', 'editor', 'viewer'];
+        validRoles = ['admin', 'editor'];
       } else if (currentRole === 'admin') {
-        validRoles = ['admin', 'editor', 'viewer']; // Admin can assign admin roles
+        validRoles = ['editor']; // Admin can assign editor roles
       } else {
         return res.status(403).json({ 
           success: false, 
@@ -250,7 +250,7 @@ const deleteUser = async (req, res) => {
       });
     }
     
-    // Admin can delete editor/viewer, superadmin can delete anyone except superadmin
+    // Admin can delete editor, superadmin can delete anyone except superadmin
     if (currentRole === 'admin' && targetUser.role.name === 'admin') {
       return res.status(403).json({ 
         success: false, 
