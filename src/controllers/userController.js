@@ -144,6 +144,14 @@ const updateUser = async (req, res) => {
 
     // Check current user permissions
     const currentUser = await User.findById(req.user.id).populate('role');
+    
+    if (!currentUser || !currentUser.role) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'User role not found' 
+      });
+    }
+    
     const currentRole = currentUser.role.name;
     
     // Get target user to check if it's superadmin
@@ -152,6 +160,13 @@ const updateUser = async (req, res) => {
       return res.status(404).json({ 
         success: false, 
         message: 'User not found' 
+      });
+    }
+    
+    if (!targetUser.role) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Target user role not found' 
       });
     }
     
