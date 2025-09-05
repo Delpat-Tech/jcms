@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JCMS Admin Dashboard</title>
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .notification { 
+            background: #f0f8ff; 
+            border: 1px solid #007bff; 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-radius: 5px; 
+        }
+        .timestamp { color: #666; font-size: 0.9em; }
+        .action { font-weight: bold; color: #007bff; }
+        .user { color: #28a745; }
+        .resource { color: #dc3545; }
+        #status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .connected { background: #d4edda; color: #155724; }
+        .disconnected { background: #f8d7da; color: #721c24; }
+        .login-form { background: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
+        .login-form input { margin: 5px; padding: 8px; width: 200px; }
+        .login-form button { padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>JCMS Admin Dashboard</h1>
+        
+        <div class="login-form">
+            <h3>Admin Login</h3>
+            <input type="text" id="username" placeholder="Username" value="superadmin">
+            <input type="password" id="password" placeholder="Password" value="admin123">
+            <button onclick="login()">Connect</button>
+        </div>
+
+        <div id="status" class="disconnected">Disconnected</div>
+        
+        <h3>Live Activity Feed</h3>
+        <div id="notifications"></div>
+    </div>
+
+    <script>
+        let socket;
+        let token;
+        let originalTitle = document.title;
+        let originalFavicon = null;
+        let blinkInterval;
+        let faviconInterval;
+        let isBlinking = false;
+        
+        // Store original favicon
+        const faviconLink = document.querySelector('link[rel="icon"]') || document.createElement('link');
+        faviconLink.rel = 'icon';
+        if (!document.querySelector('link[rel="icon"]')) {
+            document.head.appendChild(faviconLink);
+        }
+        originalFavicon = faviconLink.href;
+
+        // Request notification permission on page load
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+
+        function createAlertFavicon() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 32;
+            canvas.height = 32;
+            const ctx = canvas.getContext('2d');
+            
+            // Red circle
+            ctx.fillStyle = '#ff0000';
+            ctx.beginPath();
+            ctx.arc(16, 16, 15, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // White exclamation mark
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('!', 16, 22);
+            
+            return canvas.toDataURL();
+        }
+        
+        function blinkTab() {
+            if (isBlinking) return;
+            
+            isBlinking = true;
+            let count = 0;
+            const alertFavicon = createAlertFavicon();
+            
+            // Title blinking
+            blinkInterval = setInterval(() => {
+                document.title = count % 2 === 0 ? '🚨 URGENT: ACTIVITY DETECTED!' : '⚠️ JCMS ADMIN ALERT';
+                count++;
+                
+                if (count >= 20) { // Blink 10 times
+                    clearInterval(blinkInterval);
+                    document.title = originalTitle;
+                }
+            }, 300); // Faster blinking
+            
+            // Favicon blinking
+            let faviconCount = 0;
+            faviconInterval = setInterval(() => {
+                faviconLink.href = faviconCount % 2 === 0 ? alertFavicon : originalFavicon;
+                faviconCount++;
+                
+                if (faviconCount >= 20) {
+                    clearInterval(faviconInterval);
+                    faviconLink.href = originalFavicon;
+                    isBlinking = false;
+                }
+            }, 300);
+        }
+
+        function showDesktopNotification(notification) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                const { action, data } = notification;
+                
+                new Notification(`JCMS Alert: ${action}`, {
+                    body: `${data.username} performed ${action} on ${data.resource}`,
+                    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="red"><circle cx="12" cy="12" r="10"/></svg>',
+                    tag: 'jcms-activity',
+                    requireInteraction: true
+                });
+            }
+        }
+
+        function playNotificationSound() {
+            // Create audio context for notification sound
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+            oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.2);
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.3);
+        }
+
+        // Stop blinking when user focuses on tab
+        window.addEventListener('focus', () => {
+            if (isBlinking) {
+                clearInterval(blinkInterval);
+                clearInterval(faviconInterval);
+                document.title = originalTitle;
+                faviconLink.href = originalFavicon;
+                isBlinking = false;
+            }
+        });
+        
+        // Also stop on visibility change
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && isBlinking) {
+                clearInterval(blinkInterval);
+                clearInterval(faviconInterval);
+                document.title = originalTitle;
+                faviconLink.href = originalFavicon;
+                isBlinking = false;
+            }
+        });
+
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    token = data.token;
+                    connectSocket();
+                } else {
+                    alert('Login failed: ' + data.message);
+                }
+            } catch (error) {
+                alert('Login error: ' + error.message);
+            }
+        }
+
+        function connectSocket() {
+            socket = io('http://localhost:5000', {
+                auth: { token }
+            });
+
+            socket.on('connect', () => {
+                document.getElementById('status').textContent = 'Connected as Admin';
+                document.getElementById('status').className = 'connected';
+            });
+
+            socket.on('disconnect', () => {
+                document.getElementById('status').textContent = 'Disconnected';
+                document.getElementById('status').className = 'disconnected';
+            });
+
+            socket.on('admin_notification', (notification) => {
+                addNotification(notification);
+            });
+
+            socket.on('connect_error', (error) => {
+                alert('Connection error: ' + error.message);
+            });
+        }
+
+        function addNotification(notification) {
+            const container = document.getElementById('notifications');
+            const div = document.createElement('div');
+            div.className = 'notification';
+            
+            const { action, data, timestamp } = notification;
+            
+            div.innerHTML = `
+                <div class="timestamp">${new Date(timestamp).toLocaleString()}</div>
+                <div>
+                    <span class="user">${data.username}</span> 
+                    performed <span class="action">${action}</span> 
+                    on <span class="resource">${data.resource}</span>
+                    ${data.resourceId ? `(ID: ${data.resourceId})` : ''}
+                </div>
+                <div style="font-size: 0.8em; color: #666; margin-top: 5px;">
+                    Role: ${data.userRole} | IP: ${data.details.ip}
+                </div>
+            `;
+            
+            container.insertBefore(div, container.firstChild);
+            
+            // Keep only last 20 notifications
+            while (container.children.length > 20) {
+                container.removeChild(container.lastChild);
+            }
+            
+            // Trigger alerts if tab is not focused
+            if (document.hidden || !document.hasFocus()) {
+                blinkTab();
+                showDesktopNotification(notification);
+                playNotificationSound();
+            }
+        }
+    </script>
+</body>
+</html>

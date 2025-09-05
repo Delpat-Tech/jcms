@@ -5,8 +5,10 @@ require("dotenv").config({ path: path.resolve(__dirname, '../.env') });
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
+const http = require('http');
 const connectDB = require("./config/db");
 const { runSeeds } = require('./seeds');
+const { initializeSocket } = require('./services/socketService');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -54,12 +56,14 @@ const authRoutes = require('./routes/authRoutes');
 const usersRoutes = require('./routes/usersRoutes'); // Unified users API
 const superadminRoutes = require('./routes/superadminRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 app.use('/api/images', imageRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes); // Unified users API
 app.use('/api/superadmin', superadminRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {
@@ -84,7 +88,12 @@ app.use((err, req, res, next) => {
   });
 });
 
+// Create HTTP server and initialize WebSocket
+const server = http.createServer(app);
+initializeSocket(server);
+
 // Start server
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📡 WebSocket server initialized`);
 });
