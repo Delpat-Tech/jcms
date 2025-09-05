@@ -68,8 +68,19 @@ const createImage = async (req, res) => {
 
 const getImages = async (req, res) => {
   try {
-    const filter = { user: req.user.id };
-    const images = await Image.find(filter);
+    // Check user role
+    const User = require('../models/user');
+    const currentUser = await User.findById(req.user.id).populate('role');
+    const userRole = currentUser.role.name;
+    
+    let filter = {};
+    
+    // Superadmin can see all images, others see only their own
+    if (userRole !== 'superadmin') {
+      filter.user = req.user.id;
+    }
+    
+    const images = await Image.find(filter, '-_id');
     res.status(200).json({ success: true, data: images });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error retrieving images', error: error.message });
@@ -79,7 +90,7 @@ const getImages = async (req, res) => {
 const getImageById = async (req, res) => {
   try {
     const { id } = req.params;
-    const image = await Image.findById(id);
+    const image = await Image.findById(id, '-_id');
     if (!image) {
       return res.status(404).json({ success: false, message: 'Image not found' });
     }
@@ -118,7 +129,7 @@ const updateImage = async (req, res) => {
       return res.status(403).json({ success: false, message: 'Access denied. You can only modify your own images.' });
     }
     
-    const updatedImage = await Image.findByIdAndUpdate(id, { title }, { new: true });
+    const updatedImage = await Image.findByIdAndUpdate(id, { title }, { new: true, select: '-_id' });
     res.status(200).json({ success: true, data: updatedImage });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error updating image', error: error.message });
@@ -186,7 +197,7 @@ const patchImage = async (req, res) => {
       dataToUpdate.fileUrl = `${req.protocol}://${req.get('host')}/${dataToUpdate.internalPath}`;
     }
     
-    const updatedImage = await Image.findByIdAndUpdate(id, dataToUpdate, { new: true });
+    const updatedImage = await Image.findByIdAndUpdate(id, dataToUpdate, { new: true, select: '-_id' });
     
     res.status(200).json({ success: true, data: updatedImage });
   } catch (error) {
@@ -240,7 +251,7 @@ const getBulkImages = async (req, res) => {
       projection = fields.split(',').join(' ');
     }
 
-    const images = await Image.find(filter, projection).limit(Number(limit));
+    const images = await Image.find(filter, projection ? `${projection} -_id` : '-_id').limit(Number(limit));
 
     res.json({ success: true, data: images });
   } catch (error) {

@@ -39,22 +39,10 @@ const seedDevelopment = async () => {
         role: roleMapLocal.get('editor')
       },
       {
-        username: 'content_writer',
-        email: 'writer@test.com',
-        password: 'test123',
-        role: roleMapLocal.get('contributor')
-      },
-      {
         username: 'qa_tester',
         email: 'qa@test.com',
         password: 'test123',
         role: roleMapLocal.get('viewer')
-      },
-      {
-        username: 'demo_user',
-        email: 'demo@test.com',
-        password: 'demo123',
-        role: roleMapLocal.get('guest')
       }
     ];
 
@@ -153,9 +141,7 @@ const seedDevelopment = async () => {
 - Dev Admin: dev.admin@test.com / dev123
 - Editor 1: editor1@test.com / test123
 - Editor 2: editor2@test.com / test123
-- Writer: writer@test.com / test123
-- QA Tester: qa@test.com / test123
-- Demo User: demo@test.com / demo123`);
+- QA Tester: qa@test.com / test123`);
     
     return {
       superAdminUser,

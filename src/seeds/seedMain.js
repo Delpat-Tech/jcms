@@ -11,11 +11,6 @@ const seedMain = async () => {
     // First run core seeding
     const { superAdminUser } = await seedCore();
     
-    // Get roles for user creation
-    const Role = require('../models/role');
-    const roles = await Role.find({}).select('name _id');
-    const roleMap = new Map(roles.map(role => [role.name, role._id]));
-    
     console.log("👥 Seeding Sample Users...");
     
     // Create sample users
@@ -24,31 +19,19 @@ const seedMain = async () => {
         username: 'john_admin',
         email: 'john@example.com',
         password: 'password123',
-        role: roleMap.get('admin')
+        role: 'admin'
       },
       {
         username: 'jane_editor',
         email: 'jane@example.com',
         password: 'password123',
-        role: roleMap.get('editor')
-      },
-      {
-        username: 'mike_contributor',
-        email: 'mike@example.com',
-        password: 'password123',
-        role: roleMap.get('contributor')
+        role: 'editor'
       },
       {
         username: 'bob_viewer',
         email: 'bob@example.com',
         password: 'password123',
-        role: roleMap.get('viewer')
-      },
-      {
-        username: 'guest_user',
-        email: 'guest@example.com',
-        password: 'password123',
-        role: roleMap.get('guest')
+        role: 'viewer'
       }
     ];
 
@@ -104,20 +87,11 @@ const seedMain = async () => {
     console.log(`👑 SuperAdmin: ${superAdminUser.username} (${superAdminUser.email})`);
     console.log(`👥 Sample Users: ${createdUsers.length} created`);
     console.log(`🖼️ Sample Images: ${sampleImages.length} created`);
-    console.log(`
-🔑 Login Credentials:
-- SuperAdmin: admin@system.com / admin123
-- Admin: john@example.com / password123
-- Editor: jane@example.com / password123
-- Contributor: mike@example.com / password123
-- Viewer: bob@example.com / password123
-- Guest: guest@example.com / password123`);
     
     return {
       superAdminUser,
       sampleUsers: createdUsers,
-      sampleImages,
-      roleMap
+      sampleImages
     };
     
   } catch (error) {

@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const seedCore = require('./seedCore');
 const seedMain = require('./seedMain');
 const seedEmpty = require('./seedEmpty');
-const seedRolesAndPermissions = require('./seedRolesAndPermissions');
+const { seedRolesAndPermissions } = require('./seedConfig');
 const seedDevelopment = require('./seedDevelopment');
 require('dotenv').config();
 

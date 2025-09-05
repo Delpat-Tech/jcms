@@ -1,7 +1,7 @@
 // src/seeds/seedCore.js
 const mongoose = require('mongoose');
 const User = require('../models/user');
-const seedRolesAndPermissions = require('./seedRolesAndPermissions');
+const { seedRolesAndPermissions } = require('./seedConfig');
 
 const seedCore = async (type = 'core') => {
   try {

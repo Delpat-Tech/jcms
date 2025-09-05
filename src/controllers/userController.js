@@ -35,7 +35,7 @@ const createUserWithRole = async (req, res) => {
     // Populate role for response (excluding permissions)
     await newUser.populate({
       path: 'role',
-      select: '-permissions'
+      select: 'name description -_id'
     });
     
     // Remove password from response
@@ -79,7 +79,10 @@ const getAllUsers = async (req, res) => {
     }
     // SuperAdmin can see all users (no filter)
     
-    const users = await User.find(query, '-password').populate('role').sort({ createdAt: -1 });
+    const users = await User.find(query, '-password -_id').populate({
+      path: 'role',
+      select: 'name description -_id'
+    }).sort({ createdAt: -1 });
     res.status(200).json({ 
       success: true, 
       count: users.length,
@@ -103,7 +106,10 @@ const getUserById = async (req, res) => {
     const currentUser = await User.findById(req.user.id).populate('role');
     const currentRole = currentUser.role.name;
     
-    const user = await User.findById(userId, '-password').populate('role');
+    const user = await User.findById(userId, '-password -_id').populate({
+      path: 'role',
+      select: 'name description -_id'
+    });
     
     if (!user) {
       return res.status(404).json({ 
@@ -188,7 +194,7 @@ const updateUser = async (req, res) => {
     const user = await User.findByIdAndUpdate(
       userId, 
       updateData, 
-      { new: true, select: '-password' }
+      { new: true, select: '-password -_id' }
     );
 
     if (!user) {
