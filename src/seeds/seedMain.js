@@ -3,15 +3,16 @@ const mongoose = require('mongoose');
 const seedCore = require('./seedCore');
 const User = require('../models/user');
 const Image = require('../models/image');
+const logger = require('../config/logger');
 
 const seedMain = async () => {
   try {
-    console.log("🌱 Starting Main Seeding...");
+    logger.info('Starting main seeding');
     
     // First run core seeding
     const { superAdminUser } = await seedCore();
     
-    console.log("👥 Seeding Sample Users...");
+    logger.info('Seeding sample users');
     
     // Create sample users
     const sampleUsers = [
@@ -40,14 +41,14 @@ const seedMain = async () => {
       let user = await User.findOne({ email: userData.email });
       if (!user) {
         user = await User.create(userData);
-        console.log(`✅ Sample user created: ${userData.username}`);
+        logger.info('Sample user created', { username: userData.username, email: userData.email });
       } else {
-        console.log(`ℹ️ Sample user already exists: ${userData.username}`);
+        logger.info('Sample user already exists', { username: userData.username });
       }
       createdUsers.push(user);
     }
 
-    console.log("🖼️ Seeding Sample Images...");
+    logger.info('Seeding sample images');
     
     // Create sample images for each user
     const sampleImages = [
@@ -77,16 +78,17 @@ const seedMain = async () => {
       let image = await Image.findOne({ filename: imageData.filename });
       if (!image) {
         image = await Image.create(imageData);
-        console.log(`✅ Sample image created: ${imageData.title}`);
+        logger.info('Sample image created', { title: imageData.title, filename: imageData.filename });
       } else {
-        console.log(`ℹ️ Sample image already exists: ${imageData.title}`);
+        logger.info('Sample image already exists', { title: imageData.title });
       }
     }
 
-    console.log("🎉 Main seeding completed!");
-    console.log(`👑 SuperAdmin: ${superAdminUser.username} (${superAdminUser.email})`);
-    console.log(`👥 Sample Users: ${createdUsers.length} created`);
-    console.log(`🖼️ Sample Images: ${sampleImages.length} created`);
+    logger.info('Main seeding completed', { 
+      superAdmin: { username: superAdminUser.username, email: superAdminUser.email },
+      usersCreated: createdUsers.length,
+      imagesCreated: sampleImages.length
+    });
     
     return {
       superAdminUser,
@@ -95,7 +97,7 @@ const seedMain = async () => {
     };
     
   } catch (error) {
-    console.error('❌ Main seeding error:', error.message);
+    logger.error('Main seeding error', { error: error.message, stack: error.stack });
     throw error;
   }
 };

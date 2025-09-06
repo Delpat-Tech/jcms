@@ -4,10 +4,11 @@ const seedMain = require('./seedMain');
 const User = require('../models/user');
 const Image = require('../models/image');
 const Role = require('../models/role');
+const logger = require('../config/logger');
 
 const seedDevelopment = async () => {
   try {
-    console.log("🚀 Starting Development Seeding...");
+    logger.info('Starting development seeding');
     
     // First run main seeding
     const { superAdminUser, roleMap } = await seedMain();
@@ -16,7 +17,7 @@ const seedDevelopment = async () => {
     const roles = await Role.find({}).select('name _id');
     const roleMapLocal = new Map(roles.map(role => [role.name, role._id]));
     
-    console.log("👥 Seeding Additional Development Users...");
+    logger.info('Seeding additional development users');
     
     // Create additional development users
     const devUsers = [
@@ -51,14 +52,14 @@ const seedDevelopment = async () => {
       let user = await User.findOne({ email: userData.email });
       if (!user) {
         user = await User.create(userData);
-        console.log(`✅ Dev user created: ${userData.username}`);
+        logger.info('Dev user created', { username: userData.username, email: userData.email });
       } else {
-        console.log(`ℹ️ Dev user already exists: ${userData.username}`);
+        logger.info('Dev user already exists', { username: userData.username });
       }
       createdDevUsers.push(user);
     }
 
-    console.log("🖼️ Seeding Development Images...");
+    logger.info('Seeding development images');
     
     // Create development images
     const devImages = [
@@ -124,17 +125,25 @@ const seedDevelopment = async () => {
       let image = await Image.findOne({ filename: imageData.filename });
       if (!image) {
         image = await Image.create(imageData);
-        console.log(`✅ Dev image created: ${imageData.title}`);
+        logger.info('Dev image created', { title: imageData.title, filename: imageData.filename });
       } else {
-        console.log(`ℹ️ Dev image already exists: ${imageData.title}`);
+        logger.info('Dev image already exists', { title: imageData.title });
       }
       createdDevImages.push(image);
     }
 
-    console.log("🎉 Development seeding completed!");
-    console.log(`👑 SuperAdmin: ${superAdminUser.username} (${superAdminUser.email})`);
-    console.log(`👥 Development Users: ${createdDevUsers.length} created`);
-    console.log(`🖼️ Development Images: ${createdDevImages.length} created`);
+    logger.info('Development seeding completed', {
+      superAdmin: { username: superAdminUser.username, email: superAdminUser.email },
+      devUsersCreated: createdDevUsers.length,
+      devImagesCreated: createdDevImages.length,
+      credentials: [
+        'SuperAdmin: admin@system.com / admin123',
+        'Dev Admin: dev.admin@test.com / dev123',
+        'Editor 1: editor1@test.com / test123',
+        'Editor 2: editor2@test.com / test123',
+        'QA Tester: qa@test.com / test123'
+      ]
+    });
     console.log(`
 🔑 Development Login Credentials:
 - SuperAdmin: admin@system.com / admin123
@@ -151,7 +160,7 @@ const seedDevelopment = async () => {
     };
     
   } catch (error) {
-    console.error('❌ Development seeding error:', error.message);
+    logger.error('Development seeding error', { error: error.message, stack: error.stack });
     throw error;
   }
 };

@@ -2,6 +2,7 @@
 const mongoose = require('mongoose');
 const Role = require('../models/role');
 const Permission = require('../models/permission');
+const logger = require('../config/logger');
 
 const seedConfig = {
   // Default credentials for different environments
@@ -156,7 +157,7 @@ const seedConfig = {
 // Seeding function for roles and permissions
 const seedRolesAndPermissions = async () => {
   try {
-    console.log("🔐 Seeding Roles and Permissions...");
+    logger.info('Starting roles and permissions seeding');
 
     // Create permissions
     const permissionMap = new Map();
@@ -164,7 +165,7 @@ const seedRolesAndPermissions = async () => {
       let permission = await Permission.findOne({ name: permData.name });
       if (!permission) {
         permission = await Permission.create(permData);
-        console.log(`✅ Permission created: ${permData.name}`);
+        logger.info('Permission created', { name: permData.name });
       }
       permissionMap.set(permData.name, permission._id);
     }
@@ -250,21 +251,21 @@ const seedRolesAndPermissions = async () => {
       let role = await Role.findOne({ name: roleData.name });
       if (!role) {
         role = await Role.create(roleData);
-        console.log(`✅ Role created: ${roleData.name}`);
+        logger.info('Role created', { name: roleData.name });
       } else {
         // Update permissions if role exists
         role.permissions = roleData.permissions;
         await role.save();
-        console.log(`✅ Role updated: ${roleData.name}`);
+        logger.info('Role updated', { name: roleData.name });
       }
       roleMap.set(roleData.name, role._id);
     }
 
-    console.log("🎉 Roles and Permissions seeding completed!");
+    logger.info('Roles and permissions seeding completed');
     return { roleMap, permissionMap };
     
   } catch (error) {
-    console.error('❌ Roles and Permissions seeding error:', error.message);
+    logger.error('Roles and Permissions seeding error', { error: error.message, stack: error.stack });
     throw error;
   }
 };

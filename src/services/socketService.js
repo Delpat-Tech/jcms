@@ -2,6 +2,7 @@
 const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
+const logger = require('../config/logger');
 
 let io;
 
@@ -39,16 +40,16 @@ const initializeSocket = (server) => {
   });
 
   io.on('connection', (socket) => {
-    console.log(`User connected: ${socket.username} (${socket.userRole})`);
+    logger.debug('User connected to WebSocket', { username: socket.username, userRole: socket.userRole, userId: socket.userId });
     
     // Join admin room if user is admin or superadmin
     if (['admin', 'superadmin'].includes(socket.userRole)) {
       socket.join('admins');
-      console.log(`${socket.username} joined admin room`);
+      logger.debug('User joined admin room', { username: socket.username, userRole: socket.userRole });
     }
 
     socket.on('disconnect', () => {
-      console.log(`User disconnected: ${socket.username}`);
+      logger.debug('User disconnected from WebSocket', { username: socket.username, userRole: socket.userRole });
     });
   });
 
@@ -63,7 +64,7 @@ const notifyAdmins = async (action, data) => {
       data,
       timestamp: new Date().toISOString()
     };
-    console.log('📡 Sending WebSocket notification to admins:', notification);
+    logger.debug('Sending WebSocket notification to admins', { action, timestamp: notification.timestamp });
     io.to('admins').emit('admin_notification', notification);
   }
   

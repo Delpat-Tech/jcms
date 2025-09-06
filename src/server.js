@@ -5,10 +5,9 @@ require("dotenv").config({ path: path.resolve(__dirname, '../.env') });
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
-const http = require('http');
 const connectDB = require("./config/db");
 const { runSeeds } = require('./seeds');
-const { initializeSocket } = require('./services/socketService');
+const logger = require('./config/logger');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -17,7 +16,7 @@ const PORT = process.env.PORT || 5000;
 try {
   connectDB();
 } catch (error) {
-  console.error('❌ Database connection failed:', error.message);
+  logger.error('Database connection failed', { error: error.message });
   process.exit(1);
 }
 
@@ -26,10 +25,10 @@ if (process.env.AUTO_SEED === 'true') {
   setTimeout(async () => {
     try {
       const seedType = process.env.SEED_TYPE || 'core';
-      console.log(`🌱 Auto-seeding with type: ${seedType}`);
+      logger.info('Auto-seeding started', { seedType });
       await runSeeds(seedType);
     } catch (error) {
-      console.error('❌ Auto-seeding failed:', error.message);
+      logger.error('Auto-seeding failed', { error: error.message, seedType });
     }
   }, 2000); // Wait 2 seconds for DB connection
 }
@@ -50,20 +49,27 @@ app.get("/api/health", (req, res) => {
   res.status(200).json({ status: "ok", message: "Server is running" });
 });
 
+// Logger test route
+app.get("/api/test-logger", (req, res) => {
+  logger.info('Logger test - INFO level', { test: true, timestamp: new Date() });
+  logger.warn('Logger test - WARN level', { test: true });
+  logger.error('Logger test - ERROR level', { test: true, error: 'This is a test error' });
+  res.json({ success: true, message: 'Logger test completed - check console' });
+});
+
 // Import and mount API routes
 const imageRoutes = require('./routes/imageRoutes');
+const imagesRoutes = require('./routes/imagesRoutes'); // Unified images API
 const authRoutes = require('./routes/authRoutes');
 const usersRoutes = require('./routes/usersRoutes'); // Unified users API
 const superadminRoutes = require('./routes/superadminRoutes');
 const adminRoutes = require('./routes/adminRoutes');
-const notificationRoutes = require('./routes/notificationRoutes');
 
-app.use('/api/images', imageRoutes);
+app.use('/api/images', imagesRoutes); // Unified images API for all roles
 app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes); // Unified users API
 app.use('/api/superadmin', superadminRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/notifications', notificationRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {
@@ -80,7 +86,12 @@ app.use((err, req, res, next) => {
   }
 
   // Fallback for other errors
-  console.error(err);
+  logger.error('Unhandled server error', { 
+    error: err.message, 
+    stack: err.stack,
+    url: req?.url, 
+    method: req?.method 
+  });
   res.status(500).json({
     success: false,
     message: "Server error",
@@ -88,12 +99,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Create HTTP server and initialize WebSocket
-const server = http.createServer(app);
-initializeSocket(server);
-
 // Start server
-server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📡 WebSocket server initialized`);
+app.listen(PORT, () => {
+  logger.info('Server started successfully', { port: PORT });
 });

@@ -1,11 +1,12 @@
 // test-superadmin-privileges.js
 const axios = require('axios');
+const logger = require('./src/config/logger');
 
 const BASE_URL = 'http://localhost:5000/api';
 
 async function testSuperAdminPrivileges() {
   try {
-    console.log('👑 Testing Super Admin Privileges...\n');
+    logger.info('Starting Super Admin privileges test');
 
     // Login as system admin
     const systemLogin = await axios.post(`${BASE_URL}/auth/login`, {
@@ -14,48 +15,50 @@ async function testSuperAdminPrivileges() {
       tenant: '68b56457fc1d2b318626df74'
     });
     const systemToken = systemLogin.data.token;
-    console.log('✅ System admin logged in');
+    logger.debug('System admin logged in successfully');
 
     // Test 1: Cross-tenant image access
     const images = await axios.get(`${BASE_URL}/images`, {
       headers: { Authorization: `Bearer ${systemToken}` }
     });
-    console.log(`✅ Images: Can see ${images.data.count} images from all tenants`);
+    logger.debug('Cross-tenant image access verified', { imageCount: images.data.count });
 
     // Test 2: Cross-tenant user access
     const users = await axios.get(`${BASE_URL}/users/all-users`, {
       headers: { Authorization: `Bearer ${systemToken}` }
     });
-    console.log(`✅ Users: Can see ${users.data.data.length} users from all tenants`);
+    logger.debug('Cross-tenant user access verified', { userCount: users.data.data.length });
 
     // Test 3: User analytics (all tenants)
     const analytics = await axios.get(`${BASE_URL}/users/analytics`, {
       headers: { Authorization: `Bearer ${systemToken}` }
     });
-    console.log(`✅ Analytics: ${analytics.data.data.tenantScope} - ${analytics.data.data.totalUsers} total users`);
+    logger.debug('Analytics access verified', { scope: analytics.data.data.tenantScope, totalUsers: analytics.data.data.totalUsers });
 
     // Test 4: Server analytics
     const serverAnalytics = await axios.get(`${BASE_URL}/analytics/server`, {
       headers: { Authorization: `Bearer ${systemToken}` }
     });
-    console.log(`✅ Server Analytics: ${serverAnalytics.data.data.totals.tenants} tenants, ${serverAnalytics.data.data.totals.users} users`);
+    logger.debug('Server analytics access verified', { tenants: serverAnalytics.data.data.totals.tenants, users: serverAnalytics.data.data.totals.users });
 
     // Test 5: Tenant management
     const tenants = await axios.get(`${BASE_URL}/tenants`, {
       headers: { Authorization: `Bearer ${systemToken}` }
     });
-    console.log(`✅ Tenants: Can manage ${tenants.data.data.length} tenants`);
+    logger.debug('Tenant management access verified', { tenantCount: tenants.data.data.length });
 
-    console.log('\n🎉 Super Admin has FULL PRIVILEGES across all tenants!');
-    console.log('📋 Privileges confirmed:');
-    console.log('  - Cross-tenant image access ✅');
-    console.log('  - Cross-tenant user management ✅');
-    console.log('  - System-wide analytics ✅');
-    console.log('  - Tenant management ✅');
-    console.log('  - Server monitoring ✅');
+    logger.info('Super Admin privileges test completed successfully', {
+      privileges: [
+        'Cross-tenant image access',
+        'Cross-tenant user management', 
+        'System-wide analytics',
+        'Tenant management',
+        'Server monitoring'
+      ]
+    });
 
   } catch (error) {
-    console.error('❌ Test failed:', error.response?.data || error.message);
+    logger.error('Test failed', { error: error.response?.data || error.message, stack: error.stack });
   }
 }
 

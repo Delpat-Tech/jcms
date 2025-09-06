@@ -1,5 +1,6 @@
 // middlewares/activityLogger.js
 const { notifyAdmins } = require('../services/socketService');
+const logger = require('../config/logger');
 
 const logActivity = (action, resource) => {
   return async (req, res, next) => {
@@ -22,7 +23,7 @@ const logActivity = (action, resource) => {
               };
             }
           } catch (error) {
-            console.error('Error fetching user for activity log:', error);
+            logger.error('Error fetching user for activity log', { error: error.message, userId: req.user?.id, stack: error.stack });
           }
         }
 
@@ -42,7 +43,7 @@ const logActivity = (action, resource) => {
         };
 
         // Notify admins via WebSocket
-        console.log('📝 Activity logged:', activityData);
+        logger.debug('Activity logged', activityData);
         notifyAdmins('user_activity', activityData);
       }
       

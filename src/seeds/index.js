@@ -5,6 +5,7 @@ const seedMain = require('./seedMain');
 const seedEmpty = require('./seedEmpty');
 const { seedRolesAndPermissions } = require('./seedConfig');
 const seedDevelopment = require('./seedDevelopment');
+const logger = require('../config/logger');
 require('dotenv').config();
 
 // Main seed runner with database connection
@@ -18,7 +19,7 @@ const runSeeds = async (type = 'core') => {
     // Connect to database if not already connected
     if (mongoose.connection.readyState === 0) {
       await mongoose.connect(process.env.MONGO_URI);
-      console.log('💾 Connected to MongoDB for seeding');
+      logger.info('Connected to MongoDB for seeding');
     }
 
     switch (type) {
@@ -37,13 +38,13 @@ const runSeeds = async (type = 'core') => {
         await seedRolesAndPermissions();
         break;
       default:
-        console.log('⚠️ Unknown seed type. Available: core, main, dev, empty, roles');
+        logger.warn('Unknown seed type', { type, availableTypes: ['core', 'main', 'dev', 'empty', 'roles'] });
     }
 
-    console.log('✅ Seeding completed successfully!');
+    logger.info('Seeding completed successfully', { type });
     
   } catch (error) {
-    console.error('❌ Seeding failed:', error.message);
+    logger.error('Seeding failed', { error: error.message, type, stack: error.stack });
     throw error;
   }
 };
@@ -55,7 +56,7 @@ const runStandalone = async () => {
     await runSeeds(seedType);
     process.exit(0);
   } catch (error) {
-    console.error('❌ Seeding failed:', error.message);
+    logger.error('Standalone seeding failed', { error: error.message, seedType, stack: error.stack });
     process.exit(1);
   }
 };

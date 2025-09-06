@@ -9,11 +9,12 @@ const {
   getImagesByUser 
 } = require('../controllers/userController');
 const { authenticate, requireAdminOrAbove } = require('../middlewares/auth');
+const { restrictEditorAccess } = require('../middlewares/editorRestriction');
 const { logActivity } = require('../middlewares/activityLogger');
 const router = express.Router();
 
-// All routes require authentication and admin role or above
-router.use(authenticate, requireAdminOrAbove);
+// All routes require authentication, block editors, and admin role or above
+router.use(authenticate, restrictEditorAccess, requireAdminOrAbove);
 
 // User Management Routes - Same API, different results based on role
 router.post('/', logActivity('CREATE', 'user'), createUserWithRole);           // Create user

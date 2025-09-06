@@ -1,16 +1,17 @@
 // seed.js - Seed Runner Script
 const { runSeeds } = require('./src/seeds');
+const logger = require('./src/config/logger');
 
 const main = async () => {
   const seedType = process.argv[2] || 'core';
   
-  console.log(`🌱 Running ${seedType} seeds...`);
+  logger.info('Starting seed process', { seedType });
   
   try {
     await runSeeds(seedType);
-    console.log('✅ All seeds completed successfully!');
+    logger.info('All seeds completed successfully', { seedType });
   } catch (error) {
-    console.error('❌ Seeding failed:', error.message);
+    logger.error('Seeding failed', { error: error.message, seedType, stack: error.stack });
     process.exit(1);
   }
 };

@@ -1,24 +1,24 @@
 // src/seeds/seedEmpty.js
 const mongoose = require('mongoose');
 const seedCore = require('./seedCore');
+const logger = require('../config/logger');
 require('dotenv').config();
 
 const seedEmpty = async () => {
   try {
-    console.log("🌱 Starting Empty Seeding (Minimal)...");
+    logger.info('Starting empty seeding (minimal)');
     
     // Only run core seeding (roles, permissions, SuperAdmin)
     const result = await seedCore();
     
-    console.log("🎉 Empty seeding completed successfully!");
-    console.log("ℹ️ Only essential data has been seeded:");
-    console.log("  - Roles and permissions");
-    console.log("  - SuperAdmin user");
+    logger.info('Empty seeding completed successfully', { 
+      seededData: ['Roles and permissions', 'SuperAdmin user'] 
+    });
     
     return result;
     
   } catch (error) {
-    console.error('❌ Empty seeding failed:', error.message);
+    logger.error('Empty seeding failed', { error: error.message, stack: error.stack });
     throw error;
   }
 };

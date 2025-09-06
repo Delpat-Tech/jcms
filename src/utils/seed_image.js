@@ -3,6 +3,7 @@ require("dotenv").config();
 const mongoose = require("mongoose");
 const connectDB = require("../config/db");
 const Image = require("../models/image");
+const logger = require('../config/logger');
 
 const seedImage = async () => {
   await connectDB();
@@ -19,9 +20,9 @@ const seedImage = async () => {
       tenant: "tenant123",
     });
 
-    console.log("✅ Dummy Image Inserted:", img);
+    logger.debug('Dummy image inserted', { imageId: img._id, title: img.title, format: img.format });
   } catch (error) {
-    console.error("❌ Error inserting image:", error.message);
+    logger.error('Error inserting dummy image', { error: error.message, stack: error.stack });
   } finally {
     mongoose.connection.close();
   }

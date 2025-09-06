@@ -16,11 +16,6 @@ router.use(authenticate, requireAdminOrAbove);
 
 // User management has been moved to unified /api/users routes
 
-// Image Management Routes
-router.post('/images', upload.single('image'), createImage);
-router.get('/images', getImages);
-router.get('/images/:id', getImageById);
-router.put('/images/:id', upload.single('image'), updateImage);
-router.delete('/images/:id', deleteImage);
+// Image management moved to unified /api/admin-images
 
 module.exports = router;

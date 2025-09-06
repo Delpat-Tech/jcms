@@ -15,7 +15,31 @@ const createUserWithRole = async (req, res) => {
       });
     }
 
+    // Check user permissions for role assignment
+    const currentUser = await User.findById(req.user.id).populate('role');
+    const currentRole = currentUser.role.name;
+    
+    let validRoles;
+    if (currentRole === 'superadmin') {
+      validRoles = ['admin', 'editor', 'viewer']; // SuperAdmin cannot create another superadmin
+    } else if (currentRole === 'admin') {
+      validRoles = ['editor', 'viewer']; // Admin cannot create admin or superadmin
+    } else {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Insufficient permissions to create users' 
+      });
+    }
+    
     const roleName = role || 'editor';
+    
+    if (!validRoles.includes(roleName)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Invalid role. You can only create: ${validRoles.join(', ')}` 
+      });
+    }
+
     const roleDoc = await Role.findOne({ name: roleName });
     
     if (!roleDoc) {
@@ -79,7 +103,7 @@ const getAllUsers = async (req, res) => {
     }
     // SuperAdmin can see all users (no filter)
     
-    const users = await User.find(query, '-password -_id').populate({
+    const users = await User.find(query, '-password').populate({
       path: 'role',
       select: 'name description -_id'
     }).sort({ createdAt: -1 });
@@ -106,7 +130,7 @@ const getUserById = async (req, res) => {
     const currentUser = await User.findById(req.user.id).populate('role');
     const currentRole = currentUser.role.name;
     
-    const user = await User.findById(userId, '-password -_id').populate({
+    const user = await User.findById(userId, '-password').populate({
       path: 'role',
       select: 'name description -_id'
     });
@@ -184,9 +208,9 @@ const updateUser = async (req, res) => {
     if (role) {
       let validRoles;
       if (currentRole === 'superadmin') {
-        validRoles = ['admin', 'editor'];
+        validRoles = ['admin', 'editor', 'viewer']; // SuperAdmin cannot assign superadmin role
       } else if (currentRole === 'admin') {
-        validRoles = ['editor']; // Admin can assign editor roles
+        validRoles = ['editor', 'viewer']; // Admin cannot promote to admin or superadmin
       } else {
         return res.status(403).json({ 
           success: false, 
@@ -209,7 +233,7 @@ const updateUser = async (req, res) => {
     const user = await User.findByIdAndUpdate(
       userId, 
       updateData, 
-      { new: true, select: '-password -_id' }
+      { new: true, select: '-password' }
     );
 
     if (!user) {
@@ -257,15 +281,15 @@ const deleteUser = async (req, res) => {
       });
     }
     
-    // Prevent deleting superadmin
+    // Prevent deleting the only superadmin
     if (targetUser.role.name === 'superadmin') {
       return res.status(403).json({ 
         success: false, 
-        message: 'Cannot delete superadmin user' 
+        message: 'Cannot delete the system superadmin' 
       });
     }
     
-    // Admin can delete editor, superadmin can delete anyone except superadmin
+    // Admin can only delete editor/viewer, not other admins
     if (currentRole === 'admin' && targetUser.role.name === 'admin') {
       return res.status(403).json({ 
         success: false, 

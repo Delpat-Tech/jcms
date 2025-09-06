@@ -2,6 +2,7 @@
 const User = require('../models/user');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const logger = require('../config/logger');
 
 const registerUser = async (req, res) => {
   return res.status(403).json({ 
@@ -11,25 +12,63 @@ const registerUser = async (req, res) => {
 };
 
 const loginUser = async (req, res) => {
-  const { email, username, password } = req.body;
+  const { email, password } = req.body;
+  
   try {
-    // Allow login with either email or username
-    const loginField = email || username;
-    const user = await User.findOne({
-      $or: [{ email: loginField }, { username: loginField }]
-    });
-    if (!user) {
-      return res.status(400).json({ success: false, message: 'Invalid credentials' });
+    if (!email || !password) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email and password are required' 
+      });
     }
+
+    const user = await User.findOne({ email }).populate('role');
+    
+    if (!user) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid credentials' 
+      });
+    }
+    
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ success: false, message: 'Invalid credentials' });
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid credentials' 
+      });
     }
+    
     const payload = { user: { id: user.id } };
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
-    res.json({ success: true, token });
+    
+    logger.info('User login successful', { 
+      userId: user._id, 
+      email: user.email, 
+      role: user.role.name 
+    });
+    
+    res.json({ 
+      success: true, 
+      token,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role.name
+      }
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    logger.error('Login error', { 
+      error: error.message, 
+      stack: error.stack,
+      email: email 
+    });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error', 
+      error: error.message 
+    });
   }
 };
 

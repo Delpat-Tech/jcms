@@ -2,16 +2,17 @@
 const mongoose = require('mongoose');
 const User = require('../models/user');
 const { seedRolesAndPermissions } = require('./seedConfig');
+const logger = require('../config/logger');
 
 const seedCore = async (type = 'core') => {
   try {
-    console.log(`🌱 Starting ${type.charAt(0).toUpperCase() + type.slice(1)} Seeding...`);
+    logger.info('Starting core seeding', { type });
     
     // Seed roles and permissions
     const { roleMap } = await seedRolesAndPermissions();
     
     // Create SuperAdmin
-    console.log("👑 Seeding SuperAdmin User...");
+    logger.info('Seeding SuperAdmin user');
     const superAdminLoginId = process.env.SUPER_ADMIN_LOGIN_ID || 'superadmin';
     const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD || 'admin123';
     const superAdminEmail = process.env.SUPER_ADMIN_EMAIL || 'admin@system.com';
@@ -28,7 +29,7 @@ const seedCore = async (type = 'core') => {
     }
 
     if (!saUser) {
-      console.log(`Creating SuperAdmin user (Login ID: ${superAdminLoginId})...`);
+      logger.info('Creating SuperAdmin user', { loginId: superAdminLoginId });
       saUser = await User.create({
         username: superAdminLoginId,
         email: superAdminEmail,
@@ -36,7 +37,7 @@ const seedCore = async (type = 'core') => {
         role: superAdminRoleId,
         isActive: true
       });
-      console.log(`✅ SuperAdmin user created with ID: ${saUser._id}`);
+      logger.info('SuperAdmin user created', { userId: saUser._id, loginId: superAdminLoginId });
     } else {
       let updated = false;
       if (!saUser.role || !saUser.role.equals(superAdminRoleId)) {
@@ -58,9 +59,9 @@ const seedCore = async (type = 'core') => {
 
       if (updated) {
         await saUser.save();
-        console.log(`✅ Updated existing SuperAdmin user (${saUser.username})`);
+        logger.info('Updated existing SuperAdmin user', { username: saUser.username });
       } else {
-        console.log(`ℹ️ SuperAdmin user (${saUser.username}) already exists and is configured.`);
+        logger.info('SuperAdmin user already configured', { username: saUser.username });
       }
     }
 
@@ -69,17 +70,23 @@ const seedCore = async (type = 'core') => {
     let sampleImages = [];
     
     if (type === 'main' || type === 'development') {
-      console.log("👥 Creating sample users...");
+      logger.info('Creating sample users');
       const User = require('../models/user');
       const Image = require('../models/image');
       
-      const userData = type === 'development' ? [
-        { username: 'dev_admin', email: 'dev.admin@test.com', password: 'dev123', role: 'admin' },
-        { username: 'test_editor', email: 'editor@test.com', password: 'test123', role: 'editor' },
-
-      ] : [
-        { username: 'john_admin', email: 'john@example.com', password: 'password123', role: 'admin' },
-        { username: 'jane_editor', email: 'jane@example.com', password: 'password123', role: 'editor' }
+      const userData = [
+        { 
+          username: process.env.ADMIN_USERNAME || 'dev_admin', 
+          email: process.env.ADMIN_EMAIL || 'dev.admin@test.com', 
+          password: process.env.ADMIN_PASSWORD || 'dev123', 
+          role: 'admin' 
+        },
+        { 
+          username: process.env.EDITOR_USERNAME || 'test_editor', 
+          email: process.env.EDITOR_EMAIL || 'editor@test.com', 
+          password: process.env.EDITOR_PASSWORD || 'test123', 
+          role: 'editor' 
+        }
       ];
       
       for (const data of userData) {
@@ -92,21 +99,21 @@ const seedCore = async (type = 'core') => {
             role: roleMap.get(data.role),
             isActive: true
           });
-          console.log(`✅ Sample user created: ${data.username}`);
+          logger.info('Sample user created', { username: data.username, email: data.email });
         }
         sampleUsers.push(user);
       }
     }
     
-    console.log(`🎉 ${type.charAt(0).toUpperCase() + type.slice(1)} seeding completed!`);
-    console.log(`👤 Username: ${superAdminLoginId}`);
-    console.log(`📧 Email: ${superAdminEmail}`);
-    console.log(`🔑 Password: ${superAdminPassword}`);
+    logger.info('Core seeding completed', { 
+      type, 
+      superAdmin: { username: superAdminLoginId, email: superAdminEmail } 
+    });
     
     return { superAdminUser: saUser, sampleUsers, sampleImages, roleMap };
     
   } catch (error) {
-    console.error('❌ Core seeding error:', error.message);
+    logger.error('Core seeding error', { error: error.message, type, stack: error.stack });
     throw error;
   }
 };

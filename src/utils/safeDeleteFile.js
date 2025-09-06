@@ -1,4 +1,5 @@
 const fs = require('fs');
+const logger = require('../config/logger');
 
 const safeDeleteFile = (filePath, retries = 5, delay = 100) => {
   return new Promise((resolve) => {
@@ -10,7 +11,7 @@ const safeDeleteFile = (filePath, retries = 5, delay = 100) => {
           } else if ((err.code === 'EBUSY' || err.code === 'EPERM') && attempt < retries) {
             setTimeout(() => attemptDelete(attempt + 1), delay);
           } else {
-            console.error(`Error deleting file ${filePath}:`, err.message);
+            logger.error('Error deleting file', { filePath, error: err.message, code: err.code, attempt });
             resolve(false);
           }
         } else {

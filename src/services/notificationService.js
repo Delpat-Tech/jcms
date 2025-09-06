@@ -2,6 +2,7 @@
 const nodemailer = require('nodemailer');
 const Notification = require('../models/notification');
 const User = require('../models/user');
+const logger = require('../config/logger');
 
 // Email transporter setup
 const transporter = nodemailer.createTransport({
@@ -16,7 +17,7 @@ const transporter = nodemailer.createTransport({
 
 const sendEmailNotification = async (adminEmails, activityData) => {
   if (!process.env.SMTP_USER) {
-    console.log('📧 Email notifications disabled (no SMTP config)');
+    logger.debug('Email notifications disabled - no SMTP config');
     return;
   }
 
@@ -39,9 +40,9 @@ const sendEmailNotification = async (adminEmails, activityData) => {
       subject,
       html
     });
-    console.log('📧 Email notifications sent to admins');
+    logger.debug('Email notifications sent to admins', { recipients: adminEmails.length });
   } catch (error) {
-    console.error('❌ Email notification failed:', error.message);
+    logger.error('Email notification failed', { error: error.message, stack: error.stack });
   }
 };
 
@@ -59,10 +60,10 @@ const saveNotification = async (activityData) => {
     });
     
     await notification.save();
-    console.log('💾 Notification saved to database');
+    logger.debug('Notification saved to database', { type: 'user_activity', action: activityData.action });
     return notification;
   } catch (error) {
-    console.error('❌ Failed to save notification:', error.message);
+    logger.error('Failed to save notification', { error: error.message, stack: error.stack });
   }
 };
 

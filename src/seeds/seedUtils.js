@@ -1,5 +1,6 @@
 // src/seeds/seedUtils.js
 const mongoose = require('mongoose');
+const logger = require('../config/logger');
 
 const seedUtils = {
   // Check if document exists
@@ -11,12 +12,12 @@ const seedUtils = {
   async createIfNotExists(Model, data, uniqueField = 'name') {
     const existing = await Model.findOne({ [uniqueField]: data[uniqueField] });
     if (existing) {
-      console.log(`ℹ️ ${Model.modelName} '${data[uniqueField]}' already exists`);
+      logger.info('Document already exists', { model: Model.modelName, field: uniqueField, value: data[uniqueField] });
       return existing;
     }
     
     const created = await Model.create(data);
-    console.log(`✅ ${Model.modelName} '${data[uniqueField]}' created`);
+    logger.info('Document created', { model: Model.modelName, field: uniqueField, value: data[uniqueField] });
     return created;
   },
 
@@ -34,10 +35,10 @@ const seedUtils = {
   async dropCollection(collectionName) {
     try {
       await mongoose.connection.db.dropCollection(collectionName);
-      console.log(`🗑️ Dropped collection: ${collectionName}`);
+      logger.info('Collection dropped', { collection: collectionName });
     } catch (error) {
       if (error.code === 26) { // Collection doesn't exist
-        console.log(`ℹ️ Collection ${collectionName} doesn't exist, skipping drop`);
+        logger.info('Collection does not exist, skipping drop', { collection: collectionName });
       } else {
         throw error;
       }
