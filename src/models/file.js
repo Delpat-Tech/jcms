@@ -1,0 +1,27 @@
+// models/file.js
+const mongoose = require('mongoose');
+
+const fileSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  internalPath: { type: String, required: true },
+  fileUrl: { type: String, required: true },
+  originalName: { type: String, required: true },
+  fileType: {
+    type: String,
+    required: true,
+    enum: ['image', 'document', 'spreadsheet', 'presentation', 'text'],
+  },
+  format: { type: String, required: true },
+  fileSize: { type: Number, required: true },
+  notes: {
+    type: mongoose.Schema.Types.Mixed,
+    default: {}
+  }
+}, { timestamps: true });
+
+module.exports = mongoose.model('File', fileSchema);

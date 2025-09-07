@@ -60,12 +60,14 @@ app.get("/api/test-logger", (req, res) => {
 // Import and mount API routes
 const imageRoutes = require('./routes/imageRoutes');
 const imagesRoutes = require('./routes/imagesRoutes'); // Unified images API
+const fileRoutes = require('./routes/fileRoutes'); // New file routes
 const authRoutes = require('./routes/authRoutes');
 const usersRoutes = require('./routes/usersRoutes'); // Unified users API
 const superadminRoutes = require('./routes/superadminRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 
 app.use('/api/images', imagesRoutes); // Unified images API for all roles
+app.use('/api/files', fileRoutes); // New file API for all file types
 app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes); // Unified users API
 app.use('/api/superadmin', superadminRoutes);
@@ -81,7 +83,7 @@ app.use((err, req, res, next) => {
       });
     }
     return res.status(400).json({ success: false, message: err.message });
-  } else if (err.message === "Only JPG and PNG files are allowed") {
+  } else if (err.message.includes("File type not supported")) {
     return res.status(400).json({ success: false, message: err.message });
   }
 
