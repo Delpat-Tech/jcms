@@ -18,27 +18,18 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  const imageTypes = /jpeg|jpg|png|gif|webp|bmp|tiff/;
-  const documentTypes = /pdf|doc|docx|txt|rtf|odt/;
-  const spreadsheetTypes = /xls|xlsx|ods|csv/;
-  const presentationTypes = /ppt|pptx|odp/;
-  
-  const isImage = imageTypes.test(file.mimetype) || /\.(jpg|jpeg|png|gif|webp|bmp|tiff)$/i.test(file.originalname);
-  const isDocument = documentTypes.test(file.mimetype) || /\.(pdf|doc|docx|txt|rtf|odt)$/i.test(file.originalname);
-  const isSpreadsheet = spreadsheetTypes.test(file.mimetype) || /\.(xls|xlsx|ods|csv)$/i.test(file.originalname);
-  const isPresentation = presentationTypes.test(file.mimetype) || /\.(ppt|pptx|odp)$/i.test(file.originalname);
-  
-  if (isImage || isDocument || isSpreadsheet || isPresentation) {
-    cb(null, true);
-  } else {
-    cb(new Error('File type not supported. Allowed: images, PDF, Word, Excel, PowerPoint, text files'));
-  }
+  // Accept any file type - no restrictions
+  cb(null, true);
 };
 
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB for documents
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB for any file type
   fileFilter: fileFilter
 });
 
+// Support multiple files in single 'file' field
+const uploadMultipleInSingleField = upload.array('file', 10);
+
 module.exports = upload;
+module.exports.uploadMultipleInSingleField = uploadMultipleInSingleField;

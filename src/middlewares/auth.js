@@ -14,7 +14,7 @@ const authenticate = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    const user = await User.findById(decoded.user.id).populate('role').select('username email role');
+    const user = await User.findById(decoded.user.id).populate('role').populate('tenant').select('username email role tenant');
     if (!user) {
       return res.status(401).json({ message: 'User not found' });
     }
@@ -23,7 +23,8 @@ const authenticate = async (req, res, next) => {
       id: user._id, 
       username: user.username,
       email: user.email,
-      role: user.role
+      role: user.role,
+      tenant: user.tenant
     };
     
     next();
@@ -86,6 +87,18 @@ const requirePermission = (requiredPermission) => {
   };
 };
 
+// Tenant filtering middleware
+const addTenantFilter = (req, res, next) => {
+  if (req.user.role.name === 'superadmin') {
+    // Superadmin can see all data
+    req.tenantFilter = {};
+  } else {
+    // All other users can only see their tenant's data
+    req.tenantFilter = { tenant: req.user.tenant?._id || null };
+  }
+  next();
+};
+
 // Convenience role functions
 const requireSuperAdmin = requireRole(['superadmin']);
 const requireAdminOrAbove = requireRole(['superadmin', 'admin']);
@@ -96,7 +109,8 @@ module.exports = {
   requireRole,
   requireSuperAdmin,
   requireAdminOrAbove,
-  requireEditorOrAbove
+  requireEditorOrAbove,
+  addTenantFilter
 };
 
 // Default export for backward compatibility

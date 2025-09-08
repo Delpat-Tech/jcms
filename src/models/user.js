@@ -11,6 +11,11 @@ const userSchema = new mongoose.Schema({
     ref: 'Role',
     required: true
   },
+  tenant: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Tenant',
+    default: null // null for superadmin
+  },
   isActive: { type: Boolean, default: true },
 }, { timestamps: true });
 

@@ -6,67 +6,148 @@ const fs = require('fs');
 
 const uploadFile = async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ success: false, message: 'No file uploaded' });
+    // Handle multiple files in 'file' field, 'files' array, or single file
+    let files = [];
+    if (req.files && Array.isArray(req.files)) {
+      files = req.files;
+    } else if (req.file) {
+      files = [req.file];
     }
-
-    const { title, tenant = 'default', section = 'general' } = req.body;
     
-    if (!title) {
-      fs.unlinkSync(req.file.path);
-      return res.status(400).json({ success: false, message: 'Title is required' });
+    if (files.length === 0) {
+      return res.status(400).json({ success: false, message: 'No files uploaded' });
     }
 
-    const processedFile = await processFile(req.file, tenant, section);
+    const uploadedFiles = [];
+    
+    for (const file of files) {
+      if (!file) continue;
+
+      const { title, tenant = 'default', section = 'general' } = req.body;
+      const fileTitle = title || file.originalname;
+
+      const processedFile = await processFile(file, tenant, section);
     
     const baseUrl = `${req.protocol}://${req.get('host')}`;
     
-    const newFile = new File({
-      title,
-      user: req.user.id,
-      originalName: req.file.originalname,
-      fileSize: req.file.size,
-      ...processedFile,
-      fullUrl: `${baseUrl}${processedFile.fileUrl}`
-    });
+      const newFile = new File({
+        title: fileTitle,
+        user: req.user.id,
+        tenant: req.user.tenant?._id || null,
+        originalName: file.originalname,
+        fileSize: file.size,
+        ...processedFile
+      });
 
-    await newFile.save();
-    
-    // Clean up temp file
-    if (fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
+      await newFile.save();
+      
+      // Clean up temp file
+      if (fs.existsSync(file.path)) {
+        fs.unlinkSync(file.path);
+      }
+
+      uploadedFiles.push({
+        ...newFile.toObject(),
+        fullUrl: `${baseUrl}${processedFile.fileUrl}`
+      });
+
+      // Send notification
+      const notification = {
+        action: 'file_upload',
+        timestamp: new Date(),
+        data: {
+          username: req.user.username || 'Unknown',
+          resource: 'File',
+          resourceId: newFile._id,
+          userRole: req.user.role?.name || 'user',
+          details: { ip: req.ip, fileName: file.originalname, fileType: processedFile.fileType }
+        }
+      };
+      global.io.emit('admin_notification', notification);
     }
 
-    // Send notification
-    const notification = {
-      action: 'file_upload',
-      timestamp: new Date(),
-      data: {
-        username: req.user.username || 'Unknown',
-        resource: 'File',
-        resourceId: newFile._id,
-        userRole: req.user.role?.name || 'user',
-        details: { ip: req.ip, fileName: req.file.originalname, fileType: processedFile.fileType }
-      }
+    // Format file size helper
+    const formatFileSize = (bytes) => {
+      if (bytes < 1024) return `${bytes} B`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+      if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+      return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
     };
-    global.io.emit('admin_notification', notification);
+
+    // Aggregate response with unique fields only
+    const totalSizeBytes = uploadedFiles.reduce((sum, f) => sum + f.fileSize, 0);
+    const summary = {
+      totalFiles: uploadedFiles.length,
+      fileTypes: [...new Set(uploadedFiles.map(f => f.fileType))],
+      formats: [...new Set(uploadedFiles.map(f => f.format))],
+      totalSize: formatFileSize(totalSizeBytes)
+    };
+
+    const compactFiles = uploadedFiles.map(file => ({
+      id: file._id,
+      title: file.title,
+      originalName: file.originalName,
+      fileType: file.fileType,
+      format: file.format,
+      fileSize: formatFileSize(file.fileSize),
+      fullUrl: file.fullUrl
+    }));
 
     res.status(201).json({
       success: true,
-      message: 'File uploaded successfully',
-      file: newFile
+      message: `${uploadedFiles.length} file(s) uploaded successfully`,
+      summary,
+      files: compactFiles
     });
   } catch (error) {
-    if (req.file && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
+    // Clean up temp files on error
+    const files = req.files || [req.file];
+    if (files) {
+      files.forEach(file => {
+        if (file && fs.existsSync(file.path)) {
+          fs.unlinkSync(file.path);
+        }
+      });
     }
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const getFilesByType = async (req, res) => {
+  try {
+    const { type } = req.params;
+    
+    let filter = { fileType: type };
+    if (req.user.role.name !== 'superadmin') {
+      filter.tenant = req.user.tenant?._id || null;
+    }
+    
+    const files = await File.find(filter).populate('user', 'username email').sort({ createdAt: -1 });
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    
+    const filesWithFullUrl = files.map(file => ({
+      ...file.toObject(),
+      fullUrl: `${baseUrl}${file.fileUrl}`
+    }));
+    
+    res.json({ success: true, files: filesWithFullUrl, type });
+  } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
 const getFiles = async (req, res) => {
   try {
-    const files = await File.find().populate('user', 'username email').sort({ createdAt: -1 });
+    // Apply tenant filtering
+    let filter = {};
+    if (req.user.role.name === 'superadmin') {
+      // Superadmin can see all files
+    } else {
+      // Tenant users can only see their tenant's files
+      filter.tenant = req.user.tenant?._id || null;
+    }
+    
+    const files = await File.find(filter).populate('user', 'username email').sort({ createdAt: -1 });
     const baseUrl = `${req.protocol}://${req.get('host')}`;
     
     const filesWithFullUrl = files.map(file => ({
@@ -82,7 +163,12 @@ const getFiles = async (req, res) => {
 
 const getFileById = async (req, res) => {
   try {
-    const file = await File.findById(req.params.id).populate('user', 'username email');
+    let filter = { _id: req.params.id };
+    if (req.user.role.name !== 'superadmin') {
+      filter.tenant = req.user.tenant?._id || null;
+    }
+    
+    const file = await File.findOne(filter).populate('user', 'username email');
     if (!file) {
       return res.status(404).json({ success: false, message: 'File not found' });
     }
@@ -190,4 +276,4 @@ const convertFileFormat = async (req, res) => {
   }
 };
 
-module.exports = { uploadFile, getFiles, getFileById, deleteFile, convertFileFormat };
+module.exports = { uploadFile, getFiles, getFileById, deleteFile, convertFileFormat, getFilesByType };
