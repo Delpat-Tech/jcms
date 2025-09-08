@@ -198,9 +198,7 @@
         }
 
         function connectSocket() {
-            socket = io('http://localhost:5000', {
-                auth: { token }
-            });
+            socket = io('http://localhost:5000');
 
             socket.on('connect', () => {
                 document.getElementById('status').textContent = 'Connected as Admin';
@@ -217,28 +215,46 @@
             });
 
             socket.on('connect_error', (error) => {
+                console.log('Connection error:', error);
                 alert('Connection error: ' + error.message);
             });
+            
+            // Test notification button
+            setTimeout(() => {
+                const testBtn = document.createElement('button');
+                testBtn.textContent = 'Send Test Notification';
+                testBtn.onclick = () => {
+                    fetch('http://localhost:5000/api/test-notification', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ test: 'data' })
+                    });
+                };
+                document.querySelector('.container').appendChild(testBtn);
+            }, 1000);
         }
 
         function addNotification(notification) {
+            console.log('Received notification:', notification);
+            
             const container = document.getElementById('notifications');
             const div = document.createElement('div');
             div.className = 'notification';
             
-            const { action, data, timestamp } = notification;
+            const { action, data, timestamp, message } = notification;
             
             div.innerHTML = `
                 <div class="timestamp">${new Date(timestamp).toLocaleString()}</div>
                 <div>
-                    <span class="user">${data.username}</span> 
-                    performed <span class="action">${action}</span> 
-                    on <span class="resource">${data.resource}</span>
-                    ${data.resourceId ? `(ID: ${data.resourceId})` : ''}
+                    <span class="user">${data?.username || 'Unknown'}</span> 
+                    performed <span class="action">${action || 'action'}</span> 
+                    on <span class="resource">${data?.resource || 'resource'}</span>
+                    ${data?.resourceId ? `(ID: ${data.resourceId})` : ''}
                 </div>
                 <div style="font-size: 0.8em; color: #666; margin-top: 5px;">
-                    Role: ${data.userRole} | IP: ${data.details.ip}
+                    Role: ${data?.userRole || 'N/A'} | IP: ${data?.details?.ip || 'N/A'}
                 </div>
+                <div style="font-size: 0.9em; margin-top: 5px;">${message || 'No message'}</div>
             `;
             
             container.insertBefore(div, container.firstChild);

@@ -1,15 +1,17 @@
 // routes/analyticsRoutes.js
 const express = require('express');
-const { getServerAnalytics, getTenantAnalytics, getDashboard } = require('../controllers/analyticsController');
-const auth = require('../middlewares/auth');
-const permit = require('../middlewares/rbac');
-const validateTenant = require('../middlewares/validateTenant');
+const { getDashboardStats, getFileStats, getUserActivity, getSystemHealth, getSecurityInsights, getContentInsights, getPredictiveAnalytics, getPerformanceMetrics } = require('../controllers/analyticsController');
+const { authenticate, requireAdminOrAbove } = require('../middlewares/auth');
 
 const router = express.Router();
 
-// Admin-only analytics routes
-router.get('/server', auth, validateTenant, permit('admin'), getServerAnalytics);
-router.get('/tenants', auth, validateTenant, permit('admin'), getTenantAnalytics);
-router.get('/dashboard', auth, validateTenant, permit('admin'), getDashboard);
+router.get('/dashboard', authenticate, requireAdminOrAbove, getDashboardStats);
+router.get('/files', authenticate, requireAdminOrAbove, getFileStats);
+router.get('/users', authenticate, requireAdminOrAbove, getUserActivity);
+router.get('/system', authenticate, requireAdminOrAbove, getSystemHealth);
+router.get('/security', authenticate, requireAdminOrAbove, getSecurityInsights);
+router.get('/content', authenticate, requireAdminOrAbove, getContentInsights);
+router.get('/predictions', authenticate, requireAdminOrAbove, getPredictiveAnalytics);
+router.get('/performance', authenticate, requireAdminOrAbove, getPerformanceMetrics);
 
 module.exports = router;

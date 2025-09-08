@@ -12,17 +12,17 @@ const registerUser = async (req, res) => {
 };
 
 const loginUser = async (req, res) => {
-  const { email, password } = req.body;
+  const { username, password } = req.body;
   
   try {
-    if (!email || !password) {
+    if (!username || !password) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Email and password are required' 
+        message: 'Username and password are required' 
       });
     }
 
-    const user = await User.findOne({ email }).populate('role');
+    const user = await User.findOne({ username }).populate('role');
     
     if (!user) {
       return res.status(400).json({ 
@@ -44,7 +44,7 @@ const loginUser = async (req, res) => {
     
     logger.info('User login successful', { 
       userId: user._id, 
-      email: user.email, 
+      username: user.username, 
       role: user.role.name 
     });
     
@@ -62,7 +62,7 @@ const loginUser = async (req, res) => {
     logger.error('Login error', { 
       error: error.message, 
       stack: error.stack,
-      email: email 
+      username: username 
     });
     res.status(500).json({ 
       success: false, 

@@ -37,6 +37,20 @@ const uploadFile = async (req, res) => {
       fs.unlinkSync(req.file.path);
     }
 
+    // Send notification
+    const notification = {
+      action: 'file_upload',
+      timestamp: new Date(),
+      data: {
+        username: req.user.username || 'Unknown',
+        resource: 'File',
+        resourceId: newFile._id,
+        userRole: req.user.role?.name || 'user',
+        details: { ip: req.ip, fileName: req.file.originalname, fileType: processedFile.fileType }
+      }
+    };
+    global.io.emit('admin_notification', notification);
+
     res.status(201).json({
       success: true,
       message: 'File uploaded successfully',
@@ -98,6 +112,21 @@ const deleteFile = async (req, res) => {
     }
 
     await File.findByIdAndDelete(req.params.id);
+    
+    // Send notification
+    const notification = {
+      action: 'file_delete',
+      timestamp: new Date(),
+      data: {
+        username: req.user.username || 'Unknown',
+        resource: 'File',
+        resourceId: req.params.id,
+        userRole: req.user.role?.name || 'user',
+        details: { ip: req.ip, fileName: file.originalName }
+      }
+    };
+    global.io.emit('admin_notification', notification);
+    
     res.json({ success: true, message: 'File deleted successfully' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -137,6 +166,20 @@ const convertFileFormat = async (req, res) => {
       fullUrl: `${baseUrl}${file.fileUrl}`
     };
 
+    // Send notification
+    const notification = {
+      action: 'file_convert',
+      timestamp: new Date(),
+      data: {
+        username: req.user.username || 'Unknown',
+        resource: 'File',
+        resourceId: req.params.id,
+        userRole: req.user.role?.name || 'user',
+        details: { ip: req.ip, fromFormat: file.format, toFormat: format }
+      }
+    };
+    global.io.emit('admin_notification', notification);
+    
     res.json({ 
       success: true, 
       message: `File converted to ${format}`, 

@@ -60,6 +60,20 @@ const createImage = async (req, res) => {
       notes: req.body.notes || {},
     });
 
+    // Send notification
+    const notification = {
+      action: 'image_upload',
+      timestamp: new Date(),
+      data: {
+        username: req.user.username || 'Unknown',
+        resource: 'Image',
+        resourceId: newImage._id,
+        userRole: req.user.role?.name || 'user',
+        details: { ip: req.ip, title: title, format: chosenFormat }
+      }
+    };
+    global.io.emit('admin_notification', notification);
+
     res.status(201).json({ success: true, data: newImage });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error creating image', error: error.message });
@@ -186,6 +200,21 @@ const updateImage = async (req, res) => {
     }
     
     const updatedImage = await Image.findByIdAndUpdate(id, { title }, { new: true });
+    
+    // Send notification
+    const notification = {
+      action: 'image_update',
+      timestamp: new Date(),
+      data: {
+        username: req.user.username || 'Unknown',
+        resource: 'Image',
+        resourceId: id,
+        userRole: userRole,
+        details: { ip: req.ip, newTitle: title }
+      }
+    };
+    global.io.emit('admin_notification', notification);
+    
     res.status(200).json({ success: true, data: updatedImage });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error updating image', error: error.message });
@@ -268,6 +297,20 @@ const patchImage = async (req, res) => {
     
     const updatedImage = await Image.findByIdAndUpdate(id, dataToUpdate, { new: true });
     
+    // Send notification
+    const notification = {
+      action: 'image_patch',
+      timestamp: new Date(),
+      data: {
+        username: req.user.username || 'Unknown',
+        resource: 'Image',
+        resourceId: id,
+        userRole: userRole,
+        details: { ip: req.ip, changes: Object.keys(dataToUpdate) }
+      }
+    };
+    global.io.emit('admin_notification', notification);
+    
     res.status(200).json({ success: true, data: updatedImage });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error updating image', error: error.message });
@@ -310,6 +353,20 @@ const deleteImage = async (req, res) => {
     if (image.internalPath) {
       await safeDeleteFile(image.internalPath);
     }
+    
+    // Send notification
+    const notification = {
+      action: 'image_delete',
+      timestamp: new Date(),
+      data: {
+        username: req.user.username || 'Unknown',
+        resource: 'Image',
+        resourceId: id,
+        userRole: userRole,
+        details: { ip: req.ip, title: image.title }
+      }
+    };
+    global.io.emit('admin_notification', notification);
     
     res.status(200).json({ success: true, message: 'Image deleted successfully' });
   } catch (error) {
