@@ -2,6 +2,8 @@
 const File = require('../models/file');
 const { processFile } = require('../services/fileService');
 const { convertFile } = require('../services/conversionService');
+const { sanitizePath } = require('../utils/pathSanitizer');
+const { sanitizeForLog } = require('../utils/inputSanitizer');
 const fs = require('fs');
 
 const uploadFile = async (req, res) => {
@@ -191,10 +193,25 @@ const deleteFile = async (req, res) => {
     if (!file) {
       return res.status(404).json({ success: false, message: 'File not found' });
     }
+    
+    // Check tenant permissions
+    if (req.user.role.name !== 'superadmin') {
+      const userTenant = req.user.tenant?._id ? req.user.tenant._id.toString() : null;
+      const fileTenant = file.tenant ? file.tenant.toString() : null;
+      
+      if (userTenant !== fileTenant) {
+        return res.status(403).json({ success: false, message: 'Access denied. You can only delete files from your tenant.' });
+      }
+      
+      if (req.user.role.name !== 'admin' && file.user.toString() !== req.user.id) {
+        return res.status(403).json({ success: false, message: 'Access denied. You can only delete your own files.' });
+      }
+    }
 
     // Delete physical file
-    if (fs.existsSync(file.internalPath)) {
-      fs.unlinkSync(file.internalPath);
+    const safePath = sanitizePath(file.internalPath);
+    if (fs.existsSync(safePath)) {
+      fs.unlinkSync(safePath);
     }
 
     await File.findByIdAndDelete(req.params.id);
@@ -208,7 +225,7 @@ const deleteFile = async (req, res) => {
         resource: 'File',
         resourceId: req.params.id,
         userRole: req.user.role?.name || 'user',
-        details: { ip: req.ip, fileName: file.originalName }
+        details: { ip: req.ip, fileName: sanitizeForLog(file.originalName) }
       }
     };
     global.io.emit('admin_notification', notification);

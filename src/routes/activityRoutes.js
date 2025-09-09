@@ -25,14 +25,18 @@ router.get('/', async (req, res) => {
       .populate('userId', 'username email')
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
-      .limit(parseInt(limit));
+      .limit(isNaN(parseInt(limit)) ? 50 : parseInt(limit));
 
     const total = await ActivityLog.countDocuments(filter);
 
     res.json({
       success: true,
       data: activities,
-      pagination: { page: parseInt(page), limit: parseInt(limit), total }
+      pagination: { 
+        page: isNaN(parseInt(page)) ? 1 : parseInt(page), 
+        limit: isNaN(parseInt(limit)) ? 50 : parseInt(limit), 
+        total 
+      }
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error fetching activity logs' });

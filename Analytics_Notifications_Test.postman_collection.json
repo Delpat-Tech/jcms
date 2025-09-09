@@ -1,0 +1,201 @@
+{
+  "info": {
+    "name": "JCMS Analytics & Notifications Test",
+    "description": "Test collection for analytics and notifications",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    const response = pm.response.json();",
+              "    pm.collectionVariables.set('token', response.token);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@system.com\",\n  \"password\": \"admin123\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "2. Analytics - Dashboard",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/analytics/dashboard",
+          "host": ["{{baseUrl}}"],
+          "path": ["analytics", "dashboard"]
+        }
+      }
+    },
+    {
+      "name": "3. Analytics - File Stats",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/analytics/files",
+          "host": ["{{baseUrl}}"],
+          "path": ["analytics", "files"]
+        }
+      }
+    },
+    {
+      "name": "4. Analytics - User Activity",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/analytics/users",
+          "host": ["{{baseUrl}}"],
+          "path": ["analytics", "users"]
+        }
+      }
+    },
+    {
+      "name": "5. Analytics - System Health",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/analytics/system",
+          "host": ["{{baseUrl}}"],
+          "path": ["analytics", "system"]
+        }
+      }
+    },
+    {
+      "name": "6. Notifications - Unread",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/notifications/unread",
+          "host": ["{{baseUrl}}"],
+          "path": ["notifications", "unread"]
+        }
+      }
+    },
+    {
+      "name": "7. Notifications - Stats",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/notifications/stats",
+          "host": ["{{baseUrl}}"],
+          "path": ["notifications", "stats"]
+        }
+      }
+    },
+    {
+      "name": "8. Test Notification Trigger",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"message\": \"Test notification from Postman\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/../test-notification",
+          "host": ["{{baseUrl}}"],
+          "path": ["..", "test-notification"]
+        }
+      }
+    },
+    {
+      "name": "9. Create User (Triggers Notification)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"test_user\",\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"viewer\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/users",
+          "host": ["{{baseUrl}}"],
+          "path": ["users"]
+        }
+      }
+    }
+  ]
+}

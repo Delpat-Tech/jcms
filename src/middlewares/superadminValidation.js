@@ -10,6 +10,9 @@ const validateSingleSuperAdmin = async (req, res, next) => {
     if (role === 'superadmin') {
       // Check if superadmin already exists
       const superadminRole = await Role.findOne({ name: 'superadmin' });
+      if (!superadminRole) {
+        return res.status(500).json({ success: false, message: 'Superadmin role not found in system' });
+      }
       const existingSuperAdmin = await User.findOne({ role: superadminRole._id });
       
       if (existingSuperAdmin) {

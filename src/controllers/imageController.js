@@ -4,6 +4,8 @@ const fs = require('fs');
 const sharp = require('sharp');
 const Image = require('../models/image');
 const { safeDeleteFile } = require('../utils/safeDeleteFile');
+const { sanitizePath, sanitizeFilename } = require('../utils/pathSanitizer');
+const { sanitizeForLog } = require('../utils/inputSanitizer');
 const logger = require('../config/logger');
 
 sharp.cache(false);
@@ -31,14 +33,17 @@ const createImage = async (req, res) => {
     if (!allowedFormats.includes(chosenFormat)) chosenFormat = 'webp';
     if (chosenFormat === 'jpg') chosenFormat = 'jpeg';
 
-    const uploadDir = `uploads/${userId}`;
+    // Tenant-based file organization
+    const tenantPath = req.user.tenant ? req.user.tenant.toString() : 'system';
+    const uploadDir = `uploads/${tenantPath}/${userId}`;
     fs.mkdirSync(uploadDir, { recursive: true });
 
-    const baseName = path.parse(req.file.originalname).name + '-' + Date.now();
+    const sanitizedFilename = sanitizeFilename(req.file.originalname);
+    const baseName = path.parse(sanitizedFilename).name + '-' + Date.now();
     const imageBuffer = fs.readFileSync(req.file.path);
     await safeDeleteFile(req.file.path);
 
-    const outputPath = path.join(uploadDir, `${baseName}.${chosenFormat}`);
+    const outputPath = sanitizePath(path.join(uploadDir, `${baseName}.${chosenFormat}`));
     
     const sharpInstance = sharp(imageBuffer);
     if (chosenFormat === 'webp') await sharpInstance.webp({ quality: 80 }).toFile(outputPath);
@@ -55,6 +60,7 @@ const createImage = async (req, res) => {
     const newImage = await Image.create({
       title,
       user: userId,
+      tenant: req.user.tenant || null,
       internalPath,
       fileUrl,
       format: chosenFormat,
@@ -79,7 +85,7 @@ const createImage = async (req, res) => {
         }
       });
       
-      logger.info('Image upload tracked', { userId: req.user.id, username: user.username });
+      logger.info('Image upload tracked', { userId: req.user.id, username: sanitizeForLog(user.username) });
     } catch (error) {
       logger.error('Activity tracking failed', { error: error.message });
     }
@@ -106,27 +112,19 @@ const getImages = async (req, res) => {
       // Return only current user's images regardless of role
       filter.user = req.user.id;
     } else {
-      // Apply role-based filtering
+      // Apply tenant + role-based filtering
       if (userRole === 'superadmin') {
-        // Superadmin can see all images
-      } else if (userRole === 'admin') {
-        // Admin can see own images + editor/viewer images + other admin images (but NOT superadmin images)
-        const Role = require('../models/role');
-        const editorRole = await Role.findOne({ name: 'editor' });
-        const viewerRole = await Role.findOne({ name: 'viewer' });
-        const adminRole = await Role.findOne({ name: 'admin' });
-        
-        const allowedUsers = await User.find({
-          $or: [
-            { _id: req.user.id }, // Own images
-            { role: { $in: [editorRole._id, viewerRole._id, adminRole._id] } } // Editor/viewer/admin images
-          ]
-        }).select('_id');
-        
-        filter.user = { $in: allowedUsers.map(u => u._id) };
+        // Superadmin can see all images from all tenants
       } else {
-        // Editor/viewer can ONLY see their own images
-        filter.user = req.user.id;
+        // All other roles can only see images from their tenant
+        filter.tenant = req.user.tenant;
+        
+        if (userRole === 'admin') {
+          // Admin can see all images within their tenant
+        } else {
+          // Editor/viewer can ONLY see their own images within their tenant
+          filter.user = req.user.id;
+        }
       }
     }
     
@@ -149,25 +147,29 @@ const getImageById = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Image not found' });
     }
     
-    // Check access permissions
+    // Check tenant + access permissions
     const User = require('../models/user');
     const currentUser = await User.findById(req.user.id).populate('role');
     const userRole = currentUser.role.name;
     
     if (userRole === 'superadmin') {
-      // Superadmin can access all images
-    } else if (userRole === 'admin') {
-      // Admin can view own + editor/viewer + other admin images, but NOT superadmin images
-      const imageOwner = await User.findById(image.user).populate('role');
-      const ownerRole = imageOwner.role.name;
-      
-      if (ownerRole === 'superadmin') {
-        return res.status(403).json({ success: false, message: 'Access denied. You cannot access superadmin images.' });
-      }
+      // Superadmin can access all images from all tenants
     } else {
-      // Editor/viewer can ONLY access their own images
-      if (image.user.toString() !== req.user.id) {
-        return res.status(403).json({ success: false, message: 'Access denied. You can only access your own images.' });
+      // Check tenant access first
+      const userTenant = req.user.tenant ? req.user.tenant.toString() : null;
+      const imageTenant = image.tenant ? image.tenant.toString() : null;
+      
+      if (userTenant !== imageTenant) {
+        return res.status(403).json({ success: false, message: 'Access denied. You can only access images from your tenant.' });
+      }
+      
+      if (userRole === 'admin') {
+        // Admin can view all images within their tenant
+      } else {
+        // Editor/viewer can ONLY access their own images within their tenant
+        if (image.user.toString() !== req.user.id) {
+          return res.status(403).json({ success: false, message: 'Access denied. You can only access your own images.' });
+        }
       }
     }
     
@@ -187,25 +189,29 @@ const updateImage = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Image not found' });
     }
     
-    // Check modification permissions
+    // Check tenant + modification permissions
     const User = require('../models/user');
     const currentUser = await User.findById(req.user.id).populate('role');
     const userRole = currentUser.role.name;
     
     if (userRole === 'superadmin') {
-      // Superadmin can modify all images
-    } else if (userRole === 'admin') {
-      // Admin can modify own + editor/viewer images, but NOT other admin or superadmin images
-      const imageOwner = await User.findById(image.user).populate('role');
-      const ownerRole = imageOwner.role.name;
-      
-      if (image.user.toString() !== req.user.id && (ownerRole === 'admin' || ownerRole === 'superadmin')) {
-        return res.status(403).json({ success: false, message: 'Access denied. You cannot modify images uploaded by other admins or superadmin.' });
-      }
+      // Superadmin can modify all images from all tenants
     } else {
-      // Editor/viewer can only modify their own
-      if (image.user.toString() !== req.user.id) {
-        return res.status(403).json({ success: false, message: 'Access denied. You can only modify your own images.' });
+      // Check tenant access first
+      const userTenant = req.user.tenant ? req.user.tenant.toString() : null;
+      const imageTenant = image.tenant ? image.tenant.toString() : null;
+      
+      if (userTenant !== imageTenant) {
+        return res.status(403).json({ success: false, message: 'Access denied. You can only modify images from your tenant.' });
+      }
+      
+      if (userRole === 'admin') {
+        // Admin can modify all images within their tenant
+      } else {
+        // Editor/viewer can only modify their own images within their tenant
+        if (image.user.toString() !== req.user.id) {
+          return res.status(403).json({ success: false, message: 'Access denied. You can only modify your own images.' });
+        }
       }
     }
     
@@ -238,25 +244,29 @@ const patchImage = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Image not found' });
     }
     
-    // Check modification permissions
+    // Check tenant + modification permissions
     const User = require('../models/user');
     const currentUser = await User.findById(req.user.id).populate('role');
     const userRole = currentUser.role.name;
     
     if (userRole === 'superadmin') {
-      // Superadmin can modify all images
-    } else if (userRole === 'admin') {
-      // Admin can modify own + editor/viewer images, but NOT other admin or superadmin images
-      const imageOwner = await User.findById(image.user).populate('role');
-      const ownerRole = imageOwner.role.name;
-      
-      if (image.user.toString() !== req.user.id && (ownerRole === 'admin' || ownerRole === 'superadmin')) {
-        return res.status(403).json({ success: false, message: 'Access denied. You cannot modify images uploaded by other admins or superadmin.' });
-      }
+      // Superadmin can modify all images from all tenants
     } else {
-      // Editor/viewer can only modify their own
-      if (image.user.toString() !== req.user.id) {
-        return res.status(403).json({ success: false, message: 'Access denied. You can only modify your own images.' });
+      // Check tenant access first
+      const userTenant = req.user.tenant ? req.user.tenant.toString() : null;
+      const imageTenant = image.tenant ? image.tenant.toString() : null;
+      
+      if (userTenant !== imageTenant) {
+        return res.status(403).json({ success: false, message: 'Access denied. You can only modify images from your tenant.' });
+      }
+      
+      if (userRole === 'admin') {
+        // Admin can modify all images within their tenant
+      } else {
+        // Editor/viewer can only modify their own images within their tenant
+        if (image.user.toString() !== req.user.id) {
+          return res.status(403).json({ success: false, message: 'Access denied. You can only modify your own images.' });
+        }
       }
     }
     
@@ -273,7 +283,7 @@ const patchImage = async (req, res) => {
         return res.status(400).json({ success: false, message: 'Invalid format. Allowed: webp, avif, jpg, jpeg, png, gif, tiff, bmp' });
       }
       
-      const oldPath = image.internalPath;
+      const oldPath = sanitizePath(image.internalPath);
       const uploadDir = path.dirname(oldPath);
       const baseName = path.parse(oldPath).name;
       
@@ -281,7 +291,7 @@ const patchImage = async (req, res) => {
       const imageBuffer = fs.readFileSync(oldPath);
       
       // Create new path with new format
-      const newPath = path.join(uploadDir, `${baseName}.${newFormat}`);
+      const newPath = sanitizePath(path.join(uploadDir, `${baseName}.${newFormat}`));
       
       // Convert image to new format
       const sharpInstance = sharp(imageBuffer);
@@ -330,25 +340,29 @@ const deleteImage = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Image not found' });
     }
     
-    // Check deletion permissions
+    // Check tenant + deletion permissions
     const User = require('../models/user');
     const currentUser = await User.findById(req.user.id).populate('role');
     const userRole = currentUser.role.name;
     
     if (userRole === 'superadmin') {
-      // Superadmin can delete all images
-    } else if (userRole === 'admin') {
-      // Admin can delete own + editor/viewer images, but NOT other admin or superadmin images
-      const imageOwner = await User.findById(image.user).populate('role');
-      const ownerRole = imageOwner.role.name;
-      
-      if (image.user.toString() !== req.user.id && (ownerRole === 'admin' || ownerRole === 'superadmin')) {
-        return res.status(403).json({ success: false, message: 'Access denied. You cannot delete images uploaded by other admins or superadmin.' });
-      }
+      // Superadmin can delete all images from all tenants
     } else {
-      // Editor/viewer can only delete their own
-      if (image.user.toString() !== req.user.id) {
-        return res.status(403).json({ success: false, message: 'Access denied. You can only delete your own images.' });
+      // Check tenant access first
+      const userTenant = req.user.tenant ? req.user.tenant.toString() : null;
+      const imageTenant = image.tenant ? image.tenant.toString() : null;
+      
+      if (userTenant !== imageTenant) {
+        return res.status(403).json({ success: false, message: 'Access denied. You can only delete images from your tenant.' });
+      }
+      
+      if (userRole === 'admin') {
+        // Admin can delete all images within their tenant
+      } else {
+        // Editor/viewer can only delete their own images within their tenant
+        if (image.user.toString() !== req.user.id) {
+          return res.status(403).json({ success: false, message: 'Access denied. You can only delete your own images.' });
+        }
       }
     }
     
@@ -379,6 +393,15 @@ const getBulkImages = async (req, res) => {
   try {
     const { limit = 20, fields, userId } = req.query;
     let filter = {};
+    
+    // Apply tenant filtering for non-superadmin users
+    const User = require('../models/user');
+    const currentUser = await User.findById(req.user.id).populate('role');
+    const userRole = currentUser.role.name;
+    
+    if (userRole !== 'superadmin') {
+      filter.tenant = req.user.tenant;
+    }
     
     if (userId) {
       filter.user = userId;
