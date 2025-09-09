@@ -243,19 +243,38 @@
             
             const { action, data, timestamp, message } = notification;
             
-            div.innerHTML = `
-                <div class="timestamp">${new Date(timestamp).toLocaleString()}</div>
-                <div>
-                    <span class="user">${data?.username || 'Unknown'}</span> 
-                    performed <span class="action">${action || 'action'}</span> 
-                    on <span class="resource">${data?.resource || 'resource'}</span>
-                    ${data?.resourceId ? `(ID: ${data.resourceId})` : ''}
-                </div>
-                <div style="font-size: 0.8em; color: #666; margin-top: 5px;">
-                    Role: ${data?.userRole || 'N/A'} | IP: ${data?.details?.ip || 'N/A'}
-                </div>
-                <div style="font-size: 0.9em; margin-top: 5px;">${message || 'No message'}</div>
-            `;
+            // Handle high activity alerts
+            if (action === 'high_activity_alert') {
+                div.innerHTML = `
+                    <div class="timestamp">${new Date(timestamp).toLocaleString()}</div>
+                    <div style="background: #ffebee; border-left: 4px solid #f44336; padding: 10px; border-radius: 5px;">
+                        <strong>⚠️ High Activity Alert</strong>
+                        <div style="margin-top: 5px;">
+                            <strong>${data.username}</strong> performed <strong>${data.totalOperations}</strong> operations in ${data.timeframe}
+                        </div>
+                        <div style="margin-top: 5px; font-size: 0.9em;">
+                            ${Object.values(data.summary).map(s => 
+                                `<div>• ${s.count}x ${s.action} on ${s.resource}</div>`
+                            ).join('')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Regular notification
+                div.innerHTML = `
+                    <div class="timestamp">${new Date(timestamp).toLocaleString()}</div>
+                    <div>
+                        <span class="user">${data?.username || 'Unknown'}</span> 
+                        performed <span class="action">${action || 'action'}</span> 
+                        on <span class="resource">${data?.resource || 'resource'}</span>
+                        ${data?.resourceId ? `(ID: ${data.resourceId})` : ''}
+                    </div>
+                    <div style="font-size: 0.8em; color: #666; margin-top: 5px;">
+                        Role: ${data?.userRole || 'N/A'} | IP: ${data?.details?.ip || 'N/A'}
+                    </div>
+                    <div style="font-size: 0.9em; margin-top: 5px;">${message || 'No message'}</div>
+                `;
+            }
             
             container.insertBefore(div, container.firstChild);
             

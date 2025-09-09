@@ -4,6 +4,7 @@ const fs = require('fs');
 const sharp = require('sharp');
 const Image = require('../models/image');
 const { safeDeleteFile } = require('../utils/safeDeleteFile');
+const logger = require('../config/logger');
 
 sharp.cache(false);
 
@@ -60,19 +61,28 @@ const createImage = async (req, res) => {
       notes: req.body.notes || {},
     });
 
-    // Send notification
-    const notification = {
-      action: 'image_upload',
-      timestamp: new Date(),
-      data: {
-        username: req.user.username || 'Unknown',
-        resource: 'Image',
-        resourceId: newImage._id,
-        userRole: req.user.role?.name || 'user',
-        details: { ip: req.ip, title: title, format: chosenFormat }
-      }
-    };
-    global.io.emit('admin_notification', notification);
+    // Direct activity tracking
+    try {
+      const aggregator = require('../services/notificationAggregator');
+      const User = require('../models/user');
+      const user = await User.findById(req.user.id).populate('role');
+      
+      await aggregator.addNotification({
+        action: 'image_upload',
+        data: {
+          userId: req.user.id,
+          username: user.username,
+          resource: 'Image',
+          resourceId: newImage._id,
+          userRole: user.role.name,
+          details: { ip: req.ip, title: title, format: chosenFormat }
+        }
+      });
+      
+      logger.info('Image upload tracked', { userId: req.user.id, username: user.username });
+    } catch (error) {
+      logger.error('Activity tracking failed', { error: error.message });
+    }
 
     res.status(201).json({ success: true, data: newImage });
   } catch (error) {
@@ -201,19 +211,16 @@ const updateImage = async (req, res) => {
     
     const updatedImage = await Image.findByIdAndUpdate(id, { title }, { new: true });
     
-    // Send notification
-    const notification = {
-      action: 'image_update',
-      timestamp: new Date(),
-      data: {
-        username: req.user.username || 'Unknown',
-        resource: 'Image',
-        resourceId: id,
-        userRole: userRole,
-        details: { ip: req.ip, newTitle: title }
-      }
-    };
-    global.io.emit('admin_notification', notification);
+    // Log activity using new system
+    const { notifyAdmins } = require('../services/socketService');
+    await notifyAdmins('image_update', {
+      userId: req.user.id,
+      username: req.user.username || 'Unknown',
+      resource: 'Image',
+      resourceId: id,
+      userRole: userRole,
+      details: { ip: req.ip, newTitle: title }
+    });
     
     res.status(200).json({ success: true, data: updatedImage });
   } catch (error) {
@@ -297,19 +304,16 @@ const patchImage = async (req, res) => {
     
     const updatedImage = await Image.findByIdAndUpdate(id, dataToUpdate, { new: true });
     
-    // Send notification
-    const notification = {
-      action: 'image_patch',
-      timestamp: new Date(),
-      data: {
-        username: req.user.username || 'Unknown',
-        resource: 'Image',
-        resourceId: id,
-        userRole: userRole,
-        details: { ip: req.ip, changes: Object.keys(dataToUpdate) }
-      }
-    };
-    global.io.emit('admin_notification', notification);
+    // Log activity using new system
+    const { notifyAdmins } = require('../services/socketService');
+    await notifyAdmins('image_patch', {
+      userId: req.user.id,
+      username: req.user.username || 'Unknown',
+      resource: 'Image',
+      resourceId: id,
+      userRole: userRole,
+      details: { ip: req.ip, changes: Object.keys(dataToUpdate) }
+    });
     
     res.status(200).json({ success: true, data: updatedImage });
   } catch (error) {
@@ -354,19 +358,16 @@ const deleteImage = async (req, res) => {
       await safeDeleteFile(image.internalPath);
     }
     
-    // Send notification
-    const notification = {
-      action: 'image_delete',
-      timestamp: new Date(),
-      data: {
-        username: req.user.username || 'Unknown',
-        resource: 'Image',
-        resourceId: id,
-        userRole: userRole,
-        details: { ip: req.ip, title: image.title }
-      }
-    };
-    global.io.emit('admin_notification', notification);
+    // Log activity using new system
+    const { notifyAdmins } = require('../services/socketService');
+    await notifyAdmins('image_delete', {
+      userId: req.user.id,
+      username: req.user.username || 'Unknown',
+      resource: 'Image',
+      resourceId: id,
+      userRole: userRole,
+      details: { ip: req.ip, title: image.title }
+    });
     
     res.status(200).json({ success: true, message: 'Image deleted successfully' });
   } catch (error) {

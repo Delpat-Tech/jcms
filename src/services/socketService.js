@@ -57,20 +57,21 @@ const initializeSocket = (server) => {
 };
 
 const notifyAdmins = async (action, data) => {
-  // 1. Send real-time WebSocket notification
-  if (io) {
-    const notification = {
-      action,
-      data,
-      timestamp: new Date().toISOString()
-    };
-    logger.debug('Sending WebSocket notification to admins', { action, timestamp: notification.timestamp });
-    io.to('admins').emit('admin_notification', notification);
-  }
+  // 1. Add to aggregator for activity tracking
+  const aggregator = require('./notificationAggregator');
+  const notification = {
+    action,
+    data: {
+      ...data,
+      userId: data.userId || data.user
+    },
+    timestamp: new Date().toISOString()
+  };
   
-  // 2. Send comprehensive notifications (email + database)
-  const { notifyAdmins: comprehensiveNotify } = require('./notificationService');
-  await comprehensiveNotify(data);
+  await aggregator.addNotification(notification);
+  
+  // 2. Only send email for high-priority or threshold-exceeded activities
+  // Regular CRUD operations are just logged silently
 };
 
 module.exports = {

@@ -105,6 +105,29 @@ app.post("/api/test-notification", (req, res) => {
   res.json({ success: true, message: 'Notification sent', clients: global.io.engine.clientsCount });
 });
 
+// Test activity tracking
+app.post("/api/test-activity", async (req, res) => {
+  try {
+    const { notifyAdmins } = require('./services/socketService');
+    
+    // Simulate multiple activities
+    for (let i = 0; i < 5; i++) {
+      await notifyAdmins('test_upload', {
+        userId: '507f1f77bcf86cd799439011',
+        username: 'TestUser',
+        resource: 'TestResource',
+        resourceId: `test-${i}`,
+        userRole: 'admin',
+        details: { ip: '127.0.0.1', test: true }
+      });
+    }
+    
+    res.json({ success: true, message: 'Activity test completed' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Import and mount API routes
 const imageRoutes = require('./routes/imageRoutes');
 const imagesRoutes = require('./routes/imagesRoutes'); // Unified images API
@@ -124,6 +147,8 @@ app.use('/api/superadmin', superadminRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/tenants', tenantRoutes);
+app.use('/api/notifications', require('./routes/notificationRoutes'));
+app.use('/api/activity', require('./routes/activityRoutes'));
 
 // Global error handler
 app.use((err, req, res, next) => {

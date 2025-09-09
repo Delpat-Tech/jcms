@@ -42,9 +42,9 @@ const logActivity = (action, resource) => {
           }
         };
 
-        // Notify admins via WebSocket
+        // Use new activity tracking system
         logger.debug('Activity logged', activityData);
-        notifyAdmins('user_activity', activityData);
+        notifyAdmins(action, activityData);
       }
       
       // Call original res.json
