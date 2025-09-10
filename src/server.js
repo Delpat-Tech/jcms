@@ -48,9 +48,19 @@ app.get("/admin", (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'admin-dashboard.html'));
 });
 
-app.get("/test", (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'test-socket.html'));
+app.get("/admin-dashboard.html", (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'admin-dashboard.html'));
 });
+
+app.get("/test", (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'test-websocket.html'));
+});
+
+app.get("/test-websocket.html", (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'test-websocket.html'));
+});
+
+// (Test routes unchanged)
 
 // Health check route
 app.get("/api/health", (req, res) => {
@@ -129,7 +139,6 @@ app.post("/api/test-activity", async (req, res) => {
 });
 
 // Import and mount API routes
-const imageRoutes = require('./routes/imageRoutes');
 const imagesRoutes = require('./routes/imagesRoutes'); // Unified images API
 const fileRoutes = require('./routes/fileRoutes'); // New file routes
 const authRoutes = require('./routes/authRoutes');

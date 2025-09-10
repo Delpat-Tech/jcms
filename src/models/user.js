@@ -18,6 +18,18 @@ const userSchema = new mongoose.Schema({
     default: null // null for superadmin
   },
   isActive: { type: Boolean, default: true },
+  deactivatedAt: { type: Date, default: null },
+  deactivatedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  reactivatedAt: { type: Date, default: null },
+  reactivatedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
 }, { timestamps: true });
 
 // Create compound sparse index for phone and tenant

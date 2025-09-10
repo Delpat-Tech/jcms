@@ -14,42 +14,104 @@ const initializeSocket = (server) => {
     }
   });
 
-  // Authentication middleware for socket connections
+  // Optional authentication middleware for socket connections
   io.use(async (socket, next) => {
     try {
-      const token = socket.handshake.auth.token;
+      const token = socket.handshake.auth.token || socket.handshake.query.token;
+      
       if (!token) {
-        return next(new Error('Authentication error'));
+        // Allow connection without authentication but mark as guest
+        socket.userId = 'guest';
+        socket.userRole = 'guest';
+        socket.username = 'Guest User';
+        logger.debug('WebSocket: Guest connection allowed');
+        return next();
       }
 
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await User.findById(decoded.user.id).populate('role');
-      
-      if (!user) {
-        return next(new Error('User not found'));
-      }
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.user.id).populate('role');
+        
+        if (!user) {
+          // Fallback to guest if user not found
+          socket.userId = 'guest';
+          socket.userRole = 'guest';
+          socket.username = 'Guest User';
+          logger.warn('WebSocket: User not found, falling back to guest');
+          return next();
+        }
 
-      socket.userId = user._id.toString();
-      socket.userRole = user.role.name;
-      socket.username = user.username;
-      
-      next();
+        socket.userId = user._id.toString();
+        socket.userRole = user.role.name;
+        socket.username = user.username;
+        
+        logger.debug('WebSocket: Authenticated user connected', {
+          userId: socket.userId,
+          username: socket.username,
+          role: socket.userRole
+        });
+        
+        next();
+      } catch (jwtError) {
+        // Invalid token, fallback to guest
+        socket.userId = 'guest';
+        socket.userRole = 'guest';
+        socket.username = 'Guest User';
+        logger.warn('WebSocket: Invalid token, falling back to guest', { error: jwtError.message });
+        next();
+      }
     } catch (err) {
-      next(new Error('Authentication error'));
+      logger.error('WebSocket authentication error', { error: err.message });
+      // Still allow connection as guest
+      socket.userId = 'guest';
+      socket.userRole = 'guest';
+      socket.username = 'Guest User';
+      next();
     }
   });
 
   io.on('connection', (socket) => {
-    logger.debug('User connected to WebSocket', { username: socket.username, userRole: socket.userRole, userId: socket.userId });
+    logger.info('WebSocket connection established', { 
+      username: socket.username, 
+      userRole: socket.userRole, 
+      userId: socket.userId,
+      socketId: socket.id
+    });
     
-    // Join admin room if user is admin or superadmin
+    // Join appropriate rooms based on user role
     if (['admin', 'superadmin'].includes(socket.userRole)) {
       socket.join('admins');
-      logger.debug('User joined admin room', { username: socket.username, userRole: socket.userRole });
+      logger.info('User joined admin room', { 
+        username: socket.username, 
+        userRole: socket.userRole,
+        socketId: socket.id 
+      });
+    } else if (socket.userRole === 'guest') {
+      socket.join('guests');
+      logger.debug('Guest user connected', { socketId: socket.id });
+    } else {
+      socket.join('users');
+      logger.debug('Regular user connected', { 
+        username: socket.username, 
+        userRole: socket.userRole,
+        socketId: socket.id 
+      });
     }
 
     socket.on('disconnect', () => {
-      logger.debug('User disconnected from WebSocket', { username: socket.username, userRole: socket.userRole });
+      logger.debug('WebSocket disconnected', { 
+        username: socket.username, 
+        userRole: socket.userRole,
+        socketId: socket.id
+      });
+    });
+    
+    // Send a welcome message to confirm connection
+    socket.emit('connection_confirmed', {
+      message: 'WebSocket connected successfully',
+      userRole: socket.userRole,
+      username: socket.username,
+      timestamp: new Date().toISOString()
     });
   });
 
@@ -57,7 +119,16 @@ const initializeSocket = (server) => {
 };
 
 const notifyAdmins = async (action, data) => {
-  // 1. Add to aggregator for activity tracking
+  const callId = Math.random().toString(36).substring(7);
+  
+  logger.info('🔵 SOCKET SERVICE: notifyAdmins called', {
+    callId,
+    action,
+    userId: data.userId,
+    username: data.username
+  });
+  
+  // Add to aggregator for activity tracking and real-time notifications
   const aggregator = require('./notificationAggregator');
   const notification = {
     action,
@@ -68,7 +139,17 @@ const notifyAdmins = async (action, data) => {
     timestamp: new Date().toISOString()
   };
   
+  logger.info('🔵 SOCKET SERVICE: Calling aggregator.addNotification', {
+    callId,
+    action
+  });
+  
   await aggregator.addNotification(notification);
+  
+  logger.info('🔵 SOCKET SERVICE: aggregator.addNotification completed', {
+    callId,
+    action
+  });
   
   // 2. Only send email for high-priority or threshold-exceeded activities
   // Regular CRUD operations are just logged silently

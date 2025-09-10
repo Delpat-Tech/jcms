@@ -246,6 +246,14 @@ const removeTenantUser = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Cannot remove tenant admin' });
     }
 
+    // Check if user is already deactivated
+    if (!user.isActive) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'User is already deactivated' 
+      });
+    }
+
     // Role-based deletion permissions
     const currentUserRole = req.user.role.name;
     const targetUserRole = user.role.name;
@@ -255,14 +263,28 @@ const removeTenantUser = async (req, res) => {
       if (!['editor', 'viewer'].includes(targetUserRole)) {
         return res.status(403).json({ 
           success: false, 
-          message: 'Admin can only delete editor and viewer users' 
+          message: 'Admin can only deactivate editor and viewer users' 
         });
       }
     }
     // Superadmin can delete any user (including editors)
 
-    await User.findByIdAndDelete(userId);
-    res.json({ success: true, message: 'User removed from tenant successfully' });
+    // Soft delete: Set isActive to false instead of hard deletion
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        isActive: false,
+        deactivatedAt: new Date(),
+        deactivatedBy: req.user.id
+      },
+      { new: true, select: 'username email isActive deactivatedAt' }
+    ).populate('role', 'name');
+    
+    res.json({ 
+      success: true, 
+      message: 'User deactivated from tenant successfully',
+      data: updatedUser
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

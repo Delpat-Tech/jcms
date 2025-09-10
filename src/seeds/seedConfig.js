@@ -61,9 +61,17 @@ const seedConfig = {
         'api.read', 'api.write'
       ]
     },
-
-
-
+    viewer: {
+      description: 'Content Viewer - View only access',
+      permissions: [
+        'content.read',
+        'image.read',
+        'user.profile',
+        'user.read',
+        'analytics.view',
+        'api.read'
+      ]
+    }
   },
 
   // Sample data templates
@@ -240,9 +248,23 @@ const seedRolesAndPermissions = async () => {
           permissionMap.get('api.write')
         ]
       },
-
-
-
+      {
+        name: 'viewer',
+        description: 'Content Viewer - View only access',
+        permissions: [
+          // Content
+          permissionMap.get('content.read'),
+          // Image
+          permissionMap.get('image.read'),
+          // User Profile
+          permissionMap.get('user.profile'),
+          permissionMap.get('user.read'),
+          // Basic Analytics
+          permissionMap.get('analytics.view'),
+          // API
+          permissionMap.get('api.read')
+        ]
+      }
     ];
 
     // Create roles

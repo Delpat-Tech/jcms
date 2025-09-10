@@ -10,7 +10,11 @@
     "seed:core": "node seed.js core",
     "seed:main": "node seed.js main",
     "seed:empty": "node seed.js empty",
-    "seed:roles": "node seed.js roles"
+    "seed:roles": "node seed.js roles",
+    "setup": "node setupDatabase.js",
+    "setup:db": "node setupDatabase.js",
+    "troubleshoot": "node troubleshoot-connection.js",
+    "check": "node troubleshoot-connection.js"
   },
   "repository": {
     "type": "git",
@@ -48,6 +52,7 @@
     "winston": "^3.17.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "nodemon": "^3.1.10",
+    "socket.io-client": "^4.8.1"
   }
 }

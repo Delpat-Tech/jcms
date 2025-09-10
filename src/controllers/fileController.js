@@ -52,20 +52,6 @@ const uploadFile = async (req, res) => {
         ...newFile.toObject(),
         fullUrl: `${baseUrl}${processedFile.fileUrl}`
       });
-
-      // Send notification
-      const notification = {
-        action: 'file_upload',
-        timestamp: new Date(),
-        data: {
-          username: req.user.username || 'Unknown',
-          resource: 'File',
-          resourceId: newFile._id,
-          userRole: req.user.role?.name || 'user',
-          details: { ip: req.ip, fileName: file.originalname, fileType: processedFile.fileType }
-        }
-      };
-      global.io.emit('admin_notification', notification);
     }
 
     // Format file size helper
@@ -216,20 +202,6 @@ const deleteFile = async (req, res) => {
 
     await File.findByIdAndDelete(req.params.id);
     
-    // Send notification
-    const notification = {
-      action: 'file_delete',
-      timestamp: new Date(),
-      data: {
-        username: req.user.username || 'Unknown',
-        resource: 'File',
-        resourceId: req.params.id,
-        userRole: req.user.role?.name || 'user',
-        details: { ip: req.ip, fileName: sanitizeForLog(file.originalName) }
-      }
-    };
-    global.io.emit('admin_notification', notification);
-    
     res.json({ success: true, message: 'File deleted successfully' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -268,20 +240,6 @@ const convertFileFormat = async (req, res) => {
       ...file.toObject(),
       fullUrl: `${baseUrl}${file.fileUrl}`
     };
-
-    // Send notification
-    const notification = {
-      action: 'file_convert',
-      timestamp: new Date(),
-      data: {
-        username: req.user.username || 'Unknown',
-        resource: 'File',
-        resourceId: req.params.id,
-        userRole: req.user.role?.name || 'user',
-        details: { ip: req.ip, fromFormat: file.format, toFormat: format }
-      }
-    };
-    global.io.emit('admin_notification', notification);
     
     res.json({ 
       success: true, 

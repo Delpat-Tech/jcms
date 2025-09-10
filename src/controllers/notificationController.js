@@ -149,10 +149,144 @@ const getFilterOptions = async (req, res) => {
   }
 };
 
+// Get user-specific operations from folder-like collections
+const getUserOperations = async (req, res) => {
+  try {
+    const { userId, operation } = req.params;
+    const { page = 1, limit = 20 } = req.query;
+    
+    const mongoose = require('mongoose');
+    const collectionName = `activity_${userId}_${operation}`;
+    
+    // Check if collection exists
+    const collections = await mongoose.connection.db.listCollections({ name: collectionName }).toArray();
+    if (collections.length === 0) {
+      return res.json({
+        success: true,
+        data: [],
+        message: 'No operations found for this user and action type',
+        pagination: { page: 1, limit, total: 0, pages: 0 }
+      });
+    }
+    
+    const DynamicModel = mongoose.model(collectionName, new mongoose.Schema({}, { strict: false }), collectionName);
+    
+    const skip = (page - 1) * limit;
+    const operations = await DynamicModel.find({})
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+      
+    const total = await DynamicModel.countDocuments({});
+    
+    res.json({
+      success: true,
+      data: operations,
+      userFolder: `${userId}/${operation}`,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    logger.error('Error fetching user operations', { error: error.message, stack: error.stack });
+    res.status(500).json({ success: false, message: 'Error fetching user operations' });
+  }
+};
+
+// Get all available user folders (collections)
+const getUserFolders = async (req, res) => {
+  try {
+    const mongoose = require('mongoose');
+    const collections = await mongoose.connection.db.listCollections().toArray();
+    
+    const userFolders = collections
+      .map(col => col.name)
+      .filter(name => name.startsWith('activity_'))
+      .map(name => {
+        const parts = name.replace('activity_', '').split('_');
+        const userId = parts[0];
+        const operation = parts.slice(1).join('_');
+        return { userId, operation, collection: name };
+      })
+      .reduce((acc, folder) => {
+        if (!acc[folder.userId]) {
+          acc[folder.userId] = [];
+        }
+        acc[folder.userId].push({ operation: folder.operation, collection: folder.collection });
+        return acc;
+      }, {});
+    
+    res.json({
+      success: true,
+      userFolders,
+      totalUsers: Object.keys(userFolders).length,
+      totalFolders: collections.filter(col => col.name.startsWith('activity_')).length
+    });
+  } catch (error) {
+    logger.error('Error fetching user folders', { error: error.message });
+    res.status(500).json({ success: false, message: 'Error fetching user folders' });
+  }
+};
+
+// Get aggregated notification summary for dashboard
+const getAggregatedSummary = async (req, res) => {
+  try {
+    const { hours = 24 } = req.query;
+    const startTime = new Date(Date.now() - (hours * 60 * 60 * 1000));
+    
+    const ActivityLog = require('../models/activityLog');
+    
+    const aggregation = await ActivityLog.aggregate([
+      { $match: { createdAt: { $gte: startTime } } },
+      {
+        $group: {
+          _id: {
+            action: '$action',
+            username: '$username',
+            resource: '$resource'
+          },
+          count: { $sum: 1 },
+          firstSeen: { $min: '$createdAt' },
+          lastSeen: { $max: '$createdAt' },
+          resourceIds: { $addToSet: '$resourceId' }
+        }
+      },
+      { $match: { count: { $gte: 3 } } }, // Only groups with 3+ similar operations
+      { $sort: { count: -1, lastSeen: -1 } },
+      { $limit: 50 }
+    ]);
+    
+    res.json({
+      success: true,
+      data: aggregation.map(item => ({
+        action: item._id.action,
+        username: item._id.username,
+        resource: item._id.resource,
+        count: item.count,
+        timeSpan: Math.round((item.lastSeen - item.firstSeen) / 1000 / 60), // minutes
+        resourceIds: item.resourceIds,
+        firstSeen: item.firstSeen,
+        lastSeen: item.lastSeen
+      })),
+      timeRange: `${hours} hours`,
+      generatedAt: new Date()
+    });
+  } catch (error) {
+    logger.error('Error fetching aggregated summary', { error: error.message });
+    res.status(500).json({ success: false, message: 'Error fetching aggregated summary' });
+  }
+};
+
 module.exports = {
   getNotifications,
   getUnreadNotifications,
   getNotificationStats,
   markAsRead,
-  getFilterOptions
+  getFilterOptions,
+  getUserOperations,
+  getUserFolders,
+  getAggregatedSummary
 };

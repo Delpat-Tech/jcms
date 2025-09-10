@@ -97,6 +97,8 @@ const createUserWithRole = async (req, res) => {
 // Get all users with role-based filtering
 const getAllUsers = async (req, res) => {
   try {
+    const { includeInactive = 'false', status } = req.query;
+    
     // Get current user role
     const currentUser = await User.findById(req.user.id).populate('role');
     const currentRole = currentUser.role.name;
@@ -118,16 +120,35 @@ const getAllUsers = async (req, res) => {
       query = { tenant: req.user.tenant };
     }
     
+    // Filter by active status
+    if (status === 'active') {
+      query.isActive = true;
+    } else if (status === 'inactive') {
+      query.isActive = false;
+    } else if (includeInactive !== 'true') {
+      // By default, only show active users unless explicitly requested
+      query.isActive = true;
+    }
+    
     const users = await User.find(query, '-password').populate({
       path: 'role',
       select: 'name description -_id'
     }).populate({
       path: 'tenant',
       select: 'name -_id'
+    }).populate({
+      path: 'deactivatedBy',
+      select: 'username -_id'
     }).sort({ createdAt: -1 });
+    
     res.status(200).json({ 
       success: true, 
       count: users.length,
+      filter: {
+        includeInactive: includeInactive === 'true',
+        status: status || 'all active',
+        role: currentRole
+      },
       data: users 
     });
   } catch (error) {
@@ -232,6 +253,14 @@ const updateUser = async (req, res) => {
       });
     }
     
+    // Check if trying to update a deactivated user (unless reactivating)
+    if (!targetUser.isActive && (isActive !== true)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Cannot update deactivated user. Use reactivate endpoint first or set isActive to true.' 
+      });
+    }
+    
     // Tenant isolation - non-superadmin users can only update users from their tenant
     if (currentRole !== 'superadmin' && targetUser.tenant && req.user.tenant && 
         targetUser.tenant.toString() !== req.user.tenant.toString()) {
@@ -265,9 +294,33 @@ const updateUser = async (req, res) => {
       }
       
       const roleDoc = await Role.findOne({ name: role });
+      if (!roleDoc) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Role not found in database' 
+        });
+      }
       updateData.role = roleDoc._id;
     }
-    if (typeof isActive === 'boolean') updateData.isActive = isActive;
+    if (typeof isActive === 'boolean') {
+      updateData.isActive = isActive;
+      
+      // If reactivating user, clear deactivation fields
+      if (isActive === true && !targetUser.isActive) {
+        updateData.deactivatedAt = null;
+        updateData.deactivatedBy = null;
+        updateData.reactivatedAt = new Date();
+        updateData.reactivatedBy = req.user.id;
+      }
+      
+      // If deactivating user, set deactivation fields
+      if (isActive === false && targetUser.isActive) {
+        updateData.deactivatedAt = new Date();
+        updateData.deactivatedBy = req.user.id;
+        updateData.reactivatedAt = null;
+        updateData.reactivatedBy = null;
+      }
+    }
 
     const user = await User.findByIdAndUpdate(
       userId, 
@@ -288,16 +341,29 @@ const updateUser = async (req, res) => {
       data: user 
     });
   } catch (error) {
+    console.error('Update user error:', error);
+    
     if (error.code === 11000) {
       return res.status(400).json({ 
         success: false, 
         message: 'Username or email already exists' 
       });
     }
+    
+    // Check for specific null reference errors
+    if (error.message.includes('Cannot read properties of null')) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'User or related data not found. The user may have been deleted or corrupted.', 
+        error: error.message 
+      });
+    }
+    
     res.status(500).json({ 
       success: false, 
       message: 'Error updating user', 
-      error: error.message 
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };
@@ -345,7 +411,25 @@ const deleteUser = async (req, res) => {
       });
     }
     
-    const user = await User.findByIdAndDelete(userId);
+    // Check if user is already deactivated
+    if (!targetUser.isActive) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'User is already deactivated' 
+      });
+    }
+    
+    // Soft delete: Set isActive to false instead of hard deletion
+    const user = await User.findByIdAndUpdate(
+      userId, 
+      { 
+        isActive: false,
+        deactivatedAt: new Date(),
+        deactivatedBy: req.user.id
+      }, 
+      { new: true, select: '-password' }
+    ).populate('role', 'name');
+    
     if (!user) {
       return res.status(404).json({ 
         success: false, 
@@ -355,7 +439,15 @@ const deleteUser = async (req, res) => {
 
     res.status(200).json({ 
       success: true, 
-      message: 'User deleted successfully' 
+      message: 'User deactivated successfully',
+      data: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role.name,
+        isActive: user.isActive,
+        deactivatedAt: user.deactivatedAt
+      }
     });
   } catch (error) {
     res.status(500).json({ 
@@ -490,6 +582,89 @@ const resetUserPassword = async (req, res) => {
   }
 };
 
+const reactivateUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    // Check current user permissions
+    const currentUser = await User.findById(req.user.id).populate('role');
+    const currentRole = currentUser.role.name;
+    
+    // Get target user to check current status
+    const targetUser = await User.findById(userId).populate('role');
+    if (!targetUser) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
+    
+    // Check if user is already active
+    if (targetUser.isActive) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'User is already active' 
+      });
+    }
+    
+    // Permission checks - same as update/delete
+    if (targetUser.role.name === 'superadmin' && currentRole !== 'superadmin') {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Cannot reactivate superadmin user' 
+      });
+    }
+    
+    if (currentRole === 'admin' && targetUser.role.name === 'admin') {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Admin cannot reactivate other admin users' 
+      });
+    }
+    
+    // Tenant isolation
+    if (currentRole !== 'superadmin' && targetUser.tenant && req.user.tenant && 
+        targetUser.tenant.toString() !== req.user.tenant.toString()) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Cannot reactivate users from other tenants' 
+      });
+    }
+    
+    // Reactivate user
+    const user = await User.findByIdAndUpdate(
+      userId, 
+      { 
+        isActive: true,
+        deactivatedAt: null,
+        deactivatedBy: null,
+        reactivatedAt: new Date(),
+        reactivatedBy: req.user.id
+      }, 
+      { new: true, select: '-password' }
+    ).populate('role', 'name');
+    
+    res.status(200).json({ 
+      success: true, 
+      message: 'User reactivated successfully',
+      data: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role.name,
+        isActive: user.isActive,
+        reactivatedAt: user.reactivatedAt
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error reactivating user', 
+      error: error.message 
+    });
+  }
+};
+
 module.exports = {
   createUser,
   createUserWithRole,
@@ -497,6 +672,7 @@ module.exports = {
   getUserById,
   updateUser,
   deleteUser,
+  reactivateUser,
   getImagesByUser,
   updateProfile,
   resetUserPassword
