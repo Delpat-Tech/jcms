@@ -49,12 +49,20 @@ const createUserWithRole = async (req, res) => {
       });
     }
 
-    const newUser = await User.create({ 
+    // Set tenant for new user based on current user's tenant
+    const userData = { 
       username, 
       email, 
       password,
       role: roleDoc._id
-    });
+    };
+    
+    // Only set tenant if current user is not superadmin
+    if (currentRole !== 'superadmin') {
+      userData.tenant = req.user.tenant;
+    }
+    
+    const newUser = await User.create(userData);
 
     // Populate role for response (excluding permissions)
     await newUser.populate({
@@ -95,17 +103,27 @@ const getAllUsers = async (req, res) => {
     
     let query = {};
     
-    // Role-based filtering
-    if (currentRole === 'admin') {
-      // Admin can only see non-superadmin users
+    // Role-based and tenant-based filtering
+    if (currentRole === 'superadmin') {
+      // SuperAdmin can see all users (no filter)
+    } else if (currentRole === 'admin') {
+      // Admin can only see users from their own tenant (excluding superadmin)
       const superadminRole = await Role.findOne({ name: 'superadmin' });
-      query = { role: { $ne: superadminRole._id } };
+      query = { 
+        tenant: req.user.tenant,
+        role: { $ne: superadminRole._id }
+      };
+    } else {
+      // Other roles can only see users from their own tenant
+      query = { tenant: req.user.tenant };
     }
-    // SuperAdmin can see all users (no filter)
     
     const users = await User.find(query, '-password').populate({
       path: 'role',
       select: 'name description -_id'
+    }).populate({
+      path: 'tenant',
+      select: 'name -_id'
     }).sort({ createdAt: -1 });
     res.status(200).json({ 
       success: true, 
@@ -133,6 +151,9 @@ const getUserById = async (req, res) => {
     const user = await User.findById(userId, '-password').populate({
       path: 'role',
       select: 'name description -_id'
+    }).populate({
+      path: 'tenant',
+      select: 'name -_id'
     });
     
     if (!user) {
@@ -142,11 +163,20 @@ const getUserById = async (req, res) => {
       });
     }
     
-    // Role-based access control
+    // Role-based and tenant-based access control
     if (currentRole === 'admin' && user.role.name === 'superadmin') {
       return res.status(403).json({ 
         success: false, 
         message: 'Access denied. Cannot view superadmin details.' 
+      });
+    }
+    
+    // Tenant isolation - non-superadmin users can only view users from their tenant
+    if (currentRole !== 'superadmin' && user.tenant && req.user.tenant && 
+        user.tenant.toString() !== req.user.tenant.toString()) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Access denied. Cannot view users from other tenants.' 
       });
     }
 
@@ -199,6 +229,15 @@ const updateUser = async (req, res) => {
       return res.status(403).json({ 
         success: false, 
         message: 'Cannot modify superadmin user' 
+      });
+    }
+    
+    // Tenant isolation - non-superadmin users can only update users from their tenant
+    if (currentRole !== 'superadmin' && targetUser.tenant && req.user.tenant && 
+        targetUser.tenant.toString() !== req.user.tenant.toString()) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Cannot modify users from other tenants' 
       });
     }
 
@@ -297,6 +336,15 @@ const deleteUser = async (req, res) => {
       });
     }
     
+    // Tenant isolation - non-superadmin users can only delete users from their tenant
+    if (currentRole !== 'superadmin' && targetUser.tenant && req.user.tenant && 
+        targetUser.tenant.toString() !== req.user.tenant.toString()) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Cannot delete users from other tenants' 
+      });
+    }
+    
     const user = await User.findByIdAndDelete(userId);
     if (!user) {
       return res.status(404).json({ 
@@ -347,6 +395,101 @@ const getImagesByUser = async (req, res) => {
   }
 };
 
+const updateProfile = async (req, res) => {
+  try {
+    const { username, currentPassword, newPassword } = req.body;
+    const userId = req.user.id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const updateData = {};
+    
+    if (username) {
+      const existingUser = await User.findOne({ username, _id: { $ne: userId } });
+      if (existingUser) {
+        return res.status(400).json({ success: false, message: 'Username already exists' });
+      }
+      updateData.username = username;
+    }
+
+    if (newPassword) {
+      if (!currentPassword) {
+        return res.status(400).json({ success: false, message: 'Current password required' });
+      }
+      
+      const bcrypt = require('bcryptjs');
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      if (!isMatch) {
+        return res.status(400).json({ success: false, message: 'Current password is incorrect' });
+      }
+      
+      updateData.password = newPassword;
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ success: false, message: 'No valid fields to update' });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(userId, updateData, { new: true, select: '-password' });
+    
+    res.status(200).json({ 
+      success: true, 
+      message: 'Profile updated successfully',
+      data: updatedUser 
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(400).json({ success: false, message: 'Username already exists' });
+    }
+    res.status(500).json({ success: false, message: 'Error updating profile', error: error.message });
+  }
+};
+
+const resetUserPassword = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { newPassword } = req.body;
+    const currentUser = await User.findById(req.user.id).populate('role');
+    
+    if (!newPassword) {
+      return res.status(400).json({ success: false, message: 'New password is required' });
+    }
+
+    const targetUser = await User.findById(userId).populate('role');
+    if (!targetUser) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const currentRole = currentUser.role.name;
+    const targetRole = targetUser.role.name;
+
+    // Permission checks
+    if (currentRole === 'admin' && targetRole === 'editor') {
+      // Admin can reset editor password within same tenant
+      if (targetUser.tenant?.toString() !== req.user.tenant?.toString()) {
+        return res.status(403).json({ success: false, message: 'Can only reset passwords within your tenant' });
+      }
+    } else if (currentRole === 'superadmin' && ['admin', 'editor', 'viewer'].includes(targetRole)) {
+      // Superadmin can reset any non-superadmin password
+    } else {
+      return res.status(403).json({ success: false, message: 'Insufficient permissions to reset this user\'s password' });
+    }
+
+    targetUser.password = newPassword;
+    await targetUser.save();
+    
+    res.status(200).json({ 
+      success: true, 
+      message: 'Password reset successfully' 
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error resetting password', error: error.message });
+  }
+};
+
 module.exports = {
   createUser,
   createUserWithRole,
@@ -354,5 +497,7 @@ module.exports = {
   getUserById,
   updateUser,
   deleteUser,
-  getImagesByUser
+  getImagesByUser,
+  updateProfile,
+  resetUserPassword
 };

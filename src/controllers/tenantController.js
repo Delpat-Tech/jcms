@@ -125,7 +125,7 @@ const deleteTenant = async (req, res) => {
 const createTenantUser = async (req, res) => {
   try {
     const { tenantId } = req.params;
-    const { username, email, password, roleName = 'editor' } = req.body;
+    const { username, email, password, phone, roleName = 'editor' } = req.body;
 
     // Check if tenant exists
     const tenant = await Tenant.findById(tenantId);
@@ -151,13 +151,16 @@ const createTenantUser = async (req, res) => {
     }
 
     // Create user
-    const user = new User({
+    const userData = {
       username,
       email,
       password,
+      phone: phone || `auto_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       role: role._id,
       tenant: tenantId
-    });
+    };
+    
+    const user = new User(userData);
     await user.save();
 
     res.status(201).json({
@@ -229,16 +232,34 @@ const removeTenantUser = async (req, res) => {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
 
-    const user = await User.findOne({ _id: userId, tenant: tenantId });
+    const user = await User.findOne({ _id: userId, tenant: tenantId }).populate('role');
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found in this tenant' });
     }
 
     // Don't allow removing tenant admin
     const tenant = await Tenant.findById(tenantId);
+    if (!tenant) {
+      return res.status(404).json({ success: false, message: 'Tenant not found' });
+    }
     if (tenant.adminUser.toString() === userId) {
       return res.status(400).json({ success: false, message: 'Cannot remove tenant admin' });
     }
+
+    // Role-based deletion permissions
+    const currentUserRole = req.user.role.name;
+    const targetUserRole = user.role.name;
+    
+    if (currentUserRole === 'admin') {
+      // Admin can only delete editor and viewer roles within their tenant
+      if (!['editor', 'viewer'].includes(targetUserRole)) {
+        return res.status(403).json({ 
+          success: false, 
+          message: 'Admin can only delete editor and viewer users' 
+        });
+      }
+    }
+    // Superadmin can delete any user (including editors)
 
     await User.findByIdAndDelete(userId);
     res.json({ success: true, message: 'User removed from tenant successfully' });

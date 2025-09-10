@@ -6,6 +6,7 @@ const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true, trim: true },
   email: { type: String, required: true, unique: true, trim: true },
   password: { type: String, required: true },
+  phone: { type: String, sparse: true, trim: true }, // sparse allows multiple null values
   role: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Role',
@@ -18,6 +19,9 @@ const userSchema = new mongoose.Schema({
   },
   isActive: { type: Boolean, default: true },
 }, { timestamps: true });
+
+// Create compound sparse index for phone and tenant
+userSchema.index({ phone: 1, tenant: 1 }, { sparse: true });
 
 // Hash password before saving the user
 userSchema.pre('save', async function(next) {

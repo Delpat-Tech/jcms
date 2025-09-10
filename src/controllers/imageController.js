@@ -34,7 +34,7 @@ const createImage = async (req, res) => {
     if (chosenFormat === 'jpg') chosenFormat = 'jpeg';
 
     // Tenant-based file organization
-    const tenantPath = req.user.tenant ? req.user.tenant.toString() : 'system';
+    const tenantPath = req.user.tenant ? req.user.tenant._id.toString() : 'system';
     const uploadDir = `uploads/${tenantPath}/${userId}`;
     fs.mkdirSync(uploadDir, { recursive: true });
 
@@ -60,7 +60,7 @@ const createImage = async (req, res) => {
     const newImage = await Image.create({
       title,
       user: userId,
-      tenant: req.user.tenant || null,
+      tenant: req.user.tenant ? req.user.tenant._id : null,
       internalPath,
       fileUrl,
       format: chosenFormat,
@@ -117,7 +117,7 @@ const getImages = async (req, res) => {
         // Superadmin can see all images from all tenants
       } else {
         // All other roles can only see images from their tenant
-        filter.tenant = req.user.tenant;
+        filter.tenant = req.user.tenant ? req.user.tenant._id : null;
         
         if (userRole === 'admin') {
           // Admin can see all images within their tenant
@@ -156,7 +156,7 @@ const getImageById = async (req, res) => {
       // Superadmin can access all images from all tenants
     } else {
       // Check tenant access first
-      const userTenant = req.user.tenant ? req.user.tenant.toString() : null;
+      const userTenant = req.user.tenant ? req.user.tenant._id.toString() : null;
       const imageTenant = image.tenant ? image.tenant.toString() : null;
       
       if (userTenant !== imageTenant) {
@@ -198,7 +198,7 @@ const updateImage = async (req, res) => {
       // Superadmin can modify all images from all tenants
     } else {
       // Check tenant access first
-      const userTenant = req.user.tenant ? req.user.tenant.toString() : null;
+      const userTenant = req.user.tenant ? req.user.tenant._id.toString() : null;
       const imageTenant = image.tenant ? image.tenant.toString() : null;
       
       if (userTenant !== imageTenant) {
@@ -253,7 +253,7 @@ const patchImage = async (req, res) => {
       // Superadmin can modify all images from all tenants
     } else {
       // Check tenant access first
-      const userTenant = req.user.tenant ? req.user.tenant.toString() : null;
+      const userTenant = req.user.tenant ? req.user.tenant._id.toString() : null;
       const imageTenant = image.tenant ? image.tenant.toString() : null;
       
       if (userTenant !== imageTenant) {
@@ -349,7 +349,7 @@ const deleteImage = async (req, res) => {
       // Superadmin can delete all images from all tenants
     } else {
       // Check tenant access first
-      const userTenant = req.user.tenant ? req.user.tenant.toString() : null;
+      const userTenant = req.user.tenant ? req.user.tenant._id.toString() : null;
       const imageTenant = image.tenant ? image.tenant.toString() : null;
       
       if (userTenant !== imageTenant) {
@@ -400,7 +400,7 @@ const getBulkImages = async (req, res) => {
     const userRole = currentUser.role.name;
     
     if (userRole !== 'superadmin') {
-      filter.tenant = req.user.tenant;
+      filter.tenant = req.user.tenant ? req.user.tenant._id : null;
     }
     
     if (userId) {

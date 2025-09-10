@@ -138,11 +138,13 @@ const superadminRoutes = require('./routes/superadminRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const tenantRoutes = require('./routes/tenantRoutes');
+const profileRoutes = require('./routes/profileRoutes');
 
 app.use('/api/images', imagesRoutes); // Unified images API for all roles
 app.use('/api/files', fileRoutes); // New file API for all file types
 app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes); // Unified users API
+app.use('/api/profile', profileRoutes); // User profile management
 app.use('/api/superadmin', superadminRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/analytics', analyticsRoutes);
