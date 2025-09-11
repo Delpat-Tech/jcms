@@ -161,8 +161,61 @@ const generateSpecificSize = async (req, res) => {
   }
 };
 
+// Stream a pre-generated (or on-demand) variant by size
+const streamSize = async (req, res) => {
+  try {
+    const { id, size } = req.params;
+    const validSizes = ['thumbnail', 'medium', 'large'];
+    if (!validSizes.includes(size)) {
+      return res.status(400).json({ success: false, message: 'Size must be: thumbnail, medium, or large' });
+    }
+
+    const image = await Image.findById(id);
+    if (!image) {
+      return res.status(404).json({ success: false, message: 'Image not found' });
+    }
+
+    // Check access similar to other handlers
+    const User = require('../models/user');
+    const currentUser = await User.findById(req.user.id).populate('role');
+    const userRole = currentUser.role.name;
+    if (userRole !== 'superadmin') {
+      const userTenant = req.user.tenant ? req.user.tenant._id.toString() : null;
+      const imageTenant = image.tenant ? image.tenant.toString() : null;
+      if (userTenant !== imageTenant) {
+        return res.status(403).json({ success: false, message: 'Access denied. You can only access images from your tenant.' });
+      }
+      if (userRole !== 'admin' && image.user.toString() !== req.user.id) {
+        return res.status(403).json({ success: false, message: 'Access denied. You can only access your own images.' });
+      }
+    }
+
+    const inputPath = image.internalPath;
+    const dir = path.dirname(inputPath);
+    const baseName = path.parse(inputPath).name;
+    const format = image.format || 'webp';
+
+    const suffixMap = { thumbnail: '_thumb', medium: '_med', large: '_large' };
+    const targetPath = path.join(dir, `${baseName}${suffixMap[size]}.${format}`);
+
+    if (!fs.existsSync(targetPath)) {
+      const inputBuffer = fs.readFileSync(inputPath);
+      await generateMultipleSizes(inputBuffer, dir, baseName, format);
+    }
+
+    if (!fs.existsSync(targetPath)) {
+      return res.status(500).json({ success: false, message: 'Failed to generate requested size' });
+    }
+
+    res.sendFile(path.resolve(targetPath));
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error retrieving size', error: error.message });
+  }
+};
+
 module.exports = {
   generateSizes,
   generateSpecificSize,
-  convertFormat
+  convertFormat,
+  streamSize
 };

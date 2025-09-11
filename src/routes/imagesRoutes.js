@@ -22,4 +22,8 @@ router.get('/:id', getImageById);
 router.put('/:id', logActivity('image_update', 'image'), upload.single('image'), updateImage);
 router.delete('/:id', logActivity('image_delete', 'image'), deleteImage);
 
+// Retrieve specific size variant (generates on-demand if missing)
+const { streamSize } = require('../controllers/imageProcessingController');
+router.get('/:id/size/:size', streamSize);
+
 module.exports = router;

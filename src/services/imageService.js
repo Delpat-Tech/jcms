@@ -2,6 +2,7 @@
 const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs');
+const imgCfg = require('../config/imageProcessing');
 
 const IMAGE_SIZES = {
   thumbnail: { width: 300, suffix: '_thumb' },
@@ -11,30 +12,69 @@ const IMAGE_SIZES = {
 
 const generateMultipleSizes = async (inputBuffer, outputDir, baseName, format = 'webp') => {
   const results = {};
-  
-  // Create output directory if it doesn't exist
+
   fs.mkdirSync(outputDir, { recursive: true });
-  
-  // Generate each size
-  for (const [sizeName, config] of Object.entries(IMAGE_SIZES)) {
-    const outputPath = path.join(outputDir, `${baseName}${config.suffix}.${format}`);
-    
-    const sharpInstance = sharp(inputBuffer).resize(config.width, null, {
-      fit: 'inside'
-    });
-    
-    // Apply format-specific compression
-    if (format === 'webp') await sharpInstance.webp({ quality: 80 }).toFile(outputPath);
-    else if (format === 'avif') await sharpInstance.avif({ quality: 50 }).toFile(outputPath);
-    else if (format === 'jpeg') await sharpInstance.jpeg({ quality: 80 }).toFile(outputPath);
-    else if (format === 'png') await sharpInstance.png({ compressionLevel: 8 }).toFile(outputPath);
-    
+
+  // Read original width to avoid upscaling
+  const meta = await sharp(inputBuffer).metadata();
+  const originalWidth = meta.width || 0;
+
+  for (const [sizeName, cfg] of Object.entries(IMAGE_SIZES)) {
+    const targetWidth = imgCfg.avoidUpscale && originalWidth
+      ? Math.min(cfg.width, originalWidth)
+      : cfg.width;
+
+    const outputPath = path.join(outputDir, `${baseName}${cfg.suffix}.${format}`);
+
+    let pipeline = sharp(inputBuffer)
+      .resize({
+        width: targetWidth,
+        height: null,
+        fit: 'inside',
+        withoutEnlargement: !!imgCfg.avoidUpscale,
+        kernel: sharp.kernel[imgCfg.kernel] || sharp.kernel.lanczos3,
+        fastShrinkOnLoad: !!imgCfg.fastShrinkOnLoad
+      });
+
+    if (imgCfg.preserveMetadata) pipeline = pipeline.withMetadata();
+    if (sizeName === 'thumbnail' && imgCfg.sharpenThumb > 0) {
+      pipeline = pipeline.sharpen(imgCfg.sharpenThumb);
+    }
+
+    // Format-specific encoders
+    if (format === 'webp') {
+      pipeline = pipeline.webp({
+        quality: imgCfg.webp.quality,
+        smartSubsample: imgCfg.webp.smartSubsample,
+        nearLossless: imgCfg.webp.nearLossless
+      });
+    } else if (format === 'avif') {
+      pipeline = pipeline.avif({
+        quality: imgCfg.avif.quality,
+        effort: imgCfg.avif.effort
+      });
+    } else if (format === 'jpeg' || format === 'jpg') {
+      pipeline = pipeline.jpeg({
+        quality: imgCfg.jpeg.quality,
+        mozjpeg: imgCfg.jpeg.mozjpeg,
+        chromaSubsampling: imgCfg.jpeg.chromaSubsampling,
+        progressive: imgCfg.jpeg.progressive
+      });
+    } else if (format === 'png') {
+      pipeline = pipeline.png({
+        compressionLevel: imgCfg.png.compressionLevel,
+        quality: imgCfg.png.quality
+      });
+    }
+
+    await pipeline.toFile(outputPath);
+
     results[sizeName] = {
       path: outputPath.replace(/\\/g, '/'),
-      width: config.width
+      width: targetWidth
     };
   }
-  
+
   return results;
 };
 
@@ -43,19 +83,20 @@ const convertImageFormat = async (inputPath, outputFormat) => {
   if (!allowedFormats.includes(outputFormat)) {
     throw new Error(`Invalid format. Allowed: ${allowedFormats.join(', ')}`);
   }
-  
+
   const inputBuffer = fs.readFileSync(inputPath);
   const outputDir = path.dirname(inputPath);
   const baseName = path.parse(inputPath).name;
   const outputPath = path.join(outputDir, `${baseName}.${outputFormat}`);
-  
-  const sharpInstance = sharp(inputBuffer);
-  
-  if (outputFormat === 'webp') await sharpInstance.webp({ quality: 80 }).toFile(outputPath);
-  else if (outputFormat === 'avif') await sharpInstance.avif({ quality: 50 }).toFile(outputPath);
-  else if (outputFormat === 'jpeg') await sharpInstance.jpeg({ quality: 80 }).toFile(outputPath);
-  else if (outputFormat === 'png') await sharpInstance.png({ compressionLevel: 8 }).toFile(outputPath);
-  
+
+  let pipeline = sharp(inputBuffer);
+
+  if (outputFormat === 'webp') pipeline = pipeline.webp({ quality: imgCfg.webp.quality, smartSubsample: imgCfg.webp.smartSubsample, nearLossless: imgCfg.webp.nearLossless });
+  else if (outputFormat === 'avif') pipeline = pipeline.avif({ quality: imgCfg.avif.quality, effort: imgCfg.avif.effort });
+  else if (outputFormat === 'jpeg') pipeline = pipeline.jpeg({ quality: imgCfg.jpeg.quality, mozjpeg: imgCfg.jpeg.mozjpeg, chromaSubsampling: imgCfg.jpeg.chromaSubsampling, progressive: imgCfg.jpeg.progressive });
+  else if (outputFormat === 'png') pipeline = pipeline.png({ compressionLevel: imgCfg.png.compressionLevel, quality: imgCfg.png.quality });
+
+  await pipeline.toFile(outputPath);
   return outputPath.replace(/\\/g, '/');
 };
 
