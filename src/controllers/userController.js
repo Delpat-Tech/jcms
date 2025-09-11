@@ -9,7 +9,7 @@ const createUserWithRole = async (req, res) => {
     const { username, email, password, role } = req.body;
     
     if (!username || !email || !password) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false, 
         message: 'Username, email, and password are required.' 
       });
@@ -25,16 +25,16 @@ const createUserWithRole = async (req, res) => {
     } else if (currentRole === 'admin') {
       validRoles = ['editor', 'viewer']; // Admin cannot create admin or superadmin
     } else {
-      return res.status(403).json({ 
+      return res.status(403).json({
         success: false, 
-        message: 'Insufficient permissions to create users' 
+        message: 'Insufficient permissions to create users'
       });
     }
     
     const roleName = role || 'editor';
     
     if (!validRoles.includes(roleName)) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false, 
         message: `Invalid role. You can only create: ${validRoles.join(', ')}` 
       });
@@ -43,9 +43,9 @@ const createUserWithRole = async (req, res) => {
     const roleDoc = await Role.findOne({ name: roleName });
     
     if (!roleDoc) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false, 
-        message: 'Role not found in database' 
+        message: 'Role not found in database'
       });
     }
 
@@ -74,19 +74,19 @@ const createUserWithRole = async (req, res) => {
     const userResponse = newUser.toObject();
     delete userResponse.password;
 
-    res.status(201).json({ 
+    res.status(201).json({
       success: true, 
       message: 'User created successfully',
       data: userResponse 
     });
   } catch (error) {
     if (error.code === 11000) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false, 
-        message: 'Username or email already exists' 
+        message: 'Username or email already exists'
       });
     }
-    res.status(500).json({ 
+    res.status(500).json({
       success: false, 
       message: 'Error creating user', 
       error: error.message 
@@ -141,7 +141,7 @@ const getAllUsers = async (req, res) => {
       select: 'username -_id'
     }).sort({ createdAt: -1 });
     
-    res.status(200).json({ 
+    res.status(200).json({
       success: true, 
       count: users.length,
       filter: {
@@ -152,7 +152,7 @@ const getAllUsers = async (req, res) => {
       data: users 
     });
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       success: false, 
       message: 'Error retrieving users', 
       error: error.message 
@@ -178,7 +178,7 @@ const getUserById = async (req, res) => {
     });
     
     if (!user) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false, 
         message: 'User not found' 
       });
@@ -186,7 +186,7 @@ const getUserById = async (req, res) => {
     
     // Role-based and tenant-based access control
     if (currentRole === 'admin' && user.role.name === 'superadmin') {
-      return res.status(403).json({ 
+      return res.status(403).json({
         success: false, 
         message: 'Access denied. Cannot view superadmin details.' 
       });
@@ -195,7 +195,7 @@ const getUserById = async (req, res) => {
     // Tenant isolation - non-superadmin users can only view users from their tenant
     if (currentRole !== 'superadmin' && user.tenant && req.user.tenant && 
         user.tenant.toString() !== req.user.tenant.toString()) {
-      return res.status(403).json({ 
+      return res.status(403).json({
         success: false, 
         message: 'Access denied. Cannot view users from other tenants.' 
       });
@@ -203,7 +203,7 @@ const getUserById = async (req, res) => {
 
     res.status(200).json({ success: true, data: user });
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       success: false, 
       message: 'Error retrieving user', 
       error: error.message 
@@ -221,7 +221,7 @@ const updateUser = async (req, res) => {
     const currentUser = await User.findById(req.user.id).populate('role');
     
     if (!currentUser || !currentUser.role) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false, 
         message: 'User role not found' 
       });
@@ -232,30 +232,30 @@ const updateUser = async (req, res) => {
     // Get target user to check if it's superadmin
     const targetUser = await User.findById(userId).populate('role');
     if (!targetUser) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false, 
         message: 'User not found' 
       });
     }
     
     if (!targetUser.role) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false, 
-        message: 'Target user role not found' 
+        message: 'Target user role not found'
       });
     }
     
     // Prevent non-superadmin from updating superadmin
     if (targetUser.role.name === 'superadmin' && currentRole !== 'superadmin') {
-      return res.status(403).json({ 
+      return res.status(403).json({
         success: false, 
-        message: 'Cannot modify superadmin user' 
+        message: 'Cannot modify superadmin user'
       });
     }
     
     // Check if trying to update a deactivated user (unless reactivating)
     if (!targetUser.isActive && (isActive !== true)) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false, 
         message: 'Cannot update deactivated user. Use reactivate endpoint first or set isActive to true.' 
       });
@@ -264,9 +264,9 @@ const updateUser = async (req, res) => {
     // Tenant isolation - non-superadmin users can only update users from their tenant
     if (currentRole !== 'superadmin' && targetUser.tenant && req.user.tenant && 
         targetUser.tenant.toString() !== req.user.tenant.toString()) {
-      return res.status(403).json({ 
+      return res.status(403).json({
         success: false, 
-        message: 'Cannot modify users from other tenants' 
+        message: 'Cannot modify users from other tenants'
       });
     }
 
@@ -280,14 +280,14 @@ const updateUser = async (req, res) => {
       } else if (currentRole === 'admin') {
         validRoles = ['editor', 'viewer']; // Admin cannot promote to admin or superadmin
       } else {
-        return res.status(403).json({ 
+        return res.status(403).json({
           success: false, 
-          message: 'Insufficient permissions to change user roles' 
+          message: 'Insufficient permissions to change user roles'
         });
       }
       
       if (!validRoles.includes(role)) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           success: false, 
           message: `Invalid role. You can only assign: ${validRoles.join(', ')}` 
         });
@@ -295,9 +295,9 @@ const updateUser = async (req, res) => {
       
       const roleDoc = await Role.findOne({ name: role });
       if (!roleDoc) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           success: false, 
-          message: 'Role not found in database' 
+          message: 'Role not found in database'
         });
       }
       updateData.role = roleDoc._id;
@@ -329,13 +329,13 @@ const updateUser = async (req, res) => {
     );
 
     if (!user) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false, 
-        message: 'User not found' 
+        message: 'User not found'
       });
     }
 
-    res.status(200).json({ 
+    res.status(200).json({
       success: true, 
       message: 'User updated successfully',
       data: user 
@@ -344,22 +344,22 @@ const updateUser = async (req, res) => {
     console.error('Update user error:', error);
     
     if (error.code === 11000) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false, 
-        message: 'Username or email already exists' 
+        message: 'Username or email already exists'
       });
     }
     
     // Check for specific null reference errors
     if (error.message.includes('Cannot read properties of null')) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false, 
         message: 'User or related data not found. The user may have been deleted or corrupted.', 
         error: error.message 
       });
     }
     
-    res.status(500).json({ 
+    res.status(500).json({
       success: false, 
       message: 'Error updating user', 
       error: error.message,
@@ -380,49 +380,49 @@ const deleteUser = async (req, res) => {
     // Get target user to check if it's superadmin
     const targetUser = await User.findById(userId).populate('role');
     if (!targetUser) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false, 
-        message: 'User not found' 
+        message: 'User not found'
       });
     }
     
     // Prevent deleting the only superadmin
     if (targetUser.role.name === 'superadmin') {
-      return res.status(403).json({ 
+      return res.status(403).json({
         success: false, 
-        message: 'Cannot delete the system superadmin' 
+        message: 'Cannot delete the system superadmin'
       });
     }
     
     // Admin can only delete editor/viewer, not other admins
     if (currentRole === 'admin' && targetUser.role.name === 'admin') {
-      return res.status(403).json({ 
+      return res.status(403).json({
         success: false, 
-        message: 'Admin cannot delete other admin users' 
+        message: 'Admin cannot delete other admin users'
       });
     }
     
     // Tenant isolation - non-superadmin users can only delete users from their tenant
     if (currentRole !== 'superadmin' && targetUser.tenant && req.user.tenant && 
         targetUser.tenant.toString() !== req.user.tenant.toString()) {
-      return res.status(403).json({ 
+      return res.status(403).json({
         success: false, 
-        message: 'Cannot delete users from other tenants' 
+        message: 'Cannot delete users from other tenants'
       });
     }
     
     // Check if user is already deactivated
     if (!targetUser.isActive) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false, 
-        message: 'User is already deactivated' 
+        message: 'User is already deactivated'
       });
     }
     
     // Soft delete: Set isActive to false instead of hard deletion
     const user = await User.findByIdAndUpdate(
       userId, 
-      { 
+      {
         isActive: false,
         deactivatedAt: new Date(),
         deactivatedBy: req.user.id
@@ -431,13 +431,13 @@ const deleteUser = async (req, res) => {
     ).populate('role', 'name');
     
     if (!user) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false, 
-        message: 'User not found' 
+        message: 'User not found'
       });
     }
 
-    res.status(200).json({ 
+    res.status(200).json({
       success: true, 
       message: 'User deactivated successfully',
       data: {
@@ -450,7 +450,7 @@ const deleteUser = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       success: false, 
       message: 'Error deleting user', 
       error: error.message 
@@ -593,48 +593,48 @@ const reactivateUser = async (req, res) => {
     // Get target user to check current status
     const targetUser = await User.findById(userId).populate('role');
     if (!targetUser) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false, 
-        message: 'User not found' 
+        message: 'User not found'
       });
     }
     
     // Check if user is already active
     if (targetUser.isActive) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false, 
-        message: 'User is already active' 
+        message: 'User is already active'
       });
     }
     
     // Permission checks - same as update/delete
     if (targetUser.role.name === 'superadmin' && currentRole !== 'superadmin') {
-      return res.status(403).json({ 
+      return res.status(403).json({
         success: false, 
-        message: 'Cannot reactivate superadmin user' 
+        message: 'Cannot reactivate superadmin user'
       });
     }
     
     if (currentRole === 'admin' && targetUser.role.name === 'admin') {
-      return res.status(403).json({ 
+      return res.status(403).json({
         success: false, 
-        message: 'Admin cannot reactivate other admin users' 
+        message: 'Admin cannot reactivate other admin users'
       });
     }
     
     // Tenant isolation
     if (currentRole !== 'superadmin' && targetUser.tenant && req.user.tenant && 
         targetUser.tenant.toString() !== req.user.tenant.toString()) {
-      return res.status(403).json({ 
+      return res.status(403).json({
         success: false, 
-        message: 'Cannot reactivate users from other tenants' 
+        message: 'Cannot reactivate users from other tenants'
       });
     }
     
     // Reactivate user
     const user = await User.findByIdAndUpdate(
       userId, 
-      { 
+      {
         isActive: true,
         deactivatedAt: null,
         deactivatedBy: null,
@@ -644,7 +644,7 @@ const reactivateUser = async (req, res) => {
       { new: true, select: '-password' }
     ).populate('role', 'name');
     
-    res.status(200).json({ 
+    res.status(200).json({
       success: true, 
       message: 'User reactivated successfully',
       data: {
@@ -657,11 +657,72 @@ const reactivateUser = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       success: false, 
       message: 'Error reactivating user', 
       error: error.message 
     });
+  }
+};
+
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.id;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, message: 'Current and new password are required' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const bcrypt = require('bcryptjs');
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: 'Current password is incorrect' });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Password changed successfully'
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error changing password', error: error.message });
+  }
+};
+
+const changeUsername = async (req, res) => {
+  try {
+    const { username } = req.body;
+    const userId = req.user.id;
+
+    if (!username) {
+      return res.status(400).json({ success: false, message: 'Username is required' });
+    }
+
+    const existingUser = await User.findOne({ username, _id: { $ne: userId } });
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: 'Username already exists' });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(userId, { username }, { new: true, select: '-password' });
+
+    res.status(200).json({
+      success: true,
+      message: 'Username changed successfully',
+      data: updatedUser
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(400).json({ success: false, message: 'Username already exists' });
+    }
+    res.status(500).json({ success: false, message: 'Error changing username', error: error.message });
   }
 };
 
@@ -675,5 +736,7 @@ module.exports = {
   reactivateUser,
   getImagesByUser,
   updateProfile,
-  resetUserPassword
+  resetUserPassword,
+  changePassword,
+  changeUsername
 };
