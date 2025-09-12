@@ -8,10 +8,21 @@ module.exports = {
   },
   
   aggregation: {
-    activityThreshold: parseInt(process.env.ACTIVITY_THRESHOLD) || 25, // Increased from 3 to 25
-    timeWindow: parseInt(process.env.ACTIVITY_TIME_WINDOW) || 900000, // Increased to 15 minutes
-    resetInterval: parseInt(process.env.RESET_INTERVAL) || 1800000, // Reset every 30 minutes
-    cooldownPeriod: parseInt(process.env.COOLDOWN_PERIOD) || 300000 // 5 min cooldown between same user alerts
+    activityThreshold: parseInt(process.env.ACTIVITY_THRESHOLD) || 3, // Reduced to 3 for testing
+    timeWindow: parseInt(process.env.ACTIVITY_TIME_WINDOW) || 60000, // Reduced to 1 minute for testing
+    resetInterval: parseInt(process.env.RESET_INTERVAL) || 300000, // Reset every 5 minutes for testing
+    cooldownPeriod: parseInt(process.env.COOLDOWN_PERIOD) || 30000, // 30 seconds cooldown for testing
+    
+    // Time bucket configuration
+    timeBuckets: {
+      enabled: process.env.TIME_BUCKETS_ENABLED !== 'false', // Enable by default; set to 'false' to disable
+      hourlyThreshold: parseInt(process.env.HOURLY_THRESHOLD) || 1, // Reduced to 1 for testing
+      dailyThreshold: parseInt(process.env.DAILY_THRESHOLD) || 3, // Reduced to 3 for testing
+      cleanupInterval: parseInt(process.env.BUCKET_CLEANUP_INTERVAL) || 300000, // Clean up every 5 minutes for testing
+      retentionHours: parseInt(process.env.BUCKET_RETENTION_HOURS) || 1, // Keep hourly buckets for 1 hour for testing
+      retentionDays: parseInt(process.env.BUCKET_RETENTION_DAYS) || 1, // Keep daily buckets for 1 day for testing
+      timeThreshold: parseInt(process.env.BUCKET_TIME_THRESHOLD) || 180000 // Emit summary after 3 minutes even if threshold not met
+    }
   },
   
   priorities: {
@@ -28,13 +39,12 @@ module.exports = {
   // Events that bypass aggregation (immediate alerts)
   bypassAggregation: ['security_event', 'system_alert'],
   
-  // Events to completely ignore in production
-  ignored: process.env.NODE_ENV === 'production' ? 
-    ['login', 'profile_update', 'image_upload', 'file_upload'] : [],
+  // Events to completely ignore in production - disabled for testing
+  ignored: [],
   
-  // Quiet hours - no notifications except critical
+  // Quiet hours - disabled for testing
   quietHours: {
-    enabled: process.env.QUIET_HOURS_ENABLED === 'true',
+    enabled: false,
     start: process.env.QUIET_START || '22:00', // 10 PM
     end: process.env.QUIET_END || '08:00'     // 8 AM
   }

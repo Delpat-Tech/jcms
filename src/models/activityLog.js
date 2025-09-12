@@ -17,8 +17,16 @@ const activityLogSchema = new mongoose.Schema({
   isNotified: { type: Boolean, default: false }
 }, { timestamps: true });
 
-// Index for efficient querying
+// Indexes for efficient querying
+// Existing indexes
 activityLogSchema.index({ userId: 1, createdAt: -1 });
 activityLogSchema.index({ action: 1, createdAt: -1 });
+
+// Additional helpful indexes for time-bucket summaries and high-activity lookups
+activityLogSchema.index({ createdAt: -1 });
+activityLogSchema.index({ username: 1, createdAt: -1 });
+activityLogSchema.index({ resource: 1, createdAt: -1 });
+activityLogSchema.index({ userId: 1, action: 1, createdAt: -1 });
+activityLogSchema.index({ action: 1, resource: 1, createdAt: -1 });
 
 module.exports = mongoose.model('ActivityLog', activityLogSchema);

@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JCMS Admin Dashboard</title>
-    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background: #f8f9fa; }
         .container { max-width: 900px; margin: 0 auto; }
@@ -497,7 +496,8 @@
                 
                 if (usernameEl && passwordEl && usernameEl.value && passwordEl.value) {
                     console.log('🔐 Also performing API login...');
-                    const response = await fetch('http://localhost:5000/api/auth/login', {
+                    const baseUrl = getBaseUrl();
+                    const response = await fetch(baseUrl + '/api/auth/login', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ 
@@ -519,10 +519,34 @@
             }
         }
 
-        function connectSocket() {
+        async function ensureSocketIoLoaded(baseUrl) {
+            if (typeof io !== 'undefined') return;
+            await new Promise((resolve, reject) => {
+                const s = document.createElement('script');
+                s.src = `${baseUrl}/socket.io/socket.io.js`;
+                s.onload = resolve;
+                s.onerror = () => {
+                    const cdn = document.createElement('script');
+                    cdn.src = 'https://cdn.socket.io/4.8.1/socket.io.min.js';
+                    cdn.onload = resolve;
+                    cdn.onerror = reject;
+                    document.head.appendChild(cdn);
+                };
+                document.head.appendChild(s);
+            });
+        }
+
+        function getBaseUrl() {
+            if (location.protocol.startsWith('http')) return location.origin;
+            return 'http://localhost:5000';
+        }
+
+        async function connectSocket() {
             console.log('🔌 Attempting to connect socket...');
             try {
-                socket = io('http://localhost:5000', {
+                const baseUrl = getBaseUrl();
+                await ensureSocketIoLoaded(baseUrl);
+                socket = io(baseUrl, {
                     timeout: 10000,
                     forceNew: true,
                     transports: ['websocket', 'polling']
@@ -555,7 +579,22 @@
                 // Receive server-side aggregates
                 socket.on('aggregated_notification', (notification) => {
                     console.log('📦 AGGREGATED NOTIFICATION:', notification);
-                    renderAggregate(notification);
+                    // Only render regular aggregated notifications here
+                    if (!notification.data?.dayFormatted) {
+                        renderAggregate(notification);
+                    }
+                });
+                
+                // Handle time bucket notifications
+                socket.on('time_bucket_hourly', (notification) => {
+                    console.log('⏱️ HOURLY TIME BUCKET (ignored in Live tab):', notification);
+                    // Suppress hourly summaries in the live feed to avoid duplication
+                    // If desired, we could render these in the Aggregates tab instead.
+                });
+                
+                socket.on('time_bucket_daily', (notification) => {
+                    console.log('📅 DAILY TIME BUCKET:', notification);
+                    processTimeBucketNotification(notification, 'daily');
                 });
 
                 socket.on('connect_error', (error) => {
@@ -577,7 +616,8 @@
                             testBtn.style.cssText = 'margin: 10px 0; padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 3px; cursor: pointer;';
                             testBtn.onclick = () => {
                                 console.log('Test notification button clicked');
-                                fetch('http://localhost:5000/api/test-notification', {
+                                const baseUrl = getBaseUrl();
+                                fetch(baseUrl + '/api/test-notification', {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -609,6 +649,8 @@
         function addNotification(notification) {
             console.log('🔔 RECEIVED NOTIFICATION:', notification);
             const { action, data, timestamp, message } = notification;
+            // Suppress time-bucket notifications in the live feed
+            if (action && action.startsWith('time_bucket_')) return;
             const priority = getPriority(action);
             totalNotifications++;
             updateNotificationCount();
@@ -780,6 +822,157 @@
             }
         }
         
+        function processTimeBucketNotification(notification, bucketType) {
+            const { action, data, timestamp, message } = notification;
+            // For daily notifications, render in aggregates tab
+            if (bucketType === 'daily') {
+                renderAggregate(notification);
+                return;
+            }
+            const container = document.getElementById('notifications');
+            const div = document.createElement('div');
+            div.className = 'notification time-bucket-notification';
+            
+            // Style based on bucket type
+            if (bucketType === 'hourly') {
+                div.style.borderLeft = '4px solid #17a2b8'; // Info blue
+                div.style.background = '#f0f8ff';
+            } else if (bucketType === 'daily') {
+                div.style.borderLeft = '4px solid #6f42c1'; // Purple
+                div.style.background = '#f8f5ff';
+            }
+            
+            // Create content based on bucket type
+            if (bucketType === 'hourly') {
+                const { originalAction, hourFormatted, totalOperations, users, resources, activityRate, activityDuration, operationBreakdown } = data;
+                
+                div.innerHTML = `
+                    <div class="timestamp">⏱️ Hourly Summary • ${new Date(timestamp).toLocaleString()}</div>
+                    <div style="font-size: 1.1em; margin: 10px 0;">
+                        <strong>${totalOperations} ${originalAction} operations</strong> at ${hourFormatted}
+                    </div>
+                    <div style="margin: 8px 0;">
+                        👤 Users: <strong>${users.length}</strong> • 
+                        📁 Resources: <strong>${resources.length}</strong> • 
+                        ⚡ Rate: <strong>${activityRate} ops/min</strong> over ${activityDuration} min
+                    </div>
+                    <div style="font-size: 0.9em; margin-top: 10px; opacity: 0.9;">
+                        <button onclick="expandTimeBucket(this)" style="background: rgba(23,162,184,0.2); border: 1px solid rgba(23,162,184,0.3); color: #17a2b8; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; cursor: pointer;">Show Details</button>
+                    </div>
+                    <div class="time-bucket-details" style="display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(23,162,184,0.2);">
+                        <div style="margin-bottom: 10px;">
+                            <strong>Top Users:</strong>
+                            <div style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px;">
+                                ${users.map(user => 
+                                    `<div style="background: rgba(23,162,184,0.1); padding: 3px 8px; border-radius: 4px; font-size: 0.85em;">
+                                        ${user.username} (${user.count})
+                                    </div>`
+                                ).join('')}
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <strong>Resources:</strong>
+                            <div style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px;">
+                                ${resources.map(res => 
+                                    `<div style="background: rgba(23,162,184,0.1); padding: 3px 8px; border-radius: 4px; font-size: 0.85em;">
+                                        ${res.name} (${res.count})
+                                    </div>`
+                                ).join('')}
+                            </div>
+                        </div>
+                        ${operationBreakdown && operationBreakdown.length > 0 ? `
+                        <div>
+                            <strong>Operation Types:</strong>
+                            <div style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px;">
+                                ${operationBreakdown.map(op => 
+                                    `<div style="background: rgba(23,162,184,0.1); padding: 3px 8px; border-radius: 4px; font-size: 0.85em;">
+                                        ${op.type} (${op.count})
+                                    </div>`
+                                ).join('')}
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+            } else if (bucketType === 'daily') {
+                const { originalAction, dayFormatted, totalOperations, users, resources, hourlyDistribution } = data;
+                
+                // Create a simple bar chart for hourly distribution
+                const maxCount = Math.max(...hourlyDistribution.map(h => h.count));
+                const hourlyChart = hourlyDistribution.map(h => {
+                    const percentage = Math.max(5, (h.count / maxCount) * 100);
+                    return `
+                        <div style="display: flex; align-items: center; margin: 2px 0;">
+                            <div style="width: 30px; text-align: right; margin-right: 5px; font-size: 0.8em;">${h.hour}:00</div>
+                            <div style="height: 12px; background: rgba(111,66,193,0.7); width: ${percentage}%; border-radius: 2px;"></div>
+                            <div style="margin-left: 5px; font-size: 0.8em;">${h.count}</div>
+                        </div>
+                    `;
+                }).join('');
+                
+                div.innerHTML = `
+                    <div class="timestamp">📅 Daily Summary • ${new Date(timestamp).toLocaleString()}</div>
+                    <div style="font-size: 1.1em; margin: 10px 0;">
+                        <strong>${totalOperations} ${originalAction} operations</strong> on ${dayFormatted}
+                    </div>
+                    <div style="margin: 8px 0;">
+                        👤 Users: <strong>${users.length}</strong> • 
+                        📁 Resources: <strong>${resources.length}</strong>
+                    </div>
+                    <div style="font-size: 0.9em; margin-top: 10px; opacity: 0.9;">
+                        <button onclick="expandTimeBucket(this)" style="background: rgba(111,66,193,0.2); border: 1px solid rgba(111,66,193,0.3); color: #6f42c1; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; cursor: pointer;">Show Details</button>
+                    </div>
+                    <div class="time-bucket-details" style="display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(111,66,193,0.2);">
+                        <div style="margin-bottom: 15px;">
+                            <strong>Hourly Distribution:</strong>
+                            <div style="margin-top: 8px;">
+                                ${hourlyChart}
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <strong>Top Users:</strong>
+                            <div style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px;">
+                                ${users.map(user => 
+                                    `<div style="background: rgba(111,66,193,0.1); padding: 3px 8px; border-radius: 4px; font-size: 0.85em;">
+                                        ${user.username} (${user.count})
+                                    </div>`
+                                ).join('')}
+                            </div>
+                        </div>
+                        <div>
+                            <strong>Top Resources:</strong>
+                            <div style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px;">
+                                ${resources.map(res => 
+                                    `<div style="background: rgba(111,66,193,0.1); padding: 3px 8px; border-radius: 4px; font-size: 0.85em;">
+                                        ${res.name} (${res.count})
+                                    </div>`
+                                ).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            container.insertBefore(div, container.firstChild);
+            
+            // Keep only last 15 notifications
+            while (container.children.length > 15) {
+                container.removeChild(container.lastChild);
+            }
+            
+            // Play a subtle notification sound
+            playNotificationSound('medium');
+        }
+        
+        function expandTimeBucket(buttonEl) {
+            const details = buttonEl.parentElement.parentElement.querySelector('.time-bucket-details');
+            if (details) {
+                const isVisible = details.style.display !== 'none';
+                details.style.display = isVisible ? 'none' : 'block';
+                buttonEl.textContent = isVisible ? 'Show Details' : 'Hide Details';
+            }
+        }
+        
         function displayIndividualNotification(notification) {
             // Use existing notification display logic but don't count it again
             const { action, data, timestamp, message } = notification;
@@ -849,16 +1042,46 @@
             const list = document.getElementById('aggregates-list');
             const card = document.createElement('div');
             card.className = 'notification aggregated-notification';
-            card.innerHTML = `
-                <div class="timestamp">${new Date(timestamp).toLocaleString()}</div>
-                <div style="font-size: 1.05em;">
-                    <strong>📦 ${data.totalOperations} ${data.originalAction}</strong> by <span class="user">${data.username}</span>
-                </div>
-                <div style="margin-top: 6px; font-size: 0.95em;">
-                    ${data.summary.map(s => `<div>• ${s.count}× ${s.action} on ${s.resource}${s.name ? ' ('+s.name+')' : ''}</div>`).join('')}
-                </div>
-                ${data.sampleResourceIds && data.sampleResourceIds.length ? `<div style=\"margin-top:6px;font-size:0.85em;opacity:0.8;\">IDs: ${data.sampleResourceIds.join(', ')}</div>` : ''}
-            `;
+
+            if (notification.action === 'time_bucket_daily') {
+                // Handle daily time bucket notifications
+                card.innerHTML = `
+                    <div class="timestamp">📅 ${new Date(timestamp).toLocaleString()}</div>
+                    <div style="font-size: 1.05em;">
+                        <strong>Daily Summary: ${data.totalOperations} operations</strong>
+                    </div>
+                    <div style="margin-top: 6px;">
+                        👤 Users: <strong>${data.users.length}</strong> • 
+                        📁 Resources: <strong>${data.resources.length}</strong>
+                    </div>
+                    <div style="margin-top: 10px; font-size: 0.95em;">
+                        <strong>Top Users:</strong>
+                        ${data.users.slice(0, 5).map(user => 
+                            `<div style="margin: 3px 0;">• ${user.username}: ${user.count} operations</div>`
+                        ).join('')}
+                    </div>
+                    <div style="margin-top: 10px; font-size: 0.95em;">
+                        <strong>Resources:</strong>
+                        ${data.resources.slice(0, 5).map(res => 
+                            `<div style="margin: 3px 0;">• ${res.name}: ${res.count} operations</div>`
+                        ).join('')}
+                    </div>
+                `;
+            } else {
+                // Handle regular aggregated notifications (server-side batches)
+                card.innerHTML = `
+                    <div class="timestamp">📊 ${new Date(timestamp).toLocaleString()}</div>
+                    <div style="font-size: 1.05em;">
+                        <strong>${data.totalOperations} ${data.originalAction} operations</strong> by <span class="user">${data.username}</span>
+                    </div>
+                    <div style="margin-top: 6px; font-size: 0.95em;">
+                        Resource: <strong>${data.resource}</strong>
+                        ${data.sampleResourceIds ? `<div style=\"margin-top:6px;font-size:0.85em;opacity:0.8;\">Sample IDs: ${data.sampleResourceIds.slice(0, 5).join(', ')}</div>` : ''}
+                        <div style="margin-top:6px;font-size:0.85em;opacity:0.8;">Timeframe: ${data.timeframe || (Math.round((data.timeframeMs || 0)/1000) + 's')}</div>
+                    </div>
+                `;
+            }
+
             list.insertBefore(card, list.firstChild);
             while (list.children.length > 15) list.removeChild(list.lastChild);
         }
