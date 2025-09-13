@@ -1,0 +1,31 @@
+[
+  {
+    "_id": "68b7035f0a7a9d9d524914b3",
+    "name": "System",
+    "domain": "system.local",
+    "isActive": true,
+    "createdAt": "2025-09-02T14:46:56.024Z",
+    "updatedAt": "2025-09-02T14:46:56.024Z",
+    "__v": 0
+  },
+  {
+    "_id": "68c107e3041ac5e628e48309",
+    "name": "Test Company",
+    "subdomain": "testcompany",
+    "adminUser": "68c107e2041ac5e628e48307",
+    "settings": {
+      "maxUsers": 50,
+      "maxStorage": "10GB",
+      "allowedFormats": [
+        "pdf",
+        "jpg",
+        "png",
+        "docx"
+      ]
+    },
+    "isActive": true,
+    "createdAt": "2025-09-10T05:08:51.137Z",
+    "updatedAt": "2025-09-10T05:08:51.137Z",
+    "__v": 0
+  }
+]

@@ -14,7 +14,8 @@
     "setup": "node setupDatabase.js",
     "setup:db": "node setupDatabase.js",
     "troubleshoot": "node troubleshoot-connection.js",
-    "check": "node troubleshoot-connection.js"
+    "check": "node troubleshoot-connection.js",
+    "check-superadmin": "node checkSuperAdmin.js"
   },
   "repository": {
     "type": "git",

@@ -1,0 +1,121 @@
+[
+  {
+    "_id": "68c510b56eaed41082560afe",
+    "action": "image_upload",
+    "resource": "image",
+    "userId": "68b86b7b2201c52b170dc067",
+    "username": "superadmin",
+    "userRole": "superadmin",
+    "resourceId": "68c510b56eaed41082560af8",
+    "details": {
+      "method": "POST",
+      "path": "/",
+      "ip": "::1",
+      "userAgent": "PostmanRuntime/7.46.0"
+    },
+    "createdAt": "2025-09-13T06:35:33.912Z",
+    "__v": 0
+  },
+  {
+    "_id": "68c5147c432f638fab17c51b",
+    "action": "image_upload",
+    "resource": "image",
+    "userId": "68b86b7b2201c52b170dc067",
+    "username": "superadmin",
+    "userRole": "superadmin",
+    "resourceId": "68c5147a432f638fab17c515",
+    "details": {
+      "method": "POST",
+      "path": "/",
+      "ip": "::1",
+      "userAgent": "PostmanRuntime/7.46.0"
+    },
+    "createdAt": "2025-09-13T06:51:40.314Z",
+    "__v": 0
+  },
+  {
+    "_id": "68c514e2d8d46db86f92e6c0",
+    "action": "image_upload",
+    "resource": "image",
+    "userId": "68b86b7b2201c52b170dc067",
+    "username": "superadmin",
+    "userRole": "superadmin",
+    "resourceId": "68c514e2d8d46db86f92e6ba",
+    "details": {
+      "method": "POST",
+      "path": "/",
+      "ip": "::1",
+      "userAgent": "PostmanRuntime/7.46.0"
+    },
+    "createdAt": "2025-09-13T06:53:22.855Z",
+    "__v": 0
+  },
+  {
+    "_id": "68c516f5bb5ddead0723e5eb",
+    "action": "image_upload",
+    "resource": "image",
+    "userId": "68b86b7b2201c52b170dc067",
+    "username": "superadmin",
+    "userRole": "superadmin",
+    "resourceId": "68c516f4bb5ddead0723e5e5",
+    "details": {
+      "method": "POST",
+      "path": "/",
+      "ip": "::1",
+      "userAgent": "PostmanRuntime/7.46.0"
+    },
+    "createdAt": "2025-09-13T07:02:13.238Z",
+    "__v": 0
+  },
+  {
+    "_id": "68c51741b2c1bc3909219106",
+    "action": "image_upload",
+    "resource": "image",
+    "userId": "68b86b7b2201c52b170dc067",
+    "username": "superadmin",
+    "userRole": "superadmin",
+    "resourceId": "68c51740b2c1bc3909219100",
+    "details": {
+      "method": "POST",
+      "path": "/",
+      "ip": "::1",
+      "userAgent": "PostmanRuntime/7.46.0"
+    },
+    "createdAt": "2025-09-13T07:03:29.215Z",
+    "__v": 0
+  },
+  {
+    "_id": "68c517b8c33ba9381bc04b41",
+    "action": "image_upload",
+    "resource": "image",
+    "userId": "68b86b7b2201c52b170dc067",
+    "username": "superadmin",
+    "userRole": "superadmin",
+    "resourceId": "68c517b7c33ba9381bc04b3b",
+    "details": {
+      "method": "POST",
+      "path": "/",
+      "ip": "::1",
+      "userAgent": "PostmanRuntime/7.46.0"
+    },
+    "createdAt": "2025-09-13T07:05:28.193Z",
+    "__v": 0
+  },
+  {
+    "_id": "68c51bcf5c513a9679bd5e4e",
+    "action": "image_upload",
+    "resource": "image",
+    "userId": "68b86b7b2201c52b170dc067",
+    "username": "superadmin",
+    "userRole": "superadmin",
+    "resourceId": "68c51bcf5c513a9679bd5e48",
+    "details": {
+      "method": "POST",
+      "path": "/",
+      "ip": "::1",
+      "userAgent": "PostmanRuntime/7.46.0"
+    },
+    "createdAt": "2025-09-13T07:22:55.880Z",
+    "__v": 0
+  }
+]

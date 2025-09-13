@@ -61,6 +61,7 @@ const createImage = async (req, res) => {
       title,
       user: userId,
       tenant: req.user.tenant ? req.user.tenant._id : null,
+      tenantName: req.user.tenant ? req.user.tenant.name : 'system',
       internalPath,
       fileUrl,
       format: chosenFormat,

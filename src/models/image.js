@@ -13,6 +13,10 @@ const imageSchema = new mongoose.Schema({
     ref: 'Tenant',
     default: null // null for superadmin files
   },
+  tenantName: {
+    type: String,
+    default: 'system' // 'system' for superadmin files
+  },
   internalPath: { type: String, required: true },
   fileUrl: { type: String, required: true },
   format: {

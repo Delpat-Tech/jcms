@@ -1219,6 +1219,23 @@
               "path": ["api", "superadmin", "stats"]
             }
           }
+        },
+        {
+          "name": "Database Backup",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{superadminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/superadmin/backup",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "superadmin", "backup"]
+            }
+          }
         }
       ]
     },

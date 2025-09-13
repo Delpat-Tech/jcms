@@ -1,0 +1,303 @@
+[
+  {
+    "_id": "68b83f0ff07a2238f15ff113",
+    "title": "Test Image Upload",
+    "user": "68b83e8ff07a2238f15ff10f",
+    "internalPath": "uploads/68b83e8ff07a2238f15ff10f/photos-1756905230777.webp",
+    "fileUrl": "http://localhost:5000/uploads/68b83e8ff07a2238f15ff10f/photos-1756905230777.webp",
+    "format": "webp",
+    "notes": {
+      "description": "Test image for API testing",
+      "category": "test"
+    },
+    "createdAt": "2025-09-03T13:13:51.268Z",
+    "updatedAt": "2025-09-03T13:13:51.268Z",
+    "__v": 0
+  },
+  {
+    "_id": "68b95a661dfa5a0fef4bda1e",
+    "title": "SuperAdmin Test Image",
+    "user": "68b86b7b2201c52b170dc067",
+    "internalPath": "uploads/68b86b7b2201c52b170dc067/umar_photo-1756977765779.webp",
+    "fileUrl": "http://localhost:5000/uploads/68b86b7b2201c52b170dc067/umar_photo-1756977765779.webp",
+    "format": "webp",
+    "createdAt": "2025-09-04T09:22:46.346Z",
+    "updatedAt": "2025-09-04T09:22:46.346Z",
+    "__v": 0
+  },
+  {
+    "_id": "68bab0226ba6381c1ba3b314",
+    "title": "Admin Test Image",
+    "user": "68b95b6ba2047b8a6084ceed",
+    "internalPath": "uploads/68b95b6ba2047b8a6084ceed/photos-1757065250112.webp",
+    "fileUrl": "http://localhost:5000/uploads/68b95b6ba2047b8a6084ceed/photos-1757065250112.webp",
+    "format": "webp",
+    "createdAt": "2025-09-05T09:40:50.463Z",
+    "updatedAt": "2025-09-05T09:40:50.463Z",
+    "__v": 0
+  },
+  {
+    "_id": "68bbfaa7b5860049b3c1ad4d",
+    "title": "Editor Test Imagemy desctridf fd xnc xjk nncdlinfcdjfnvdf",
+    "user": "68bab7c21bd5ffeda8e358e3",
+    "internalPath": "uploads/68bab7c21bd5ffeda8e358e3/photos-1757149862710.webp",
+    "fileUrl": "http://localhost:5000/uploads/68bab7c21bd5ffeda8e358e3/photos-1757149862710.webp",
+    "format": "webp",
+    "notes": {
+      "name": "timepass"
+    },
+    "createdAt": "2025-09-06T09:11:03.157Z",
+    "updatedAt": "2025-09-06T09:11:03.157Z",
+    "__v": 0
+  },
+  {
+    "_id": "68bbfdaa247b8c8c2f6d4ef6",
+    "title": "Editor Test Image",
+    "user": "68bbd3c06af89c8558e70717",
+    "internalPath": "uploads/68bbd3c06af89c8558e70717/photos-1757150634185.webp",
+    "fileUrl": "http://localhost:5000/uploads/68bbd3c06af89c8558e70717/photos-1757150634185.webp",
+    "format": "webp",
+    "createdAt": "2025-09-06T09:23:54.529Z",
+    "updatedAt": "2025-09-06T09:23:54.529Z",
+    "__v": 0
+  },
+  {
+    "_id": "68bc10f4ca8fe873a316b601",
+    "title": "Test Image",
+    "user": "68bc109cca8fe873a316b5f4",
+    "internalPath": "uploads/68bc109cca8fe873a316b5f4/photos-1757155572116.webp",
+    "fileUrl": "http://localhost:5000/uploads/68bc109cca8fe873a316b5f4/photos-1757155572116.webp",
+    "format": "webp",
+    "createdAt": "2025-09-06T10:46:12.273Z",
+    "updatedAt": "2025-09-06T10:46:12.273Z",
+    "__v": 0
+  },
+  {
+    "_id": "68c10bc44300921c3f03d26f",
+    "title": "Admin Test Image",
+    "user": "68c107e2041ac5e628e48307",
+    "tenant": "68c107e3041ac5e628e48309",
+    "internalPath": "uploads/68c107e3041ac5e628e48309/68c107e2041ac5e628e48307/Screenshot_20250408-162509-1757481923418.webp",
+    "fileUrl": "http://localhost:5000/uploads/68c107e3041ac5e628e48309/68c107e2041ac5e628e48307/Screenshot_20250408-162509-1757481923418.webp",
+    "format": "webp",
+    "createdAt": "2025-09-10T05:25:24.210Z",
+    "updatedAt": "2025-09-10T05:25:24.210Z",
+    "__v": 0
+  },
+  {
+    "_id": "68c3ea3c43e32dcba9e0fa7c",
+    "title": "Smoke Image",
+    "user": "68b95b6ba2047b8a6084ceed",
+    "tenant": null,
+    "internalPath": "uploads/system/68b95b6ba2047b8a6084ceed/photos-1756725785951-1757669948275.webp",
+    "fileUrl": "http://localhost:5000/uploads/system/68b95b6ba2047b8a6084ceed/photos-1756725785951-1757669948275.webp",
+    "format": "webp",
+    "createdAt": "2025-09-12T09:39:08.486Z",
+    "updatedAt": "2025-09-12T09:39:08.486Z",
+    "__v": 0
+  },
+  {
+    "_id": "68c3f75d8fc3c71b47b7d7b8",
+    "title": "Admin Test Image",
+    "user": "68b95b6ba2047b8a6084ceed",
+    "tenant": null,
+    "internalPath": "uploads/system/68b95b6ba2047b8a6084ceed/Screenshot_20250408-162509-1757673308747.webp",
+    "fileUrl": "http://localhost:5000/uploads/system/68b95b6ba2047b8a6084ceed/Screenshot_20250408-162509-1757673308747.webp",
+    "format": "webp",
+    "createdAt": "2025-09-12T10:35:09.144Z",
+    "updatedAt": "2025-09-12T10:35:09.144Z",
+    "__v": 0
+  },
+  {
+    "_id": "68c510b56eaed41082560af8",
+    "title": "Test Image",
+    "user": "68b86b7b2201c52b170dc067",
+    "tenant": null,
+    "tenantName": "system",
+    "internalPath": "uploads/system/68b86b7b2201c52b170dc067/photos-1757745332626.webp",
+    "fileUrl": "http://localhost:5000/uploads/system/68b86b7b2201c52b170dc067/photos-1757745332626.webp",
+    "format": "webp",
+    "notes": {
+      "description": "Test image upload"
+    },
+    "createdAt": "2025-09-13T06:35:33.165Z",
+    "updatedAt": "2025-09-13T06:35:33.165Z",
+    "__v": 0
+  },
+  {
+    "_id": "68c510c46eaed41082560b02",
+    "title": "aabcde",
+    "user": "68b86b7b2201c52b170dc067",
+    "tenant": null,
+    "tenantName": "system",
+    "internalPath": "uploads/system/68b86b7b2201c52b170dc067/photos-1757745348371.webp",
+    "fileUrl": "http://localhost:5000/uploads/system/68b86b7b2201c52b170dc067/photos-1757745348371.webp",
+    "format": "webp",
+    "notes": {
+      "description": "Test image upload"
+    },
+    "createdAt": "2025-09-13T06:35:48.755Z",
+    "updatedAt": "2025-09-13T06:35:48.755Z",
+    "__v": 0
+  },
+  {
+    "_id": "68c510e96eaed41082560b0c",
+    "title": "aabcde",
+    "user": "68b86b7b2201c52b170dc067",
+    "tenant": null,
+    "tenantName": "system",
+    "internalPath": "uploads/system/68b86b7b2201c52b170dc067/photos-1757745385497.webp",
+    "fileUrl": "http://localhost:5000/uploads/system/68b86b7b2201c52b170dc067/photos-1757745385497.webp",
+    "format": "webp",
+    "notes": {
+      "description": "abdcddffddfgdf"
+    },
+    "createdAt": "2025-09-13T06:36:25.881Z",
+    "updatedAt": "2025-09-13T06:36:25.881Z",
+    "__v": 0
+  },
+  {
+    "_id": "68c5147a432f638fab17c515",
+    "title": "xyzz",
+    "user": "68b86b7b2201c52b170dc067",
+    "tenant": null,
+    "tenantName": "system",
+    "internalPath": "uploads/system/68b86b7b2201c52b170dc067/photos-1757746298565.webp",
+    "fileUrl": "http://localhost:5000/uploads/system/68b86b7b2201c52b170dc067/photos-1757746298565.webp",
+    "format": "webp",
+    "notes": {
+      "description": "xyzzzzzzzzzzzzzz"
+    },
+    "createdAt": "2025-09-13T06:51:38.938Z",
+    "updatedAt": "2025-09-13T06:51:38.938Z",
+    "__v": 0
+  },
+  {
+    "_id": "68c514e2d8d46db86f92e6ba",
+    "title": "testig ",
+    "user": "68b86b7b2201c52b170dc067",
+    "tenant": null,
+    "tenantName": "system",
+    "internalPath": "uploads/system/68b86b7b2201c52b170dc067/photos-1757746401890.webp",
+    "fileUrl": "http://localhost:5000/uploads/system/68b86b7b2201c52b170dc067/photos-1757746401890.webp",
+    "format": "webp",
+    "notes": {
+      "description": "xyzzzzzzzzzzzzzz"
+    },
+    "createdAt": "2025-09-13T06:53:22.292Z",
+    "updatedAt": "2025-09-13T06:53:22.292Z",
+    "__v": 0
+  },
+  {
+    "_id": "68c514e5d8d46db86f92e6c4",
+    "title": "testig ",
+    "user": "68b86b7b2201c52b170dc067",
+    "tenant": null,
+    "tenantName": "system",
+    "internalPath": "uploads/system/68b86b7b2201c52b170dc067/photos-1757746405532.webp",
+    "fileUrl": "http://localhost:5000/uploads/system/68b86b7b2201c52b170dc067/photos-1757746405532.webp",
+    "format": "webp",
+    "notes": {
+      "description": "xyzzzzzzzzzzzzzz"
+    },
+    "createdAt": "2025-09-13T06:53:25.876Z",
+    "updatedAt": "2025-09-13T06:53:25.876Z",
+    "__v": 0
+  },
+  {
+    "_id": "68c514ebd8d46db86f92e6cc",
+    "title": "testig ",
+    "user": "68b86b7b2201c52b170dc067",
+    "tenant": null,
+    "tenantName": "system",
+    "internalPath": "uploads/system/68b86b7b2201c52b170dc067/photos-1757746411333.webp",
+    "fileUrl": "http://localhost:5000/uploads/system/68b86b7b2201c52b170dc067/photos-1757746411333.webp",
+    "format": "webp",
+    "notes": {
+      "description": "xyzzzzzzzzzzzzzz"
+    },
+    "createdAt": "2025-09-13T06:53:31.708Z",
+    "updatedAt": "2025-09-13T06:53:31.708Z",
+    "__v": 0
+  },
+  {
+    "_id": "68c516f4bb5ddead0723e5e5",
+    "title": "testig ",
+    "user": "68b86b7b2201c52b170dc067",
+    "tenant": null,
+    "tenantName": "system",
+    "internalPath": "uploads/system/68b86b7b2201c52b170dc067/photos-1757746932320.webp",
+    "fileUrl": "http://localhost:5000/uploads/system/68b86b7b2201c52b170dc067/photos-1757746932320.webp",
+    "format": "webp",
+    "notes": {
+      "description": "xyzzzzzzzzzzzzzz"
+    },
+    "createdAt": "2025-09-13T07:02:12.601Z",
+    "updatedAt": "2025-09-13T07:02:12.601Z",
+    "__v": 0
+  },
+  {
+    "_id": "68c51740b2c1bc3909219100",
+    "title": "abcd e dcdvvfv",
+    "user": "68b86b7b2201c52b170dc067",
+    "tenant": null,
+    "tenantName": "system",
+    "internalPath": "uploads/system/68b86b7b2201c52b170dc067/photos-1757747008275.webp",
+    "fileUrl": "http://localhost:5000/uploads/system/68b86b7b2201c52b170dc067/photos-1757747008275.webp",
+    "format": "webp",
+    "notes": {
+      "description": "dvdfvbbdjfvdjfvdfkjvndfkjvdkjfvkj"
+    },
+    "createdAt": "2025-09-13T07:03:28.660Z",
+    "updatedAt": "2025-09-13T07:03:28.660Z",
+    "__v": 0
+  },
+  {
+    "_id": "68c517b7c33ba9381bc04b3b",
+    "title": "abcd e dcdvvfv",
+    "user": "68b86b7b2201c52b170dc067",
+    "tenant": null,
+    "tenantName": "system",
+    "internalPath": "uploads/system/68b86b7b2201c52b170dc067/photos-1757747127160.webp",
+    "fileUrl": "http://localhost:5000/uploads/system/68b86b7b2201c52b170dc067/photos-1757747127160.webp",
+    "format": "webp",
+    "notes": {
+      "description": "dvdfvbbdjfvdjfvdfkjvndfkjvdkjfvkj"
+    },
+    "createdAt": "2025-09-13T07:05:27.406Z",
+    "updatedAt": "2025-09-13T07:05:27.406Z",
+    "__v": 0
+  },
+  {
+    "_id": "68c51bcf5c513a9679bd5e48",
+    "title": "abcd e dcdvvfv",
+    "user": "68b86b7b2201c52b170dc067",
+    "tenant": null,
+    "tenantName": "system",
+    "internalPath": "uploads/system/68b86b7b2201c52b170dc067/photos-1757748174883.webp",
+    "fileUrl": "http://localhost:5000/uploads/system/68b86b7b2201c52b170dc067/photos-1757748174883.webp",
+    "format": "webp",
+    "notes": {
+      "description": "dvdfvbbdjfvdjfvdfkjvndfkjvdkjfvkj"
+    },
+    "createdAt": "2025-09-13T07:22:55.297Z",
+    "updatedAt": "2025-09-13T07:22:55.297Z",
+    "__v": 0
+  },
+  {
+    "_id": "68c51bdc5c513a9679bd5e52",
+    "title": "abcd testing",
+    "user": "68b86b7b2201c52b170dc067",
+    "tenant": null,
+    "tenantName": "system",
+    "internalPath": "uploads/system/68b86b7b2201c52b170dc067/photos-1757748187635.webp",
+    "fileUrl": "http://localhost:5000/uploads/system/68b86b7b2201c52b170dc067/photos-1757748187635.webp",
+    "format": "webp",
+    "notes": {
+      "description": "dvdfvbbdjfvdjfvdfkjvndfkjvdkjfvkj"
+    },
+    "createdAt": "2025-09-13T07:23:08.037Z",
+    "updatedAt": "2025-09-13T07:23:08.037Z",
+    "__v": 0
+  }
+]

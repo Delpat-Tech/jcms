@@ -110,8 +110,28 @@ const deleteTenant = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Tenant not found' });
     }
 
+    const Image = require('../models/image');
+    const fs = require('fs');
+    const path = require('path');
+
     // Delete all users in this tenant
     await User.deleteMany({ tenant: tenant._id });
+    
+    // Delete all images belonging to this tenant
+    const images = await Image.find({ tenant: tenant._id });
+    for (const image of images) {
+      // Delete physical file
+      if (image.filePath && fs.existsSync(image.filePath)) {
+        fs.unlinkSync(image.filePath);
+      }
+    }
+    await Image.deleteMany({ tenant: tenant._id });
+    
+    // Delete tenant upload directory
+    const tenantUploadDir = path.join(__dirname, '../../uploads', tenant._id.toString());
+    if (fs.existsSync(tenantUploadDir)) {
+      fs.rmSync(tenantUploadDir, { recursive: true, force: true });
+    }
     
     // Delete the tenant
     await Tenant.findByIdAndDelete(req.params.id);

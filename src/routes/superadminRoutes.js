@@ -1,21 +1,28 @@
 // src/routes/superadminRoutes.js
 const express = require('express');
-const {
-  createImage,
-  getImages,
-  getImageById,
-  updateImage,
-  deleteImage
-} = require('../controllers/imageController');
+const { backupDatabase } = require('../utils/backup');
 const { authenticate, requireSuperAdmin } = require('../middlewares/auth');
-const upload = require('../middlewares/upload');
 const router = express.Router();
 
 // All routes require authentication and superadmin role
 router.use(authenticate, requireSuperAdmin);
 
-// User management has been moved to unified /api/users routes
-
-// Image management moved to unified /api/admin-images
+// Database backup endpoint
+router.post('/backup', async (req, res) => {
+  try {
+    const result = await backupDatabase();
+    if (result.success) {
+      res.status(200).json(result);
+    } else {
+      res.status(500).json(result);
+    }
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      message: 'Backup failed', 
+      error: error.message 
+    });
+  }
+});
 
 module.exports = router;

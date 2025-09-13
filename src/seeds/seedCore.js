@@ -11,23 +11,40 @@ const seedCore = async (type = 'core') => {
     // Seed roles and permissions
     const { roleMap } = await seedRolesAndPermissions();
     
-    // Create SuperAdmin
+    // Create SuperAdmin - Ensure only one exists
     logger.info('Seeding SuperAdmin user');
-    const superAdminLoginId = process.env.SUPER_ADMIN_LOGIN_ID || 'superadmin';
+    const superAdminLoginId = process.env.SUPER_ADMIN_USERNAME || process.env.SUPER_ADMIN_LOGIN_ID || 'superadmin';
     const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD || 'admin123';
     const superAdminEmail = process.env.SUPER_ADMIN_EMAIL || 'admin@system.com';
     const superAdminRoleId = roleMap.get('superadmin');
 
     if (!superAdminRoleId) throw new Error('SuperAdmin role failed to seed!');
     if (!superAdminLoginId || !superAdminPassword) {
-      console.warn('SUPER_ADMIN_LOGIN_ID or SUPER_ADMIN_PASSWORD not set in .env. Using defaults.');
+      logger.warn('SUPER_ADMIN_USERNAME or SUPER_ADMIN_PASSWORD not set in .env. Using defaults.');
     }
 
-    let saUser = await User.findOne({ username: superAdminLoginId });
-    if (!saUser) {
-      saUser = await User.findOne({ email: superAdminEmail });
+    // First, check if ANY superadmin exists
+    const existingSuperAdmins = await User.find({ role: superAdminRoleId });
+    
+    if (existingSuperAdmins.length > 1) {
+      logger.warn('Multiple superadmins found! Cleaning up...', { count: existingSuperAdmins.length });
+      
+      // Keep only the first one that matches our .env credentials, or the first one
+      let keepUser = existingSuperAdmins.find(user => 
+        user.username === superAdminLoginId || user.email === superAdminEmail
+      ) || existingSuperAdmins[0];
+      
+      // Remove all others
+      const toRemove = existingSuperAdmins.filter(user => !user._id.equals(keepUser._id));
+      for (const user of toRemove) {
+        await User.findByIdAndDelete(user._id);
+        logger.info('Removed duplicate superadmin', { username: user.username, email: user.email });
+      }
     }
 
+    // Now find or create the single superadmin
+    let saUser = await User.findOne({ role: superAdminRoleId });
+    
     if (!saUser) {
       logger.info('Creating SuperAdmin user', { loginId: superAdminLoginId });
       saUser = await User.create({
@@ -35,15 +52,13 @@ const seedCore = async (type = 'core') => {
         email: superAdminEmail,
         password: superAdminPassword,
         role: superAdminRoleId,
-        isActive: true
+        isActive: true,
+        tenant: null // Superadmin has no tenant
       });
       logger.info('SuperAdmin user created', { userId: saUser._id, loginId: superAdminLoginId });
     } else {
+      // Update existing superadmin to match .env credentials
       let updated = false;
-      if (!saUser.role || !saUser.role.equals(superAdminRoleId)) {
-        saUser.role = superAdminRoleId;
-        updated = true;
-      }
       if (saUser.username !== superAdminLoginId) {
         saUser.username = superAdminLoginId;
         updated = true;
@@ -54,6 +69,14 @@ const seedCore = async (type = 'core') => {
       }
       if (superAdminPassword) {
         saUser.password = superAdminPassword;
+        updated = true;
+      }
+      if (!saUser.isActive) {
+        saUser.isActive = true;
+        updated = true;
+      }
+      if (saUser.tenant !== null) {
+        saUser.tenant = null;
         updated = true;
       }
 
@@ -105,9 +128,16 @@ const seedCore = async (type = 'core') => {
       }
     }
     
+    // Final verification - ensure only one superadmin exists
+    const finalSuperAdminCount = await User.countDocuments({ role: superAdminRoleId });
+    if (finalSuperAdminCount !== 1) {
+      throw new Error(`Expected exactly 1 superadmin, found ${finalSuperAdminCount}`);
+    }
+    
     logger.info('Core seeding completed', { 
       type, 
-      superAdmin: { username: superAdminLoginId, email: superAdminEmail } 
+      superAdmin: { username: superAdminLoginId, email: superAdminEmail },
+      superAdminCount: finalSuperAdminCount
     });
     
     return { superAdminUser: saUser, sampleUsers, sampleImages, roleMap };
