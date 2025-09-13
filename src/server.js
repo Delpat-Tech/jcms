@@ -10,7 +10,7 @@ const { runSeeds } = require('./seeds');
 const logger = require('./config/logger');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = parseInt(process.env.PORT) || 5000;
 
 // Connect to MongoDB
 try {
@@ -34,8 +34,30 @@ if (process.env.AUTO_SEED === 'true') {
 }
 
 // Middleware
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5000,http://127.0.0.1:5000')
+  .split(',')
+  .map(o => o.trim())
+  .filter(Boolean);
+const allowLocalhostWildcard = (process.env.ALLOW_LOCALHOST_WILDCARD || 'true').toLowerCase() === 'true';
+const localhostRegex = /^http:\/\/(localhost|127\.0\.0\.1)(:\\d+)?$/;
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow non-browser or same-origin requests (no Origin header)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    if (allowLocalhostWildcard && localhostRegex.test(origin)) return callback(null, true);
+    if (origin === 'null') return callback(null, true);
+    return callback(null, false);
+  },
+  credentials: true,
+  methods: ['GET','HEAD','PUT','PATCH','POST','DELETE'],
+  allowedHeaders: ['Content-Type','Authorization'],
+  optionsSuccessStatus: 204
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
-app.use(cors());
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 app.use(express.urlencoded({ extended: true }));
 
@@ -45,7 +67,11 @@ app.get("/", (req, res) => {
 });
 
 app.get("/admin", (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'admin-dashboard.html'));
+  res.sendFile(path.join(__dirname, '..', 'admin-panel.html'));
+});
+
+app.get("/admin-panel", (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'admin-panel.html'));
 });
 
 app.get("/admin-dashboard.html", (req, res) => {
@@ -64,7 +90,12 @@ app.get("/test-websocket.html", (req, res) => {
 
 // Health check route
 app.get("/api/health", (req, res) => {
-  res.status(200).json({ status: "ok", message: "Server is running" });
+  res.status(200).json({ status: "ok", message: "Server is running", port: PORT, timestamp: new Date() });
+});
+
+// Simple ping endpoint
+app.get("/ping", (req, res) => {
+  res.json({ message: "pong", server: "JCMS", port: PORT });
 });
 
 // Logger test route
@@ -190,7 +221,8 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on http://localhost:${PORT}`);
   logger.info('Server started successfully', { port: PORT });
 });
 
