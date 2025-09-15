@@ -1,89 +1,63 @@
-## JCMS – Minimal CMS Backend (Phase 1)
+# JCMS - Content Management System
 
-Basic Node.js + Express + MongoDB backend for image upload, AVIF conversion, and CRUD-ready APIs.
+A full-stack content management system built with React frontend and Node.js backend.
 
-### Tech Stack
-- Node.js, Express
-- MongoDB (Mongoose)
-- Multer (file uploads)
-- Sharp (image processing to AVIF)
-- Dotenv, CORS
+## Project Structure
 
-### Prerequisites
-- Node.js 18+
-- MongoDB connection string (local or Atlas)
+```
+jcms/
+├── backend/          # Node.js API server
+├── frontend/         # React application
+└── frontend_test/    # Next.js test application
+```
 
-### Setup
-1) Clone and install
+## Quick Start
+
+### Backend Setup
 ```bash
-git clone <repo-url>
-cd jcms
+cd backend
 npm install
+cp .env.example .env
+# Configure your MongoDB URI and other settings in .env
+npm start
 ```
 
-2) Create `.env`
+### Frontend Setup
 ```bash
-copy NUL .env  # Windows (PowerShell/CMD)
-# Then edit .env and add:
-# MONGO_URI=mongodb://localhost:27017/cms_backend
-# PORT=5000
+cd frontend
+npm install
+cp .env.example .env
+# Configure API URL in .env
+npm start
 ```
 
-3) Run
-```bash
-npm run start
-# Server: http://localhost:5000
-```
+## Default Credentials
 
-### Project Structure
-```
-src/
-  config/db.js        # Mongo connection
-  server.js           # Express app
-  controllers/        # (to be filled) image logic
-  models/             # (to be filled) mongoose schemas
-  routes/             # (to be filled) express routers
-  middlewares/        # (to be filled)
-  services/           # (to be filled) image processing (Sharp → AVIF)
-  utils/              # (to be filled) helpers
-uploads/
-  index/
-.env                  # ignored
-```
+After seeding the database:
 
-Notes:
-- `uploads/` is gitignored; empty folders are kept with `.gitkeep`.
-- Images will be stored under `uploads/{tenant}/{entity}/` in AVIF.
+- **SuperAdmin**: `superadmin` / `admin123`
+- **Admin**: `dev_admin` / `dev123`
+- **Editor**: `test_editor` / `test123`
 
-### Health Check
-```text
-GET /
-```
-Returns: `Hello World!` (temporary placeholder)
+## Features
 
+- Role-based authentication (SuperAdmin, Admin, Editor)
+- JWT token management
+- File upload and management
+- User management
+- Analytics and notifications
+- Multi-tenant support
 
-### Added Image Model and health check route
-Work Completed Till Now
+## Environment Variables
 
-Server Setup
-Created server.js using Express.
-Added middleware: express.json, cors.
-Implemented health check route:
-GET /api/health → { "status": "ok", "message": "Server is running" }
+### Backend (.env)
+- `MONGO_URI` - MongoDB connection string
+- `JWT_SECRET` - Secret for JWT tokens
+- `PORT` - Server port (default: 5000)
 
+### Frontend (.env)
+- `REACT_APP_API_URL` - Backend API URL
 
-Image Schema
-Basic schema: title, subtitle, filePath.
-Extended schema: Added width, height, format, tenant, section.
-Added Timestamps
+## License
 
-
-### Seeder Utility
-Created utils/seedImage.js for inserting test image data into MongoDB.
-Debugged validation errors for required fields.
-Verified DB connectivity by inserting dummy images.
-
-### Next Steps (Phase 1 continuation)
-- Add upload route, controller, and service for AVIF conversion.
-- Enforce upload constraints (max 2MB, jpg/png only).
-- CRUD endpoints: `POST/GET/GET/:id/PUT/:id/DELETE/:id` under `/api/:module`.
+Private project - All rights reserved.

@@ -1,25 +1,42 @@
+# Root .gitignore for JCMS project
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
 # Dependencies
 node_modules/
 
-# Environment variables
-.env
-
-# Uploads directory (keep structure)
-uploads/
-!uploads/.gitkeep
-!uploads/index/.gitkeep
-
 # Logs
 *.log
+logs/
 
-# Test and development files (allow HTML test clients for team)
-# src/utils/test-*.html - commented out to allow team testing
-src/utils/*-test.js
+# Build outputs
+build/
+dist/
+.next/
 
 # IDE files
 .vscode/
 .idea/
+*.swp
+*.swo
 
 # OS files
 .DS_Store
 Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+
+# Test files (keep only necessary ones)
+test-*.js
+debug-*.js
+create-*.js
+
+# Uploads (keep structure but ignore content)
+uploads/
+!uploads/.gitkeep

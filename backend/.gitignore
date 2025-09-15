@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+
+# Uploads directory (keep structure)
+uploads/
+!uploads/.gitkeep
+!uploads/index/.gitkeep
+
+# Logs
+*.log
+
+# Test and development files (allow HTML test clients for team)
+# src/utils/test-*.html - commented out to allow team testing
+src/utils/*-test.js
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
