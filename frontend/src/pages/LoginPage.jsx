@@ -8,7 +8,7 @@ function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
-  const { addToast } = useToasts() || { addToast: () => {} };
+  const { addNotification } = useToasts() || { addNotification: () => {} };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,7 +28,7 @@ function Login() {
       }
 
       setMessage("✅ Login successful!");
-      addToast?.({ title: "Logged in", description: `Welcome ${data.user.username}` });
+      addNotification('success', 'Logged in', `Welcome ${data.user.username}`);
       console.log("User data:", data);
       
       // Save token and user data to localStorage
@@ -40,7 +40,7 @@ function Login() {
       window.location.href = "/dashboard";
     } catch (err) {
       setMessage("❌ " + err.message);
-      addToast?.({ title: "Login failed", description: err.message, variant: "error" });
+      addNotification('error', 'Login failed', err.message);
     }
   };
 

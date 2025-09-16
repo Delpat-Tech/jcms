@@ -34,7 +34,7 @@ if (process.env.AUTO_SEED === 'true') {
 }
 
 // Middleware
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5000,http://127.0.0.1:5000')
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5000,http://127.0.0.1:5000,http://localhost:3000,http://127.0.0.1:3000')
   .split(',')
   .map(o => o.trim())
   .filter(Boolean);
@@ -51,7 +51,7 @@ const corsOptions = {
     return callback(null, false);
   },
   credentials: true,
-  methods: ['GET','HEAD','PUT','PATCH','POST','DELETE'],
+  methods: ['GET','HEAD','PUT','PATCH','POST','DELETE','OPTIONS'],
   allowedHeaders: ['Content-Type','Authorization'],
   optionsSuccessStatus: 204
 };
