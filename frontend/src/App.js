@@ -7,6 +7,7 @@ import EditorDashboard from "./pages/EditorDashboard";
 import ContentPage from "./pages/ContentPage";
 import MediaPage from "./pages/MediaPage";
 import UsersPage from "./pages/UsersPage";
+import RolesPage from "./pages/RolesPage";
 import ErrorBoundary from "./components/util/ErrorBoundary";
 import { ToastProvider } from "./components/util/Toasts";
 
@@ -31,6 +32,7 @@ function App() {
             <Route path="/dashboard/content" element={<ContentPage />} />
             <Route path="/dashboard/media" element={<MediaPage />} />
             <Route path="/dashboard/users" element={<UsersPage />} />
+            <Route path="/dashboard/roles" element={<RolesPage />} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </Router>

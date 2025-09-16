@@ -1,0 +1,166 @@
+import { useState, useEffect } from "react";
+import Layout from "../components/shared/Layout";
+import Button from "../components/ui/Button";
+import Table from "../components/ui/Table";
+import Modal from "../components/ui/Modal";
+import Input from "../components/ui/Input";
+import FormField from "../components/ui/FormField";
+import { useToasts } from "../components/util/Toasts";
+
+function RolesPage() {
+  const [roles, setRoles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [editingRole, setEditingRole] = useState(null);
+  const [formData, setFormData] = useState({ name: "", description: "" });
+  const { addNotification } = useToasts() || { addNotification: () => {} };
+
+  const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    fetchRoles();
+  }, []);
+
+  const fetchRoles = async () => {
+    try {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/superadmin/roles`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setRoles(data.roles);
+      }
+    } catch (error) {
+      addNotification('error', 'Error', 'Failed to fetch roles');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const url = editingRole 
+        ? `${process.env.REACT_APP_API_URL}/api/superadmin/roles/${editingRole._id}`
+        : `${process.env.REACT_APP_API_URL}/api/superadmin/roles`;
+      
+      const res = await fetch(url, {
+        method: editingRole ? "PUT" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        addNotification('success', 'Success', editingRole ? 'Role updated' : 'Role created');
+        fetchRoles();
+        setShowModal(false);
+        setFormData({ name: "", description: "" });
+        setEditingRole(null);
+      } else {
+        addNotification('error', 'Error', data.message);
+      }
+    } catch (error) {
+      addNotification('error', 'Error', 'Failed to save role');
+    }
+  };
+
+  const handleEdit = (role) => {
+    setEditingRole(role);
+    setFormData({ name: role.name, description: role.description || "" });
+    setShowModal(true);
+  };
+
+  const handleDelete = async (roleId) => {
+    if (!window.confirm("Are you sure you want to delete this role?")) return;
+    
+    try {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/superadmin/roles/${roleId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        addNotification('success', 'Success', 'Role deleted');
+        fetchRoles();
+      } else {
+        addNotification('error', 'Error', data.message);
+      }
+    } catch (error) {
+      addNotification('error', 'Error', 'Failed to delete role');
+    }
+  };
+
+  const columns = [
+    { key: "name", label: "Name" },
+    { key: "description", label: "Description" },
+    { key: "createdAt", label: "Created", render: (value) => new Date(value).toLocaleDateString() },
+    {
+      key: "actions",
+      label: "Actions",
+      render: (_, role) => (
+        <div className="space-x-2">
+          <Button size="sm" onClick={() => handleEdit(role)}>Edit</Button>
+          <Button size="sm" variant="danger" onClick={() => handleDelete(role._id)}>Delete</Button>
+        </div>
+      )
+    }
+  ];
+
+  if (loading) return <Layout><div>Loading...</div></Layout>;
+
+  return (
+    <Layout>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold">Roles Management</h1>
+          <Button onClick={() => setShowModal(true)}>Add Role</Button>
+        </div>
+
+        <Table data={roles} columns={columns} />
+
+        <Modal
+          isOpen={showModal}
+          onClose={() => {
+            setShowModal(false);
+            setEditingRole(null);
+            setFormData({ name: "", description: "" });
+          }}
+          title={editingRole ? "Edit Role" : "Add Role"}
+        >
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <FormField label="Name" htmlFor="name">
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                required
+              />
+            </FormField>
+            <FormField label="Description" htmlFor="description">
+              <Input
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              />
+            </FormField>
+            <div className="flex justify-end space-x-2">
+              <Button type="button" variant="secondary" onClick={() => setShowModal(false)}>
+                Cancel
+              </Button>
+              <Button type="submit">
+                {editingRole ? "Update" : "Create"}
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      </div>
+    </Layout>
+  );
+}
+
+export default RolesPage;
