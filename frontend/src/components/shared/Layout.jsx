@@ -7,9 +7,9 @@ function Layout({ children, title, user }) {
 	return (
 		<div className="min-h-screen bg-gray-50">
 			<Header title={title} user={user} />
-			<div className="mx-auto grid max-w-7xl grid-cols-1 md:grid-cols-[16rem_1fr]">
+			<div className="flex">
 				<Sidebar />
-				<main className="min-h-[calc(100vh-56px-56px)] px-4 py-6">{children}</main>
+				<main className="flex-1 min-h-[calc(100vh-56px-56px)] px-4 py-6 md:ml-64">{children}</main>
 			</div>
 			<Footer />
 		</div>
