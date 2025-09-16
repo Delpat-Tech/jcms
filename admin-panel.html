@@ -285,7 +285,10 @@
         <div id="tenants-tab" class="tab-content">
             <div class="section">
                 <h2>🏢 Tenant Management</h2>
+            
+            <!-- Tenant Operations -->
             <div class="route-group">
+                <h3>Basic Tenant Operations</h3>
                 <div class="route">
                     <span class="method get">GET</span>
                     <span class="endpoint">/api/tenants</span>
@@ -296,17 +299,94 @@
                     <span class="method post">POST</span>
                     <span class="endpoint">/api/tenants</span>
                     <span class="description">Create tenant</span>
-                    <button class="btn" onclick="showTenantCreate()">Test</button>
+                    <button class="btn" onclick="showTenantCreate()">Create</button>
                 </div>
                 <div class="route">
                     <span class="method get">GET</span>
                     <span class="endpoint">/api/tenants/:id</span>
                     <span class="description">Get specific tenant</span>
-                    <button class="btn" onclick="showTenantById()">Test</button>
+                    <button class="btn" onclick="showTenantById()">Get by ID</button>
+                </div>
+                <div class="route">
+                    <span class="method put">PUT</span>
+                    <span class="endpoint">/api/tenants/:id</span>
+                    <span class="description">Update tenant</span>
+                    <button class="btn" onclick="showTenantUpdate()">Update</button>
+                </div>
+                <div class="route">
+                    <span class="method delete">DELETE</span>
+                    <span class="endpoint">/api/tenants/:id</span>
+                    <span class="description">Delete tenant</span>
+                    <button class="btn" onclick="showTenantDelete()">Delete</button>
                 </div>
             </div>
+            
+            <!-- Tenant User Management -->
+            <div class="route-group">
+                <h3>Tenant User Management</h3>
+                <div class="route">
+                    <span class="method get">GET</span>
+                    <span class="endpoint">/api/tenants/:id/users</span>
+                    <span class="description">Get tenant users</span>
+                    <button class="btn" onclick="showTenantUsers()">Get Users</button>
+                </div>
+                <div class="route">
+                    <span class="method post">POST</span>
+                    <span class="endpoint">/api/tenants/:id/users</span>
+                    <span class="description">Create tenant user</span>
+                    <button class="btn" onclick="showCreateTenantUser()">Create User</button>
+                </div>
+                <div class="route">
+                    <span class="method post">POST</span>
+                    <span class="endpoint">/api/tenants/:id/users/bulk</span>
+                    <span class="description">Bulk create users</span>
+                    <button class="btn" onclick="showBulkCreateUsers()">Bulk Create</button>
+                </div>
+                <div class="route">
+                    <span class="method put">PUT</span>
+                    <span class="endpoint">/api/tenants/:id/users/bulk</span>
+                    <span class="description">Bulk update users</span>
+                    <button class="btn" onclick="showBulkUpdateUsers()">Bulk Update</button>
+                </div>
+                <div class="route">
+                    <span class="method get">GET</span>
+                    <span class="endpoint">/api/tenants/:id/users/export</span>
+                    <span class="description">Export tenant users</span>
+                    <button class="btn" onclick="showExportUsers()">Export</button>
+                </div>
+            </div>
+            
+            <!-- Tenant Analytics -->
+            <div class="route-group">
+                <h3>Tenant Analytics</h3>
+                <div class="route">
+                    <span class="method get">GET</span>
+                    <span class="endpoint">/api/tenant-analytics/:id/dashboard</span>
+                    <span class="description">Get tenant dashboard</span>
+                    <button class="btn" onclick="showTenantDashboard()">Dashboard</button>
+                </div>
+                <div class="route">
+                    <span class="method get">GET</span>
+                    <span class="endpoint">/api/tenants/:id/stats</span>
+                    <span class="description">Get tenant statistics</span>
+                    <button class="btn" onclick="showTenantStats()">Statistics</button>
+                </div>
+                <div class="route">
+                    <span class="method get">GET</span>
+                    <span class="endpoint">/api/tenant-analytics/:id/performance</span>
+                    <span class="description">Get performance metrics</span>
+                    <button class="btn" onclick="showTenantPerformance()">Performance</button>
+                </div>
+                <div class="route">
+                    <span class="method get">GET</span>
+                    <span class="endpoint">/api/tenant-analytics/compare</span>
+                    <span class="description">Compare tenants</span>
+                    <button class="btn" onclick="showTenantComparison()">Compare</button>
+                </div>
+            </div>
+                
                 <div id="tenants-forms" class="hidden"></div>
-                <div id="tenants-response" class="response hidden"></div>
+                <div id="tenants-response" class="hidden"></div>
             </div>
         </div>
     </div>
@@ -812,7 +892,12 @@
                 <div class="test-form">
                     <h4>Create Tenant</h4>
                     <input type="text" id="tenantName" placeholder="Tenant Name" required>
-                    <textarea id="tenantDescription" placeholder="Description"></textarea>
+                    <input type="text" id="tenantSubdomain" placeholder="Subdomain (e.g., mycompany)" required>
+                    <hr style="margin: 15px 0;">
+                    <h5>Admin User Details</h5>
+                    <input type="text" id="adminUsername" placeholder="Admin Username" required>
+                    <input type="email" id="adminEmail" placeholder="Admin Email" required>
+                    <input type="password" id="adminPassword" placeholder="Admin Password" required>
                     <button class="btn" onclick="createTenant()">Create Tenant</button>
                 </div>
             `;
@@ -821,14 +906,23 @@
 
         function createTenant() {
             const name = document.getElementById('tenantName').value;
-            const description = document.getElementById('tenantDescription').value;
+            const subdomain = document.getElementById('tenantSubdomain').value;
+            const adminUsername = document.getElementById('adminUsername').value;
+            const adminEmail = document.getElementById('adminEmail').value;
+            const adminPassword = document.getElementById('adminPassword').value;
 
-            if (!name) {
-                alert('Please enter tenant name');
+            if (!name || !subdomain || !adminUsername || !adminEmail || !adminPassword) {
+                alert('Please fill in all required fields');
                 return;
             }
 
-            testRoute('POST', '/api/tenants', { name, description });
+            testRoute('POST', '/api/tenants', { 
+                name, 
+                subdomain, 
+                adminUsername, 
+                adminEmail, 
+                adminPassword 
+            });
         }
 
         function showTenantById() {
@@ -850,6 +944,345 @@
                 return;
             }
             testRoute('GET', `/api/tenants/${id}`);
+        }
+
+        function showTenantUpdate() {
+            const formsDiv = document.getElementById('tenants-forms');
+            formsDiv.innerHTML = `
+                <div class="test-form">
+                    <h4>Update Tenant</h4>
+                    <input type="text" id="updateTenantId" placeholder="Tenant ID" required>
+                    <input type="text" id="updateTenantName" placeholder="New tenant name">
+                    <input type="number" id="updateMaxUsers" placeholder="Max users (optional)">
+                    <input type="text" id="updateMaxStorage" placeholder="Max storage (e.g., 20GB)">
+                    <label><input type="checkbox" id="updateIsActive"> Is Active</label>
+                    <button class="btn" onclick="updateTenant()">Update Tenant</button>
+                </div>
+            `;
+            formsDiv.classList.remove('hidden');
+        }
+
+        function updateTenant() {
+            const id = document.getElementById('updateTenantId').value;
+            const name = document.getElementById('updateTenantName').value;
+            const maxUsers = document.getElementById('updateMaxUsers').value;
+            const maxStorage = document.getElementById('updateMaxStorage').value;
+            const isActive = document.getElementById('updateIsActive').checked;
+
+            if (!id) {
+                alert('Please enter tenant ID');
+                return;
+            }
+
+            const updateData = {};
+            if (name) updateData.name = name;
+            if (isActive !== null) updateData.isActive = isActive;
+            if (maxUsers || maxStorage) {
+                updateData.settings = {};
+                if (maxUsers) updateData.settings.maxUsers = parseInt(maxUsers);
+                if (maxStorage) updateData.settings.maxStorage = maxStorage;
+            }
+
+            testRoute('PUT', `/api/tenants/${id}`, updateData);
+        }
+
+        function showTenantDelete() {
+            const formsDiv = document.getElementById('tenants-forms');
+            formsDiv.innerHTML = `
+                <div class="test-form">
+                    <h4>Delete Tenant</h4>
+                    <input type="text" id="deleteTenantId" placeholder="Tenant ID" required>
+                    <div style="color: red; margin: 10px 0;">⚠️ Warning: This will delete all tenant data including users, files, and images!</div>
+                    <button class="btn btn-danger" onclick="deleteTenant()">Delete Tenant</button>
+                </div>
+            `;
+            formsDiv.classList.remove('hidden');
+        }
+
+        function deleteTenant() {
+            const id = document.getElementById('deleteTenantId').value;
+            if (!id) {
+                alert('Please enter tenant ID');
+                return;
+            }
+            if (confirm('Are you absolutely sure you want to delete this tenant? This action cannot be undone!')) {
+                testRoute('DELETE', `/api/tenants/${id}`);
+            }
+        }
+
+        // Tenant User Management Functions
+        function showTenantUsers() {
+            const formsDiv = document.getElementById('tenants-forms');
+            formsDiv.innerHTML = `
+                <div class="test-form">
+                    <h4>Get Tenant Users</h4>
+                    <input type="text" id="tenantUsersId" placeholder="Tenant ID" required>
+                    <button class="btn" onclick="getTenantUsers()">Get Users</button>
+                </div>
+            `;
+            formsDiv.classList.remove('hidden');
+        }
+
+        function getTenantUsers() {
+            const tenantId = document.getElementById('tenantUsersId').value;
+            if (!tenantId) {
+                alert('Please enter tenant ID');
+                return;
+            }
+            testRoute('GET', `/api/tenants/${tenantId}/users`);
+        }
+
+        function showCreateTenantUser() {
+            const formsDiv = document.getElementById('tenants-forms');
+            formsDiv.innerHTML = `
+                <div class="test-form">
+                    <h4>Create Tenant User</h4>
+                    <input type="text" id="tenantUserTenantId" placeholder="Tenant ID" required>
+                    <input type="text" id="tenantUserUsername" placeholder="Username" required>
+                    <input type="email" id="tenantUserEmail" placeholder="Email" required>
+                    <input type="password" id="tenantUserPassword" placeholder="Password" required>
+                    <input type="tel" id="tenantUserPhone" placeholder="Phone (optional)">
+                    <select id="tenantUserRole">
+                        <option value="viewer">Viewer</option>
+                        <option value="editor" selected>Editor</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                    <button class="btn" onclick="createTenantUser()">Create User</button>
+                </div>
+            `;
+            formsDiv.classList.remove('hidden');
+        }
+
+        function createTenantUser() {
+            const tenantId = document.getElementById('tenantUserTenantId').value;
+            const username = document.getElementById('tenantUserUsername').value;
+            const email = document.getElementById('tenantUserEmail').value;
+            const password = document.getElementById('tenantUserPassword').value;
+            const phone = document.getElementById('tenantUserPhone').value;
+            const roleName = document.getElementById('tenantUserRole').value;
+
+            if (!tenantId || !username || !email || !password) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            const userData = { username, email, password, roleName };
+            if (phone) userData.phone = phone;
+
+            testRoute('POST', `/api/tenants/${tenantId}/users`, userData);
+        }
+
+        function showBulkCreateUsers() {
+            const formsDiv = document.getElementById('tenants-forms');
+            formsDiv.innerHTML = `
+                <div class="test-form">
+                    <h4>Bulk Create Tenant Users</h4>
+                    <input type="text" id="bulkTenantId" placeholder="Tenant ID" required>
+                    <textarea id="bulkUsersData" placeholder="JSON array of users [{username,email,password,roleName}...]" rows="6"></textarea>
+                    <div style="font-size: 12px; color: #666; margin: 5px 0;">
+                        Example: [{"username":"user1","email":"user1@test.com","password":"pass123","roleName":"editor"}]
+                    </div>
+                    <button class="btn" onclick="bulkCreateUsers()">Bulk Create</button>
+                </div>
+            `;
+            formsDiv.classList.remove('hidden');
+        }
+
+        function bulkCreateUsers() {
+            const tenantId = document.getElementById('bulkTenantId').value;
+            const usersData = document.getElementById('bulkUsersData').value;
+
+            if (!tenantId || !usersData) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            try {
+                const users = JSON.parse(usersData);
+                testRoute('POST', `/api/tenants/${tenantId}/users/bulk`, { users });
+            } catch (error) {
+                alert('Invalid JSON format for users data');
+            }
+        }
+
+        function showBulkUpdateUsers() {
+            const formsDiv = document.getElementById('tenants-forms');
+            formsDiv.innerHTML = `
+                <div class="test-form">
+                    <h4>Bulk Update Tenant Users</h4>
+                    <input type="text" id="bulkUpdateTenantId" placeholder="Tenant ID" required>
+                    <textarea id="bulkUpdateUserIds" placeholder="Comma-separated user IDs" rows="2"></textarea>
+                    <select id="bulkUpdateRole">
+                        <option value="">Keep current role</option>
+                        <option value="viewer">Viewer</option>
+                        <option value="editor">Editor</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                    <label><input type="checkbox" id="bulkUpdateActive"> Set Active Status</label>
+                    <label><input type="checkbox" id="bulkUpdateActiveValue"> Active</label>
+                    <button class="btn" onclick="bulkUpdateUsers()">Bulk Update</button>
+                </div>
+            `;
+            formsDiv.classList.remove('hidden');
+        }
+
+        function bulkUpdateUsers() {
+            const tenantId = document.getElementById('bulkUpdateTenantId').value;
+            const userIds = document.getElementById('bulkUpdateUserIds').value.split(',').map(id => id.trim());
+            const role = document.getElementById('bulkUpdateRole').value;
+            const setActive = document.getElementById('bulkUpdateActive').checked;
+            const isActive = document.getElementById('bulkUpdateActiveValue').checked;
+
+            if (!tenantId || !userIds.length) {
+                alert('Please provide tenant ID and user IDs');
+                return;
+            }
+
+            const updates = {};
+            if (role) updates.role = role;
+            if (setActive) updates.isActive = isActive;
+
+            testRoute('PUT', `/api/tenants/${tenantId}/users/bulk`, { userIds, updates });
+        }
+
+        function showExportUsers() {
+            const formsDiv = document.getElementById('tenants-forms');
+            formsDiv.innerHTML = `
+                <div class="test-form">
+                    <h4>Export Tenant Users</h4>
+                    <input type="text" id="exportTenantId" placeholder="Tenant ID" required>
+                    <select id="exportFormat">
+                        <option value="json">JSON</option>
+                        <option value="csv">CSV</option>
+                    </select>
+                    <button class="btn" onclick="exportUsers()">Export</button>
+                </div>
+            `;
+            formsDiv.classList.remove('hidden');
+        }
+
+        function exportUsers() {
+            const tenantId = document.getElementById('exportTenantId').value;
+            const format = document.getElementById('exportFormat').value;
+
+            if (!tenantId) {
+                alert('Please enter tenant ID');
+                return;
+            }
+
+            // Open in new tab for download
+            const url = `${baseURL}/api/tenants/${tenantId}/users/export?format=${format}`;
+            window.open(url, '_blank');
+        }
+
+        // Tenant Analytics Functions
+        function showTenantDashboard() {
+            const formsDiv = document.getElementById('tenants-forms');
+            formsDiv.innerHTML = `
+                <div class="test-form">
+                    <h4>Tenant Dashboard</h4>
+                    <input type="text" id="dashboardTenantId" placeholder="Tenant ID" required>
+                    <select id="dashboardTimeframe">
+                        <option value="24h">Last 24 hours</option>
+                        <option value="7d" selected>Last 7 days</option>
+                        <option value="30d">Last 30 days</option>
+                        <option value="90d">Last 90 days</option>
+                    </select>
+                    <button class="btn" onclick="getTenantDashboard()">Get Dashboard</button>
+                </div>
+            `;
+            formsDiv.classList.remove('hidden');
+        }
+
+        function getTenantDashboard() {
+            const tenantId = document.getElementById('dashboardTenantId').value;
+            const timeframe = document.getElementById('dashboardTimeframe').value;
+
+            if (!tenantId) {
+                alert('Please enter tenant ID');
+                return;
+            }
+
+            testRoute('GET', `/api/tenant-analytics/${tenantId}/dashboard?timeframe=${timeframe}`);
+        }
+
+        function showTenantStats() {
+            const formsDiv = document.getElementById('tenants-forms');
+            formsDiv.innerHTML = `
+                <div class="test-form">
+                    <h4>Tenant Statistics</h4>
+                    <input type="text" id="statsTenantId" placeholder="Tenant ID" required>
+                    <button class="btn" onclick="getTenantStats()">Get Statistics</button>
+                </div>
+            `;
+            formsDiv.classList.remove('hidden');
+        }
+
+        function getTenantStats() {
+            const tenantId = document.getElementById('statsTenantId').value;
+            if (!tenantId) {
+                alert('Please enter tenant ID');
+                return;
+            }
+            testRoute('GET', `/api/tenants/${tenantId}/stats`);
+        }
+
+        function showTenantPerformance() {
+            const formsDiv = document.getElementById('tenants-forms');
+            formsDiv.innerHTML = `
+                <div class="test-form">
+                    <h4>Tenant Performance Metrics</h4>
+                    <input type="text" id="perfTenantId" placeholder="Tenant ID" required>
+                    <button class="btn" onclick="getTenantPerformance()">Get Performance</button>
+                </div>
+            `;
+            formsDiv.classList.remove('hidden');
+        }
+
+        function getTenantPerformance() {
+            const tenantId = document.getElementById('perfTenantId').value;
+            if (!tenantId) {
+                alert('Please enter tenant ID');
+                return;
+            }
+            testRoute('GET', `/api/tenant-analytics/${tenantId}/performance`);
+        }
+
+        function showTenantComparison() {
+            const formsDiv = document.getElementById('tenants-forms');
+            formsDiv.innerHTML = `
+                <div class="test-form">
+                    <h4>Compare Tenants</h4>
+                    <input type="text" id="compareTenantIds" placeholder="Tenant IDs (comma-separated, optional)">
+                    <div style="font-size: 12px; color: #666; margin: 5px 0;">Leave empty to compare all tenants</div>
+                    <label><input type="checkbox" id="compareUsers" checked> Include Users</label>
+                    <label><input type="checkbox" id="compareStorage" checked> Include Storage</label>
+                    <label><input type="checkbox" id="compareActivity" checked> Include Activity</label>
+                    <button class="btn" onclick="compareTenants()">Compare</button>
+                </div>
+            `;
+            formsDiv.classList.remove('hidden');
+        }
+
+        function compareTenants() {
+            const tenantIds = document.getElementById('compareTenantIds').value;
+            const includeUsers = document.getElementById('compareUsers').checked;
+            const includeStorage = document.getElementById('compareStorage').checked;
+            const includeActivity = document.getElementById('compareActivity').checked;
+
+            let url = '/api/tenant-analytics/compare?';
+            if (tenantIds) url += `tenantIds=${tenantIds}&`;
+            
+            const metrics = [];
+            if (includeUsers) metrics.push('users');
+            if (includeStorage) metrics.push('storage');
+            if (includeActivity) metrics.push('activity');
+            
+            if (metrics.length > 0) {
+                url += `metrics=${metrics.join(',')}`;
+            }
+
+            testRoute('GET', url);
         }
 
         function showTab(tabName) {

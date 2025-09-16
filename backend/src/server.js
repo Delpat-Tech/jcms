@@ -178,6 +178,7 @@ const superadminRoutes = require('./routes/superadminRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const tenantRoutes = require('./routes/tenantRoutes');
+const tenantAnalyticsRoutes = require('./routes/tenantAnalyticsRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 
 app.use('/api/images', imagesRoutes); // Unified images API for all roles
@@ -189,6 +190,7 @@ app.use('/api/superadmin', superadminRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/tenants', tenantRoutes);
+app.use('/api/tenant-analytics', tenantAnalyticsRoutes);
 app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/activity', require('./routes/activityRoutes'));
 

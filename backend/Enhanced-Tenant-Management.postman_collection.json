@@ -1,0 +1,840 @@
+{
+  "info": {
+    "name": "Enhanced Tenant Management - JCMS",
+    "description": "Complete test collection for enhanced tenant management features including bulk operations, analytics, and data isolation",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "testTenantId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "testUserId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "item": [
+        {
+          "name": "Health Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Server is running\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.status).to.eql('ok');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health"]
+            }
+          }
+        },
+        {
+          "name": "Login as Superadmin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Login successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.token).to.exist;",
+                  "    ",
+                  "    // Store the token for subsequent requests",
+                  "    pm.collectionVariables.set('authToken', response.token);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"superadmin\",\n  \"password\": \"superpass\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏢 Basic Tenant Management",
+      "item": [
+        {
+          "name": "Get All Tenants",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Get tenants successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.tenants).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tenants",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tenants"]
+            }
+          }
+        },
+        {
+          "name": "Create Test Tenant",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Tenant creation successful\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.tenant).to.exist;",
+                  "    pm.expect(response.tenant._id).to.exist;",
+                  "    ",
+                  "    // Store tenant ID for subsequent tests",
+                  "    pm.collectionVariables.set('testTenantId', response.tenant._id);",
+                  "    ",
+                  "    // Store admin user ID if available",
+                  "    if (response.tenant.adminUser && response.tenant.adminUser._id) {",
+                  "        pm.collectionVariables.set('testUserId', response.tenant.adminUser._id);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Company Enhanced\",\n  \"subdomain\": \"testenhanced\",\n  \"adminUsername\": \"testadmin\",\n  \"adminEmail\": \"admin@testenhanced.com\",\n  \"adminPassword\": \"testpass123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tenants",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tenants"]
+            }
+          }
+        },
+        {
+          "name": "Get Tenant by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Get tenant by ID successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.tenant).to.exist;",
+                  "    pm.expect(response.tenant._id).to.eql(pm.collectionVariables.get('testTenantId'));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tenants/{{testTenantId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tenants", "{{testTenantId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Tenant Settings",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Tenant update successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.tenant.settings.maxUsers).to.eql(100);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Company Enhanced - Updated\",\n  \"settings\": {\n    \"maxUsers\": 100,\n    \"maxStorage\": \"20GB\"\n  },\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tenants/{{testTenantId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tenants", "{{testTenantId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "👥 Tenant User Management",
+      "item": [
+        {
+          "name": "Get Tenant Users",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Get tenant users successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.users).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tenants/{{testTenantId}}/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tenants", "{{testTenantId}}", "users"]
+            }
+          }
+        },
+        {
+          "name": "Create Single Tenant User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Create tenant user successful\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.user).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"singleuser\",\n  \"email\": \"single@testenhanced.com\",\n  \"password\": \"password123\",\n  \"phone\": \"+1234567890\",\n  \"roleName\": \"editor\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tenants/{{testTenantId}}/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tenants", "{{testTenantId}}", "users"]
+            }
+          }
+        },
+        {
+          "name": "Bulk Create Tenant Users",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Bulk create users successful\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.results.created).to.be.an('array');",
+                  "    pm.expect(response.results.created.length).to.be.at.least(2);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"users\": [\n    {\n      \"username\": \"bulkuser1\",\n      \"email\": \"bulkuser1@testenhanced.com\",\n      \"password\": \"password123\",\n      \"roleName\": \"editor\"\n    },\n    {\n      \"username\": \"bulkuser2\",\n      \"email\": \"bulkuser2@testenhanced.com\",\n      \"password\": \"password123\",\n      \"roleName\": \"viewer\"\n    },\n    {\n      \"username\": \"bulkuser3\",\n      \"email\": \"bulkuser3@testenhanced.com\",\n      \"password\": \"password123\",\n      \"roleName\": \"editor\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tenants/{{testTenantId}}/users/bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tenants", "{{testTenantId}}", "users", "bulk"]
+            }
+          }
+        },
+        {
+          "name": "Export Tenant Users (JSON)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Export users successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.users).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tenants/{{testTenantId}}/users/export?format=json",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tenants", "{{testTenantId}}", "users", "export"],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "json"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Export Tenant Users (CSV)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"CSV export successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('text/csv');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tenants/{{testTenantId}}/users/export?format=csv",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tenants", "{{testTenantId}}", "users", "export"],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "csv"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📊 Tenant Statistics",
+      "item": [
+        {
+          "name": "Get Tenant Stats",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Tenant stats successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.stats).to.exist;",
+                  "    pm.expect(response.stats.users).to.exist;",
+                  "    pm.expect(response.stats.storage).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tenants/{{testTenantId}}/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tenants", "{{testTenantId}}", "stats"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📈 Tenant Analytics",
+      "item": [
+        {
+          "name": "Get Tenant Dashboard (7 days)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Dashboard analytics successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.dashboard).to.exist;",
+                  "    pm.expect(response.dashboard.overview).to.exist;",
+                  "    pm.expect(response.dashboard.activity).to.exist;",
+                  "    pm.expect(response.dashboard.storage).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tenant-analytics/{{testTenantId}}/dashboard?timeframe=7d",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tenant-analytics", "{{testTenantId}}", "dashboard"],
+              "query": [
+                {
+                  "key": "timeframe",
+                  "value": "7d"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Tenant Usage History",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Usage history successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.history).to.exist;",
+                  "    pm.expect(response.period).to.eql('daily');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tenant-analytics/{{testTenantId}}/usage-history?period=daily&limit=7",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tenant-analytics", "{{testTenantId}}", "usage-history"],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "daily"
+                },
+                {
+                  "key": "limit",
+                  "value": "7"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Tenant Performance Metrics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Performance metrics successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.metrics).to.exist;",
+                  "    pm.expect(response.metrics.users).to.exist;",
+                  "    pm.expect(response.metrics.content).to.exist;",
+                  "    pm.expect(response.metrics.health).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tenant-analytics/{{testTenantId}}/performance",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tenant-analytics", "{{testTenantId}}", "performance"]
+            }
+          }
+        },
+        {
+          "name": "Get Tenant Activity Report",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Activity report successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.report).to.exist;",
+                  "    pm.expect(response.report.tenant).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tenant-analytics/{{testTenantId}}/activity-report?includeUsers=true&includeImages=true&includeFiles=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tenant-analytics", "{{testTenantId}}", "activity-report"],
+              "query": [
+                {
+                  "key": "includeUsers",
+                  "value": "true"
+                },
+                {
+                  "key": "includeImages",
+                  "value": "true"
+                },
+                {
+                  "key": "includeFiles",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Compare All Tenants",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Tenant comparison successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.comparison).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tenant-analytics/compare?metrics=users,storage,activity",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tenant-analytics", "compare"],
+              "query": [
+                {
+                  "key": "metrics",
+                  "value": "users,storage,activity"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🧪 Advanced Features",
+      "item": [
+        {
+          "name": "Test Tenant Analytics Route",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Analytics routes working\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.message).to.include('working');",
+                  "    pm.expect(response.user).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tenant-analytics/test",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tenant-analytics", "test"]
+            }
+          }
+        },
+        {
+          "name": "Bulk Update Tenant Users",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Bulk update users successful\", function () {",
+                  "    if (pm.response.code === 200) {",
+                  "        const response = pm.response.json();",
+                  "        pm.expect(response.success).to.be.true;",
+                  "        pm.expect(response.results).to.exist;",
+                  "    } else {",
+                  "        // May fail if no user IDs provided - that's expected",
+                  "        pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userIds\": [\"{{testUserId}}\"],\n  \"updates\": {\n    \"isActive\": true\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tenants/{{testTenantId}}/users/bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tenants", "{{testTenantId}}", "users", "bulk"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🧹 Cleanup",
+      "item": [
+        {
+          "name": "Delete Test Tenant",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Tenant deletion successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.message).to.include('deleted');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tenants/{{testTenantId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tenants", "{{testTenantId}}"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
