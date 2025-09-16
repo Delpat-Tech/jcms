@@ -136,7 +136,12 @@ export default function UsersPage() {
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
-    if (userData) setUser(JSON.parse(userData));
+    if (userData) {
+      const parsedUser = JSON.parse(userData);
+      setUser(parsedUser);
+      console.log('Current user role:', parsedUser.role);
+      console.log('Current user tenant:', parsedUser.tenant);
+    }
     fetchUsers();
   }, []);
 
