@@ -58,7 +58,12 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+app.use('/uploads', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  next();
+}, express.static(path.join(__dirname, '..', 'uploads')));
 app.use(express.urlencoded({ extended: true }));
 
 // Dashboard routes (first)
@@ -166,6 +171,40 @@ app.post("/api/test-activity", async (req, res) => {
     res.json({ success: true, message: 'Activity test completed' });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Debug analytics data
+app.get("/api/debug-analytics/:tenantId", async (req, res) => {
+  try {
+    const User = require('./models/user');
+    const Image = require('./models/image');
+    const File = require('./models/file');
+    
+    const tenantId = req.params.tenantId;
+    
+    const [allUsers, allImages, allFiles] = await Promise.all([
+      User.find({}).select('tenant username'),
+      Image.find({}).select('tenant title'),
+      File.find({}).select('tenant filename')
+    ]);
+    
+    res.json({ 
+      success: true,
+      tenantId,
+      counts: {
+        totalUsers: allUsers.length,
+        totalImages: allImages.length,
+        totalFiles: allFiles.length
+      },
+      samples: {
+        users: allUsers.slice(0, 3),
+        images: allImages.slice(0, 3),
+        files: allFiles.slice(0, 3)
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
