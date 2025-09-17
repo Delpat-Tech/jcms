@@ -10,10 +10,9 @@ function AddUserModal({ onClose, onUserAdded }) {
     username: '',
     email: '',
     password: '',
-    role: 'editor'
+    role: 'editor',
+    tenant: ''
   });
-
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -24,13 +23,55 @@ function AddUserModal({ onClose, onUserAdded }) {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/users', {
+      let endpoint, requestBody;
+
+      if (formData.tenant.trim()) {
+        // First, find tenant by name or subdomain
+        const tenantsResponse = await fetch('http://localhost:5000/api/tenants', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const tenantsData = await tenantsResponse.json();
+        
+        if (!tenantsData.success) {
+          setError('Failed to fetch tenants');
+          return;
+        }
+        
+        const tenant = tenantsData.tenants.find(t => 
+          t.name.toLowerCase() === formData.tenant.toLowerCase()
+        );
+        
+        if (!tenant) {
+          setError(`Tenant '${formData.tenant}' not found. Please check the tenant name.`);
+          return;
+        }
+        
+        // Create user within the found tenant
+        endpoint = `http://localhost:5000/api/tenants/${tenant._id}/users`;
+        requestBody = {
+          username: formData.username,
+          email: formData.email,
+          password: formData.password,
+          roleName: formData.role
+        };
+      } else {
+        // Create standalone user (no tenant)
+        endpoint = 'http://localhost:5000/api/users';
+        requestBody = {
+          username: formData.username,
+          email: formData.email,
+          password: formData.password,
+          role: formData.role
+        };
+      }
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(requestBody)
       });
 
       const data = await response.json();
@@ -92,6 +133,19 @@ function AddUserModal({ onClose, onUserAdded }) {
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
+              Tenant
+            </label>
+            <Input
+              type="text"
+              value={formData.tenant}
+              onChange={(e) => setFormData({...formData, tenant: e.target.value})}
+              placeholder="Enter tenant name"
+              required
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Role
             </label>
             <select
@@ -101,6 +155,7 @@ function AddUserModal({ onClose, onUserAdded }) {
             >
               <option value="editor">Editor</option>
               <option value="admin">Admin</option>
+              <option value="viewer">Viewer</option>
             </select>
           </div>
           
@@ -127,11 +182,119 @@ function AddUserModal({ onClose, onUserAdded }) {
   );
 }
 
+function UserDetailsModal({ user, onClose }) {
+  const [userDetails, setUserDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchUserDetails();
+  }, [user._id]);
+
+  const fetchUserDetails = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const [userRes, imagesRes, filesRes] = await Promise.all([
+        fetch(`http://localhost:5000/api/users/${user._id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`http://localhost:5000/api/users/${user._id}/images`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`http://localhost:5000/api/files`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ]);
+
+      const userData = await userRes.json();
+      const imagesData = await imagesRes.json();
+      const filesData = await filesRes.json();
+
+      const userFiles = filesData.success && filesData.data ? 
+        filesData.data.filter(file => file.user === user._id) : [];
+
+      setUserDetails({
+        ...userData.data,
+        imageCount: imagesData.success ? (imagesData.data?.length || 0) : 0,
+        fileCount: userFiles.length
+      });
+    } catch (error) {
+      console.error('Error fetching user details:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Modal open={true} onClose={onClose}>
+      <div className="p-6 w-96">
+        <h2 className="text-lg font-semibold mb-4">User Details</h2>
+        
+        {loading ? (
+          <div className="text-center py-4">Loading...</div>
+        ) : userDetails ? (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Username</label>
+              <p className="text-sm text-gray-900">{userDetails.username}</p>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Email</label>
+              <p className="text-sm text-gray-900">{userDetails.email}</p>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Role</label>
+              <p className="text-sm text-gray-900">{userDetails.role?.name || userDetails.role}</p>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Tenant</label>
+              <p className="text-sm text-gray-900">{userDetails.tenant?.name || 'No Tenant'}</p>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Status</label>
+              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                userDetails.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+              }`}>
+                {userDetails.isActive ? 'Active' : 'Inactive'}
+              </span>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Images Uploaded</label>
+              <p className="text-sm text-gray-900">{userDetails.imageCount}</p>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Files Uploaded</label>
+              <p className="text-sm text-gray-900">{userDetails.fileCount}</p>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Created</label>
+              <p className="text-sm text-gray-900">{new Date(userDetails.createdAt).toLocaleString()}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-4 text-gray-500">Failed to load user details</div>
+        )}
+        
+        <div className="flex justify-end pt-4">
+          <Button onClick={onClose}>Close</Button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
 export default function UsersPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -148,7 +311,7 @@ export default function UsersPage() {
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/users', {
+      const response = await fetch('http://localhost:5000/api/users?includeInactive=true', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -164,12 +327,36 @@ export default function UsersPage() {
     }
   };
 
-  const handleDeleteUser = async (userId) => {
-    if (!window.confirm('Are you sure you want to delete this user?')) return;
+  const handleToggleUserStatus = async (userId, isActive) => {
+    const action = isActive ? 'deactivate' : 'reactivate';
+    if (!window.confirm(`Are you sure you want to ${action} this user?`)) return;
     
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/users/${userId}`, {
+      const endpoint = isActive 
+        ? `http://localhost:5000/api/users/${userId}`
+        : `http://localhost:5000/api/users/${userId}/reactivate`;
+      const method = isActive ? 'DELETE' : 'POST';
+      
+      const response = await fetch(endpoint, {
+        method,
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        fetchUsers();
+      }
+    } catch (error) {
+      console.error(`Error ${action}ing user:`, error);
+    }
+  };
+
+  const handlePermanentDelete = async (userId) => {
+    if (!window.confirm('Are you sure you want to PERMANENTLY delete this user? This action cannot be undone!')) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/users/${userId}?permanent=true`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -178,29 +365,46 @@ export default function UsersPage() {
         fetchUsers();
       }
     } catch (error) {
-      console.error('Error deleting user:', error);
+      console.error('Error permanently deleting user:', error);
     }
   };
 
   const filteredUsers = users.filter(u => 
     u.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.tenant?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const columns = [
-    { key: 'username', label: 'Name' },
+    { key: 'username', label: 'Name', render: (user) => (
+      <button 
+        onClick={() => setSelectedUser(user)}
+        className="text-blue-600 hover:text-blue-800 hover:underline"
+        title="Click to view user details"
+      >
+        {user.username}
+      </button>
+    )},
     { key: 'email', label: 'Email' },
     { key: 'role', label: 'Role', render: (user) => user.role?.name || user.role },
+    { key: 'tenant', label: 'Tenant', render: (user) => user.tenant?.name || 'No Tenant' },
     { key: 'isActive', label: 'Status', render: (user) => user.isActive ? 'Active' : 'Inactive' },
     { 
       key: 'actions', 
       label: 'Actions', 
       render: (user) => (
         <div className="flex gap-2">
-          <button className="text-blue-600 hover:text-blue-800">⚙️</button>
           <button 
-            onClick={() => handleDeleteUser(user._id)}
+            onClick={() => handleToggleUserStatus(user._id, user.isActive)}
+            className={user.isActive ? "text-orange-600 hover:text-orange-800" : "text-green-600 hover:text-green-800"}
+            title={user.isActive ? "Deactivate user" : "Reactivate user"}
+          >
+            {user.isActive ? '⏸️' : '▶️'}
+          </button>
+          <button 
+            onClick={() => handlePermanentDelete(user._id)}
             className="text-red-600 hover:text-red-800"
+            title="Permanently delete user"
           >
             🗑️
           </button>
@@ -261,6 +465,13 @@ export default function UsersPage() {
             setShowAddModal(false);
             fetchUsers();
           }}
+        />
+      )}
+
+      {selectedUser && (
+        <UserDetailsModal 
+          user={selectedUser}
+          onClose={() => setSelectedUser(null)}
         />
       )}
     </SuperAdminLayout>

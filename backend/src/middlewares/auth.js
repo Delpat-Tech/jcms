@@ -14,9 +14,14 @@ const authenticate = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    const user = await User.findById(decoded.user.id).populate('role').populate('tenant').select('username email role tenant');
+    const user = await User.findById(decoded.user.id).populate('role').populate('tenant').select('username email role tenant isActive');
     if (!user) {
       return res.status(401).json({ message: 'User not found' });
+    }
+    
+    // Check if user is active
+    if (!user.isActive) {
+      return res.status(403).json({ message: 'Account is deactivated. Please contact administrator.' });
     }
     
     req.user = { 
@@ -24,7 +29,8 @@ const authenticate = async (req, res, next) => {
       username: user.username,
       email: user.email,
       role: user.role,
-      tenant: user.tenant
+      tenant: user.tenant,
+      isActive: user.isActive
     };
     
     next();
@@ -99,6 +105,14 @@ const addTenantFilter = (req, res, next) => {
   next();
 };
 
+// Check if user is active (for non-auth routes)
+const requireActiveUser = (req, res, next) => {
+  if (!req.user.isActive) {
+    return res.status(403).json({ message: 'Account is deactivated. Please contact administrator.' });
+  }
+  next();
+};
+
 // Convenience role functions
 const requireSuperAdmin = requireRole(['superadmin']);
 const requireAdminOrAbove = requireRole(['superadmin', 'admin']);
@@ -110,6 +124,7 @@ module.exports = {
   requireSuperAdmin,
   requireAdminOrAbove,
   requireEditorOrAbove,
+  requireActiveUser,
   addTenantFilter
 };
 

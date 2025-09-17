@@ -59,7 +59,7 @@ const createUserWithRole = async (req, res) => {
     
     // Only set tenant if current user is not superadmin
     if (currentRole !== 'superadmin') {
-      userData.tenant = req.user.tenant;
+      userData.tenant = req.user.tenant?._id || req.user.tenant;
     }
     
     const newUser = await User.create(userData);
@@ -111,13 +111,15 @@ const getAllUsers = async (req, res) => {
     } else if (currentRole === 'admin') {
       // Admin can only see users from their own tenant (excluding superadmin)
       const superadminRole = await Role.findOne({ name: 'superadmin' });
+      const tenantId = req.user.tenant?._id || req.user.tenant;
       query = { 
-        tenant: req.user.tenant,
+        tenant: tenantId,
         role: { $ne: superadminRole._id }
       };
     } else {
       // Other roles can only see users from their own tenant
-      query = { tenant: req.user.tenant };
+      const tenantId = req.user.tenant?._id || req.user.tenant;
+      query = { tenant: tenantId };
     }
     
     // Filter by active status
