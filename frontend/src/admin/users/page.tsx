@@ -158,7 +158,8 @@ function UserDetailsModal({ user, onClose }) {
       setUserDetails({
         ...userData.data,
         imageCount: imagesData.success ? (imagesData.data?.length || 0) : 0,
-        fileCount: userFiles.length
+        fileCount: userFiles.length,
+        isActive: userData.data?.isActive !== undefined ? userData.data.isActive : user.isActive
       });
     } catch (error) {
       console.error('Error fetching user details:', error);
