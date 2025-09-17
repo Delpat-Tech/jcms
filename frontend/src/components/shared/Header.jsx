@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import TenantLogo from '../TenantLogo';
 
 function Header({ title = "JCMS", user, onMenuClick }) {
     const [showUserDropdown, setShowUserDropdown] = useState(false);
@@ -63,10 +64,8 @@ function Header({ title = "JCMS", user, onMenuClick }) {
                     >
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
                     </button>
-                    {/* Tenant logo placeholder (left of brand) */}
-                    <div className="h-10 w-24 rounded-sm bg-gray-200 flex items-center justify-center text-gray-600 text-[10px] font-medium border border-gray-300">
-                        Tenant Logo
-                    </div>
+                    {/* Tenant logo (left of brand) */}
+                    <TenantLogo user={user} />
                     {/* Brand logo */}
                     <img
                         src="/logo.png"

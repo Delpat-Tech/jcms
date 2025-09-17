@@ -2,6 +2,10 @@
 const Tenant = require('../models/tenant');
 const User = require('../models/user');
 const Role = require('../models/role');
+const fs = require('fs');
+const path = require('path');
+const sharp = require('sharp');
+const { sanitizePath, sanitizeFilename } = require('../utils/pathSanitizer');
 
 const createTenant = async (req, res) => {
   try {
@@ -635,6 +639,59 @@ const exportTenantUsers = async (req, res) => {
   }
 };
 
+const uploadTenantLogo = async (req, res) => {
+  try {
+    const { tenantId } = req.params;
+    
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No logo file uploaded' });
+    }
+
+    // Check permissions
+    if (req.user.role.name !== 'superadmin' && req.user.tenant?._id?.toString() !== tenantId) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
+    const tenant = await Tenant.findById(tenantId);
+    if (!tenant) {
+      return res.status(404).json({ success: false, message: 'Tenant not found' });
+    }
+
+    // Create tenant logo directory
+    const logoDir = path.join(__dirname, '../../uploads/tenants', tenantId, 'branding');
+    fs.mkdirSync(logoDir, { recursive: true });
+
+    // Process and save logo
+    const sanitizedFilename = sanitizeFilename(req.file.originalname);
+    const baseName = path.parse(sanitizedFilename).name + '-logo-' + Date.now();
+    const logoPath = path.join(logoDir, `${baseName}.webp`);
+    
+    // Resize and optimize logo
+    await sharp(req.file.buffer)
+      .resize(200, 200, { fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: 90 })
+      .toFile(logoPath);
+
+    // Update tenant with logo info
+    const logoUrl = `/uploads/tenants/${tenantId}/branding/${baseName}.webp`;
+    tenant.branding.logo = {
+      url: logoUrl,
+      filename: `${baseName}.webp`,
+      uploadedAt: new Date()
+    };
+    
+    await tenant.save();
+
+    res.json({
+      success: true,
+      message: 'Logo uploaded successfully',
+      logo: tenant.branding.logo
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   createTenant,
   getTenants,
@@ -649,5 +706,6 @@ module.exports = {
   bulkUpdateTenantUsers,
   bulkDeleteTenantUsers,
   getTenantStats,
-  exportTenantUsers
+  exportTenantUsers,
+  uploadTenantLogo
 };

@@ -5,6 +5,7 @@ require("dotenv").config({ path: path.resolve(__dirname, '../.env') });
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
+const upload = multer({ storage: multer.memoryStorage() });
 const connectDB = require("./config/db");
 const { runSeeds } = require('./seeds');
 const logger = require('./config/logger');
@@ -203,6 +204,15 @@ app.get("/api/debug-analytics/:tenantId", async (req, res) => {
         files: allFiles.slice(0, 3)
       }
     });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Simple tenant logo upload route
+app.post('/api/tenants/:tenantId/logo', async (req, res) => {
+  try {
+    res.json({ success: true, message: 'Logo upload endpoint working', tenantId: req.params.tenantId });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

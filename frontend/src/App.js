@@ -1,6 +1,7 @@
 // src/App.js
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/LoginPage";
+import MediaPage from "./pages/MediaPage";
 import ErrorBoundary from "./components/util/ErrorBoundary";
 import { ToastProvider } from "./components/util/Toasts";
 
@@ -45,6 +46,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Login />} />
             <Route path="/dashboard" element={<DashboardComponent />} />
+            <Route path="/dashboard/media" element={<MediaPage />} />
             
             {/* SuperAdmin Routes */}
             <Route path="/superadmin/overview" element={<SuperAdminOverview />} />

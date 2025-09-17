@@ -112,7 +112,7 @@ const TenantBranding = ({ tenantId, onBrandingChange }) => {
       const formData = new FormData();
       formData.append('logo', file);
 
-      const response = await fetch(`/api/tenant-branding/${tenantId}/logo`, {
+      const response = await fetch(`/api/tenants/${tenantId}/logo`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

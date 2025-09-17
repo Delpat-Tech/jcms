@@ -14,6 +14,7 @@ function Layout({ children, title, user }) {
 		menuItems = [
 			{ href: "/superadmin/overview", label: "Overview" },
 			{ href: "/superadmin/users", label: "Users" },
+			{ href: "/admin/media", label: "Media" },
 			{ href: "/superadmin/roles", label: "Roles" },
 			{ href: "/superadmin/settings", label: "System Settings" },
 			{ href: "/superadmin/analytics", label: "Analytics" },

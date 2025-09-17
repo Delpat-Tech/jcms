@@ -14,9 +14,12 @@ const {
   bulkUpdateTenantUsers,
   bulkDeleteTenantUsers,
   getTenantStats,
-  exportTenantUsers
+  exportTenantUsers,
+  uploadTenantLogo
 } = require('../controllers/tenantController');
 const { authenticate, requireSuperAdmin, requireAdminOrAbove } = require('../middlewares/auth');
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage() });
 
 const router = express.Router();
 
@@ -46,5 +49,13 @@ router.delete('/:tenantId/users/bulk', authenticate, requireAdminOrAbove, bulkDe
 // Tenant analytics and reporting
 router.get('/:tenantId/stats', authenticate, requireAdminOrAbove, getTenantStats);
 router.get('/:tenantId/users/export', authenticate, requireAdminOrAbove, exportTenantUsers);
+
+// Test route for debugging
+router.get('/:tenantId/test-logo', (req, res) => {
+  res.json({ success: true, message: 'Logo route accessible', tenantId: req.params.tenantId });
+});
+
+// Tenant branding
+router.post('/:tenantId/logo', authenticate, upload.single('logo'), uploadTenantLogo);
 
 module.exports = router;
