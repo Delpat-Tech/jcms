@@ -46,7 +46,7 @@ function Layout({ children, title, user }) {
 			<Header title={title} user={user} onMenuClick={handleOpenMenu} />
 			<div className="flex">
 				<Sidebar title={title} menuItems={menuItems} user={user} isOpen={sidebarOpen} onClose={handleCloseMenu} onLinkClick={handleCloseMenu} />
-				<main className="flex-1 min-h-[calc(100vh-56px-56px)] px-4 py-6">{children}</main>
+				<main className="flex-1 min-h-[calc(100vh-56px-56px)] px-4 py-6" style={{ marginLeft: 'var(--sidebar-width, 200px)' }}>{children}</main>
 			</div>
 			<Footer />
 		</div>

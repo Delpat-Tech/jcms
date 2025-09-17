@@ -2,10 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { Home, FileText, Image as ImageIcon, Users as UsersIcon, Settings, Shield, BarChart2, User as UserIcon, HelpCircle } from "react-feather";
 
-// Simple chevron icon for collapse/expand
-const ChevronLeft = ({ className = "" }) => (
-  <svg className={className} width="20" height="20" fill="none" viewBox="0 0 20 20"><path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12.5 15l-5-5 5-5"/></svg>
-);
+// Chevron icon (kept here for potential future use)
 
 // Default Feather icons per route/label
 const FeatherIcon = ({ name, active }) => {
@@ -133,6 +130,17 @@ const Sidebar = ({
     };
   }, [isOpen, onClose]);
 
+  // Apply CSS variable for sidebar width on desktop so layout can respond
+  useEffect(() => {
+    if (!isMobileView) {
+      const width = isDesktopCollapsed ? "72px" : "200px";
+      document.documentElement.style.setProperty("--sidebar-width", width);
+    }
+    return () => {
+      // keep the last value; no-op on cleanup
+    };
+  }, [isDesktopCollapsed, isMobileView]);
+
   useEffect(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     if (isMobileView) {
@@ -151,16 +159,15 @@ const Sidebar = ({
 
   const currentTextHiddenState = isMobileView ? !isOpen : !showExpandedContent;
 
-  const toggleDesktopSidebar = () => {
-    if (!isMobileView) setIsDesktopCollapsed((prev) => !prev);
-  };
+  // Collapse toggle handled inline for simplicity on fixed sidebar
 
   const sidebarBaseClasses = "z-50 bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out";
   let sidebarDynamicClasses = "";
   if (isMobileView) {
     sidebarDynamicClasses = `fixed h-full top-0 left-0 ${isOpen ? "w-[200px] translate-x-0" : "w-0 -translate-x-full border-transparent overflow-hidden"}`;
   } else {
-    sidebarDynamicClasses = `sticky top-0 h-screen ${isDesktopCollapsed ? "w-[72px]" : "w-[200px]"}`;
+    // Fixed sidebar on desktop below the header
+    sidebarDynamicClasses = `fixed top-14 left-0 h-[calc(100vh-56px)] ${isDesktopCollapsed ? "w-[72px]" : "w-[200px]"}`;
   }
 
   const handleNavItemClick = () => {
@@ -175,18 +182,19 @@ const Sidebar = ({
       )}
       <aside className={`${sidebarBaseClasses} ${sidebarDynamicClasses}`}>
         {/* Desktop Toggle Button */}
+        {/* Desktop Toggle Button */}
         {!isMobileView && (
           <button
-            onClick={toggleDesktopSidebar}
-            className={`absolute top-1/2 -translate-y-1/2 -right-[14px] z-[51] bg-white hover:bg-indigo-50 text-gray-400 hover:text-indigo-700 border border-gray-200 w-7 h-7 flex items-center justify-center rounded-full shadow-lg transition-colors duration-200 ease-in-out transform ${isDesktopCollapsed ? "rotate-180" : "rotate-0"} transition-transform duration-200 ease-in-out group`}
+            onClick={() => setIsDesktopCollapsed((prev) => !prev)}
+            className={`absolute top-1/2 -translate-y-1/2 -right-[14px] z-[71] bg-white hover:bg-indigo-50 text-gray-400 hover:text-indigo-700 border border-gray-200 w-7 h-7 flex items-center justify-center rounded-full shadow-lg transition-colors duration-200 ease-in-out transform ${isDesktopCollapsed ? "rotate-180" : "rotate-0"}`}
             aria-label={isDesktopCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
-            <ChevronLeft className="h-4 w-4" />
+            <svg className="h-4 w-4" width="20" height="20" fill="none" viewBox="0 0 20 20"><path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12.5 15l-5-5 5-5"/></svg>
           </button>
         )}
 
         {/* Navigation */}
-        <nav className={`flex-grow overflow-y-auto overflow-x-hidden transition-all duration-100 ease-in-out ${currentTextHiddenState && !isMobileView ? "px-0" : "px-3"} py-4`}>
+        <nav className={`flex-grow overflow-visible transition-all duration-100 ease-in-out ${currentTextHiddenState && !isMobileView ? "px-0" : "px-3"} py-4`}>
           <ul className={`space-y-1.5 ${currentTextHiddenState && !isMobileView ? "flex flex-col items-center" : ""}`}>
             {items.map((item) => (
               <NavItem key={item.href} {...item} isTextHidden={currentTextHiddenState} onLinkClick={handleNavItemClick} />
