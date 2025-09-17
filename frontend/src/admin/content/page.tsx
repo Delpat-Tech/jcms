@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import Layout from "../components/shared/Layout";
-import RichTextEditor from "../components/content/RichTextEditor";
-import Button from "../components/ui/Button";
+import Layout from "../../components/shared/Layout.jsx";
+import RichTextEditor from "../../components/content/RichTextEditor.jsx";
+import Button from "../../components/ui/Button.jsx";
 
 export default function ContentPage() {
 	const user = JSON.parse(localStorage.getItem("user") || "null");

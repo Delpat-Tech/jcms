@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
-import Layout from "../components/shared/Layout";
-import Button from "../components/ui/Button";
+import React, { useEffect, useState } from 'react';
+import UserLayout from '../layout.tsx';
+import Button from "../../components/ui/Button.jsx";
 
-export default function EditorDashboard() {
+export default function UserOverview() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -17,7 +17,7 @@ export default function EditorDashboard() {
   };
 
   return (
-    <Layout title="Editor" user={user}>
+    <UserLayout title="Editor Dashboard">
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">Your Tasks</h2>
@@ -29,6 +29,6 @@ export default function EditorDashboard() {
           <li className="rounded-md border bg-white p-4 shadow-sm">Publish Articles</li>
         </ul>
       </div>
-    </Layout>
+    </UserLayout>
   );
 }

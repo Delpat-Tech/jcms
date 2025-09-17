@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import Layout from "../components/shared/Layout";
-import { FileUploader, ImageUploader } from "../components/content/Uploaders";
+import Layout from "../../components/shared/Layout.jsx";
+import { FileUploader, ImageUploader } from "../../components/content/Uploaders.jsx";
 
 export default function MediaPage() {
 	const user = JSON.parse(localStorage.getItem("user") || "null");

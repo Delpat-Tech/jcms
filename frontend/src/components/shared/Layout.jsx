@@ -8,26 +8,28 @@ function Layout({ children, title, user }) {
 	let menuItems = [];
 	if (role === "superadmin") {
 		menuItems = [
-			{ href: "/dashboard", label: "Dashboard" },
-			{ href: "/dashboard/users", label: "Users" },
-			{ href: "/dashboard/roles", label: "Roles" },
-			{ href: "/dashboard/settings", label: "System Settings" },
-			{ href: "/dashboard/analytics", label: "Analytics" },
-			{ href: "/dashboard/content", label: "Content Management" },
+			{ href: "/superadmin/overview", label: "Overview" },
+			{ href: "/superadmin/users", label: "Users" },
+			{ href: "/superadmin/roles", label: "Roles" },
+			{ href: "/superadmin/settings", label: "System Settings" },
+			{ href: "/superadmin/analytics", label: "Analytics" },
+			{ href: "/superadmin/tenants", label: "Tenants" },
 		];
 	} else if (role === "admin") {
 		menuItems = [
-			{ href: "/dashboard", label: "Dashboard" },
-			{ href: "/dashboard/content", label: "Content" },
-			{ href: "/dashboard/media", label: "Media" },
-			{ href: "/dashboard/users", label: "Users" },
-			{ href: "/dashboard/analytics", label: "Analytics" },
+			{ href: "/admin/overview", label: "Overview" },
+			{ href: "/admin/content", label: "Content" },
+			{ href: "/admin/media", label: "Media" },
+			{ href: "/admin/users", label: "Users" },
+			{ href: "/admin/analytics", label: "Analytics" },
+			{ href: "/admin/profile", label: "Profile" },
 		];
 	} else if (role === "editor") {
 		menuItems = [
-			{ href: "/dashboard", label: "Dashboard" },
-			{ href: "/dashboard/content", label: "Content" },
-			{ href: "/dashboard/media", label: "Media" },
+			{ href: "/user/overview", label: "Overview" },
+			{ href: "/user/content", label: "Content" },
+			{ href: "/user/media", label: "Media" },
+			{ href: "/user/profile", label: "Profile" },
 		];
 	} else {
 		menuItems = [

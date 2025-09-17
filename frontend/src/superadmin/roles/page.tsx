@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
-import Layout from "../components/shared/Layout";
-import Button from "../components/ui/Button";
-import Table from "../components/ui/Table";
-import Modal from "../components/ui/Modal";
-import Input from "../components/ui/Input";
-import FormField from "../components/ui/FormField";
-import { useToasts } from "../components/util/Toasts";
+import { useState, useEffect, useCallback } from "react";
+import Layout from "../../components/shared/Layout.jsx";
+import Button from "../../components/ui/Button.jsx";
+import Table from "../../components/ui/Table.jsx";
+import Modal from "../../components/ui/Modal.jsx";
+import Input from "../../components/ui/Input.jsx";
+import FormField from "../../components/ui/FormField.jsx";
+import { useToasts } from "../../components/util/Toasts.jsx";
 
 function RolesPage() {
   const [roles, setRoles] = useState([]);
@@ -17,11 +17,7 @@ function RolesPage() {
 
   const token = localStorage.getItem("token");
 
-  useEffect(() => {
-    fetchRoles();
-  }, []);
-
-  const fetchRoles = async () => {
+  const fetchRoles = useCallback(async () => {
     try {
       const res = await fetch(`${process.env.REACT_APP_API_URL}/api/superadmin/roles`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -35,7 +31,11 @@ function RolesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, addNotification]);
+
+  useEffect(() => {
+    fetchRoles();
+  }, [fetchRoles]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -69,6 +69,10 @@ function RolesPage() {
   };
 
   const handleEdit = (role) => {
+    if (!role) {
+      console.error('Role is undefined in handleEdit');
+      return;
+    }
     setEditingRole(role);
     setFormData({ name: role.name, description: role.description || "" });
     setShowModal(true);
@@ -102,7 +106,7 @@ function RolesPage() {
     {
       key: "actions",
       label: "Actions",
-      render: (_, role) => (
+      render: (role) => (
         <div className="space-x-2">
           <Button size="sm" onClick={() => handleEdit(role)}>Edit</Button>
           <Button size="sm" variant="danger" onClick={() => handleDelete(role._id)}>Delete</Button>

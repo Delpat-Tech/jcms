@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import Layout from "../components/shared/Layout";
-import Modal from "../components/ui/Modal";
-import { useToasts } from "../components/util/Toasts";
+import { useState, useEffect, useCallback } from "react";
+import Layout from "../../components/shared/Layout.jsx";
+import Modal from "../../components/ui/Modal.jsx";
+import { useToasts } from "../../components/util/Toasts.jsx";
 
 function AnalyticsPage() {
   const [tenants, setTenants] = useState([]);
@@ -13,11 +13,21 @@ function AnalyticsPage() {
 
   const token = localStorage.getItem("token");
 
-  useEffect(() => {
-    fetchTenants();
-  }, []);
+  const fetchTenantAnalytics = useCallback(async (tenantId) => {
+    try {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/tenant-analytics/${tenantId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAnalytics(data.analytics);
+      }
+    } catch (error) {
+      addNotification('error', 'Error', 'Failed to fetch analytics');
+    }
+  }, [token, addNotification]);
 
-  const fetchTenants = async () => {
+  const fetchTenants = useCallback(async () => {
     try {
       const res = await fetch(`${process.env.REACT_APP_API_URL}/api/tenants`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -35,21 +45,11 @@ function AnalyticsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, addNotification, fetchTenantAnalytics]);
 
-  const fetchTenantAnalytics = async (tenantId) => {
-    try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/tenant-analytics/${tenantId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (data.success) {
-        setAnalytics(data.analytics);
-      }
-    } catch (error) {
-      addNotification('error', 'Error', 'Failed to fetch analytics');
-    }
-  };
+  useEffect(() => {
+    fetchTenants();
+  }, [fetchTenants]);
 
   const handleTenantChange = (tenant) => {
     setSelectedTenant(tenant);

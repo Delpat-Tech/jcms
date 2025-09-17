@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
-import Layout from "../components/shared/Layout";
-import Button from "../components/ui/Button";
+import React, { useEffect, useState } from 'react';
+import AdminLayout from '../layout.tsx';
+import Button from "../../components/ui/Button.jsx";
 
-export default function AdminDashboard() {
+export default function AdminOverview() {
   const [user, setUser] = useState(null);
   const [stats, setStats] = useState({ users: 0, images: 0, files: 0, storage: '0 MB' });
   const [activities, setActivities] = useState([]);
@@ -18,19 +18,19 @@ export default function AdminDashboard() {
       const token = localStorage.getItem('token');
       
       // Fetch users count
-      const usersRes = await fetch('http://localhost:5000/api/users', {
+      const usersRes = await fetch(`${process.env.REACT_APP_API_URL}/api/users`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const usersData = await usersRes.json();
       
       // Fetch images count
-      const imagesRes = await fetch('http://localhost:5000/api/images', {
+      const imagesRes = await fetch(`${process.env.REACT_APP_API_URL}/api/images`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const imagesData = await imagesRes.json();
       
       // Fetch activity logs
-      const activityRes = await fetch('http://localhost:5000/api/activity', {
+      const activityRes = await fetch(`${process.env.REACT_APP_API_URL}/api/activity`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const activityData = await activityRes.json();
@@ -48,7 +48,7 @@ export default function AdminDashboard() {
   };
 
   return (
-    <Layout title="Dashboard" user={user}>
+    <AdminLayout title="Dashboard Overview">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
@@ -102,6 +102,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
-    </Layout>
+    </AdminLayout>
   );
 }

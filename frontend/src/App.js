@@ -1,25 +1,39 @@
 // src/App.js
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/LoginPage";
-import SuperAdminDashboard from "./pages/SuperAdminDashboard";
-import AdminDashboard from "./pages/AdminDashboard";
-import EditorDashboard from "./pages/EditorDashboard";
-import ContentPage from "./pages/ContentPage";
-import MediaPage from "./pages/MediaPage";
-import UsersPage from "./pages/UsersPage";
-import RolesPage from "./pages/RolesPage";
-import AnalyticsPage from "./pages/AnalyticsPage";
 import ErrorBoundary from "./components/util/ErrorBoundary";
 import { ToastProvider } from "./components/util/Toasts";
+
+// SuperAdmin Pages
+import SuperAdminOverview from "./superadmin/overview/page.tsx";
+import SuperAdminUsers from "./superadmin/users/page.tsx";
+import SuperAdminRoles from "./superadmin/roles/page.tsx";
+import SuperAdminAnalytics from "./superadmin/analytics/page.tsx";
+import SuperAdminTenants from "./superadmin/tenants/page.tsx";
+import SuperAdminSettings from "./superadmin/settings/page.tsx";
+
+// Admin Pages
+import AdminOverview from "./admin/overview/page.tsx";
+import AdminUsers from "./admin/users/page.tsx";
+import AdminContent from "./admin/content/page.tsx";
+import AdminMedia from "./admin/media/page.tsx";
+import AdminAnalytics from "./admin/analytics/page.tsx";
+import AdminProfile from "./admin/profile/page.tsx";
+
+// User/Editor Pages
+import EditorOverview from "./editor/overview/page.tsx";
+import EditorContent from "./editor/content/page.tsx";
+import EditorMedia from "./editor/media/page.tsx";
+import EditorProfile from "./editor/profile/page.tsx";
 
 function App() {
   const user = JSON.parse(localStorage.getItem("user") || 'null');
   const role = user?.role?.toLowerCase();
 
   const DashboardComponent = () => {
-    if (role === "superadmin") return <SuperAdminDashboard />;
-    if (role === "admin") return <AdminDashboard />;
-    if (role === "editor") return <EditorDashboard />;
+    if (role === "superadmin") return <Navigate to="/superadmin/overview" />;
+    if (role === "admin") return <Navigate to="/admin/overview" />;
+    if (role === "editor") return <Navigate to="/user/overview" />;
     return <Navigate to="/" />;
   };
 
@@ -30,11 +44,29 @@ function App() {
           <Routes>
             <Route path="/" element={<Login />} />
             <Route path="/dashboard" element={<DashboardComponent />} />
-            <Route path="/dashboard/content" element={<ContentPage />} />
-            <Route path="/dashboard/media" element={<MediaPage />} />
-            <Route path="/dashboard/users" element={<UsersPage />} />
-            <Route path="/dashboard/roles" element={<RolesPage />} />
-            <Route path="/dashboard/analytics" element={<AnalyticsPage />} />
+            
+            {/* SuperAdmin Routes */}
+            <Route path="/superadmin/overview" element={<SuperAdminOverview />} />
+            <Route path="/superadmin/users" element={<SuperAdminUsers />} />
+            <Route path="/superadmin/roles" element={<SuperAdminRoles />} />
+            <Route path="/superadmin/analytics" element={<SuperAdminAnalytics />} />
+            <Route path="/superadmin/tenants" element={<SuperAdminTenants />} />
+            <Route path="/superadmin/settings" element={<SuperAdminSettings />} />
+            
+            {/* Admin Routes */}
+            <Route path="/admin/overview" element={<AdminOverview />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/content" element={<AdminContent />} />
+            <Route path="/admin/media" element={<AdminMedia />} />
+            <Route path="/admin/analytics" element={<AdminAnalytics />} />
+            <Route path="/admin/profile" element={<AdminProfile />} />
+            
+            {/* User/Editor Routes */}
+            <Route path="/user/overview" element={<EditorOverview />} />
+            <Route path="/user/content" element={<EditorContent />} />
+            <Route path="/user/media" element={<EditorMedia />} />
+            <Route path="/user/profile" element={<EditorProfile />} />
+            
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </Router>

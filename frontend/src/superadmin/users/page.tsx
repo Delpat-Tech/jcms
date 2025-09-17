@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import Layout from '../components/shared/Layout';
-import Button from '../components/ui/Button';
-import Input from '../components/ui/Input';
-import Table from '../components/ui/Table';
-import Modal from '../components/ui/Modal';
+import SuperAdminLayout from '../layout.tsx';
+import Button from "../../components/ui/Button.jsx";
+import Input from "../../components/ui/Input.jsx";
+import Table from "../../components/ui/Table.jsx";
+import Modal from "../../components/ui/Modal.jsx";
 
 function AddUserModal({ onClose, onUserAdded }) {
   const [formData, setFormData] = useState({
@@ -210,7 +210,7 @@ export default function UsersPage() {
   ];
 
   return (
-    <Layout title="Users Management" user={user}>
+    <SuperAdminLayout title="Users Management" user={user}>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-900">Users Management</h1>
@@ -263,6 +263,6 @@ export default function UsersPage() {
           }}
         />
       )}
-    </Layout>
+    </SuperAdminLayout>
   );
 }
