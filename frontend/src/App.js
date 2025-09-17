@@ -25,6 +25,7 @@ import EditorOverview from "./editor/overview/page.tsx";
 import EditorContent from "./editor/content/page.tsx";
 import EditorMedia from "./editor/media/page.tsx";
 import EditorProfile from "./editor/profile/page.tsx";
+import EditorHelp from "./editor/help/page.tsx";
 
 function App() {
   const user = JSON.parse(localStorage.getItem("user") || 'null');
@@ -66,6 +67,7 @@ function App() {
             <Route path="/user/content" element={<EditorContent />} />
             <Route path="/user/media" element={<EditorMedia />} />
             <Route path="/user/profile" element={<EditorProfile />} />
+            <Route path="/user/help" element={<EditorHelp />} />
             
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>

@@ -1,9 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 import Footer from "./Footer";
 
 function Layout({ children, title, user }) {
+	const [sidebarOpen, setSidebarOpen] = useState(false);
+	const handleOpenMenu = () => setSidebarOpen(true);
+	const handleCloseMenu = () => setSidebarOpen(false);
+
 	const role = user?.role?.toLowerCase();
 	let menuItems = [];
 	if (role === "superadmin") {
@@ -26,10 +30,11 @@ function Layout({ children, title, user }) {
 		];
 	} else if (role === "editor") {
 		menuItems = [
-			{ href: "/user/overview", label: "Overview" },
+			{ href: "/user/overview", label: "Dashboard" },
 			{ href: "/user/content", label: "Content" },
 			{ href: "/user/media", label: "Media" },
 			{ href: "/user/profile", label: "Profile" },
+			{ href: "/user/help", label: "Help" },
 		];
 	} else {
 		menuItems = [
@@ -38,10 +43,10 @@ function Layout({ children, title, user }) {
 	}
 	return (
 		<div className="min-h-screen bg-gray-50">
-			<Header title={title} user={user} />
+			<Header title={title} user={user} onMenuClick={handleOpenMenu} />
 			<div className="flex">
-				<Sidebar title={title} menuItems={menuItems} user={user} />
-				<main className="flex-1 min-h-[calc(100vh-56px-56px)] px-4 py-6 md:ml-64">{children}</main>
+				<Sidebar title={title} menuItems={menuItems} user={user} isOpen={sidebarOpen} onClose={handleCloseMenu} onLinkClick={handleCloseMenu} />
+				<main className="flex-1 min-h-[calc(100vh-56px-56px)] px-4 py-6">{children}</main>
 			</div>
 			<Footer />
 		</div>

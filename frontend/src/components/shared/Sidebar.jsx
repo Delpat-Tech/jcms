@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useLocation, Link } from "react-router-dom";
-import { Home, FileText, Image as ImageIcon, Users as UsersIcon, Settings, Shield, BarChart2 } from "react-feather";
+import { Home, FileText, Image as ImageIcon, Users as UsersIcon, Settings, Shield, BarChart2, User as UserIcon, HelpCircle } from "react-feather";
 
 // Simple chevron icon for collapse/expand
 const ChevronLeft = ({ className = "" }) => (
@@ -33,6 +33,12 @@ const FeatherIcon = ({ name, active }) => {
     case "analytics":
     case "/dashboard/analytics":
       return <BarChart2 className={cls} />;
+    case "profile":
+    case "/user/profile":
+      return <UserIcon className={cls} />;
+    case "help":
+    case "/user/help":
+      return <HelpCircle className={cls} />;
     default:
       return <Home className={cls} />;
   }
