@@ -63,10 +63,16 @@ function Header({ title = "JCMS", user, onMenuClick }) {
                     >
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
                     </button>
-                    {/* Tenant logo placeholder */}
-                    <div className="h-8 w-8 rounded bg-indigo-600 flex items-center justify-center text-white text-xs font-semibold">L</div>
-                    {/* Brand name */}
-                    <span className="text-sm font-semibold text-gray-900">JCMS</span>
+                    {/* Tenant logo placeholder (left of brand) */}
+                    <div className="h-10 w-24 rounded-sm bg-gray-200 flex items-center justify-center text-gray-600 text-[10px] font-medium border border-gray-300">
+                        Tenant Logo
+                    </div>
+                    {/* Brand logo */}
+                    <img
+                        src="/logo.png"
+                        alt="JCMS"
+                        className="h-12 w-auto object-contain"
+                    />
                     {/* Divider */}
                     <span className="mx-2 h-5 w-px bg-gray-200" />
                     {/* Current page title */}
