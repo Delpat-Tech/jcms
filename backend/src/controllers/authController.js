@@ -12,7 +12,7 @@ const registerUser = async (req, res) => {
 };
 
 const loginUser = async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, rememberMe } = req.body;
   
   try {
     if (!username || !password) {
@@ -48,7 +48,8 @@ const loginUser = async (req, res) => {
     }
     
     const payload = { user: { id: user.id } };
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const expiresIn = rememberMe ? '7d' : '1h';
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn });
     
     logger.info('User login successful', { 
       userId: user._id, 
@@ -63,7 +64,8 @@ const loginUser = async (req, res) => {
         id: user._id,
         username: user.username,
         email: user.email,
-        role: user.role.name
+        role: user.role.name,
+        phone: user.phone || null
       }
     });
   } catch (error) {

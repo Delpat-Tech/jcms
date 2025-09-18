@@ -1,13 +1,13 @@
 // server.js
 const path = require("path");
-require("dotenv").config({ path: path.resolve(__dirname, '../.env') });
+require("dotenv").config({ path: path.resolve(__dirname, 'backend/.env') });
 
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
-const connectDB = require("./config/db");
-const { runSeeds } = require('./seeds');
-const logger = require('./config/logger');
+const connectDB = require("./backend/src/config/db");
+const { runSeeds } = require('./backend/src/seeds');
+const logger = require('./backend/src/config/logger');
 
 const app = express();
 const PORT = parseInt(process.env.PORT) || 5000;
@@ -62,7 +62,7 @@ app.use('/uploads', (req, res, next) => {
   res.header('Access-Control-Allow-Methods', 'GET');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
   next();
-}, express.static(path.join(__dirname, '..', 'uploads')));
+}, express.static(path.join(__dirname, 'uploads')));
 app.use(express.urlencoded({ extended: true }));
 
 // Health check route
@@ -73,8 +73,8 @@ app.get("/api/health", (req, res) => {
 // Debug notes endpoint
 app.get('/api/debug-notes', async (req, res) => {
   try {
-    const Image = require('./models/image');
-    const File = require('./models/file');
+    const Image = require('./backend/src/models/image');
+    const File = require('./backend/src/models/file');
     
     const images = await Image.find({}).limit(5).select('title notes');
     const files = await File.find({}).limit(5).select('title notes');
@@ -85,20 +85,18 @@ app.get('/api/debug-notes', async (req, res) => {
   }
 });
 
-
-
 // Import and mount API routes
-const imagesRoutes = require('./routes/imagesRoutes');
-const fileRoutes = require('./routes/fileRoutes');
-const authRoutes = require('./routes/authRoutes');
-const usersRoutes = require('./routes/usersRoutes');
-const superadminRoutes = require('./routes/superadminRoutes');
-const adminRoutes = require('./routes/adminRoutes');
-const analyticsRoutes = require('./routes/analyticsRoutes');
-const tenantRoutes = require('./routes/tenantRoutes');
-const tenantAnalyticsRoutes = require('./routes/tenantAnalyticsRoutes');
-const profileRoutes = require('./routes/profileRoutes');
-const Settings = require('./models/settings');
+const imagesRoutes = require('./backend/src/routes/imagesRoutes');
+const fileRoutes = require('./backend/src/routes/fileRoutes');
+const authRoutes = require('./backend/src/routes/authRoutes');
+const usersRoutes = require('./backend/src/routes/usersRoutes');
+const superadminRoutes = require('./backend/src/routes/superadminRoutes');
+const adminRoutes = require('./backend/src/routes/adminRoutes');
+const analyticsRoutes = require('./backend/src/routes/analyticsRoutes');
+const tenantRoutes = require('./backend/src/routes/tenantRoutes');
+const tenantAnalyticsRoutes = require('./backend/src/routes/tenantAnalyticsRoutes');
+const profileRoutes = require('./backend/src/routes/profileRoutes');
+const Settings = require('./backend/src/models/settings');
 
 // Mount resize endpoints before main images routes to prevent conflicts
 app.use('/api/images', imagesRoutes);
@@ -111,8 +109,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/tenants', tenantRoutes);
 app.use('/api/tenant-analytics', tenantAnalyticsRoutes);
-app.use('/api/notifications', require('./routes/notificationRoutes'));
-app.use('/api/activity', require('./routes/activityRoutes'));
+app.use('/api/notifications', require('./backend/src/routes/notificationRoutes'));
+app.use('/api/activity', require('./backend/src/routes/activityRoutes'));
 
 // Public settings endpoint (no auth) for theme/branding defaults
 app.get('/api/settings', async (req, res) => {
@@ -159,7 +157,7 @@ const server = app.listen(PORT, '0.0.0.0', () => {
 });
 
 // Initialize WebSocket
-const { initializeSocket } = require('./services/socketService');
+const { initializeSocket } = require('./backend/src/services/socketService');
 const io = initializeSocket(server);
 global.io = io;
 

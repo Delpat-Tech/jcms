@@ -2,6 +2,9 @@
 const express = require('express');
 const { 
   createTenant, 
+  createTenantOnly,
+  createTenantAdmin,
+  registerTenantWithAdmin,
   getTenants, 
   getTenantById, 
   updateTenant, 
@@ -24,7 +27,10 @@ const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
 
 // Tenant CRUD (superadmin only)
-router.post('/', authenticate, requireSuperAdmin, createTenant);
+router.post('/', authenticate, requireSuperAdmin, createTenant); // legacy combined creation
+router.post('/create', authenticate, requireSuperAdmin, createTenantOnly); // tenant only
+router.post('/:tenantId/admin', authenticate, requireSuperAdmin, createTenantAdmin); // create admin for existing tenant
+router.post('/register', registerTenantWithAdmin); // public registration (guard with env code)
 router.get('/', authenticate, requireSuperAdmin, getTenants);
 router.get('/:id', authenticate, requireSuperAdmin, getTenantById);
 router.put('/:id', authenticate, requireSuperAdmin, updateTenant);

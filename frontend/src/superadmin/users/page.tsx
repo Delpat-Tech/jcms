@@ -11,10 +11,32 @@ function AddUserModal({ onClose, onUserAdded }) {
     email: '',
     password: '',
     role: 'editor',
-    tenant: ''
+    tenant: '',
+    tenantId: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [passwordHint, setPasswordHint] = useState('');
+  const [strength, setStrength] = useState(0);
+  const [tenants, setTenants] = useState([]);
+
+  useEffect(() => {
+    const loadTenants = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('http://localhost:5000/api/tenants', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.success && Array.isArray(data.tenants)) {
+          setTenants(data.tenants);
+        }
+      } catch (e) {
+        // silent fail; dropdown will be empty
+      }
+    };
+    loadTenants();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,29 +47,21 @@ function AddUserModal({ onClose, onUserAdded }) {
       const token = localStorage.getItem('token');
       let endpoint, requestBody;
 
-      if (formData.tenant.trim()) {
-        // First, find tenant by name or subdomain
-        const tenantsResponse = await fetch('http://localhost:5000/api/tenants', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const tenantsData = await tenantsResponse.json();
-        
-        if (!tenantsData.success) {
-          setError('Failed to fetch tenants');
+      // Admin creation: require tenant selection and hit dedicated endpoint
+      if (formData.role === 'admin') {
+        if (!formData.tenantId) {
+          setError('Please select a tenant for the admin');
           return;
         }
-        
-        const tenant = tenantsData.tenants.find(t => 
-          t.name.toLowerCase() === formData.tenant.toLowerCase()
-        );
-        
-        if (!tenant) {
-          setError(`Tenant '${formData.tenant}' not found. Please check the tenant name.`);
-          return;
-        }
-        
-        // Create user within the found tenant
-        endpoint = `http://localhost:5000/api/tenants/${tenant._id}/users`;
+        endpoint = `http://localhost:5000/api/tenants/${formData.tenantId}/admin`;
+        requestBody = {
+          username: formData.username,
+          email: formData.email,
+          password: formData.password
+        };
+      } else if (formData.tenantId) {
+        // Non-admin but tenant-scoped user creation
+        endpoint = `http://localhost:5000/api/tenants/${formData.tenantId}/users`;
         requestBody = {
           username: formData.username,
           email: formData.email,
@@ -126,22 +140,50 @@ function AddUserModal({ onClose, onUserAdded }) {
             <Input
               type="password"
               value={formData.password}
-              onChange={(e) => setFormData({...formData, password: e.target.value})}
+              onChange={(e) => {
+                const v = e.target.value;
+                setFormData({...formData, password: v});
+                // Simple strength calc to mirror backend policy
+                let s = 0;
+                if (v.length >= 8) s++;
+                if (/[A-Z]/.test(v)) s++;
+                if (/[a-z]/.test(v)) s++;
+                if (/[0-9]/.test(v)) s++;
+                if (/[^A-Za-z0-9]/.test(v)) s++;
+                setStrength(s);
+                const missing = [];
+                if (v && v.length < 8) missing.push('8+ chars');
+                if (v && !/[A-Z]/.test(v)) missing.push('uppercase');
+                if (v && !/[a-z]/.test(v)) missing.push('lowercase');
+                if (v && !/[0-9]/.test(v)) missing.push('number');
+                if (v && !/[^A-Za-z0-9]/.test(v)) missing.push('special');
+                setPasswordHint(missing.length ? `Missing: ${missing.join(', ')}` : 'Looks good');
+              }}
               required
             />
+            <div className="h-2 bg-gray-200 rounded mt-2">
+              <div className={`h-2 rounded ${strength <= 2 ? 'bg-red-500' : strength === 3 ? 'bg-yellow-500' : strength === 4 ? 'bg-blue-500' : 'bg-green-600'}`} style={{ width: `${(strength/5)*100}%` }} />
+            </div>
+            {formData.password && (
+              <div className="text-xs text-gray-600 mt-1">{passwordHint}</div>
+            )}
           </div>
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Tenant
             </label>
-            <Input
-              type="text"
-              value={formData.tenant}
-              onChange={(e) => setFormData({...formData, tenant: e.target.value})}
-              placeholder="Enter tenant name"
-              required
-            />
+            <select
+              value={formData.tenantId}
+              onChange={(e) => setFormData({ ...formData, tenantId: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required={formData.role === 'admin'}
+            >
+              <option value="">{formData.role === 'admin' ? 'Select tenant (required for admin)' : 'Select tenant (optional)'}</option>
+              {tenants.map((t) => (
+                <option key={t._id} value={t._id}>{t.name} {t.subdomain ? `(${t.subdomain})` : ''}</option>
+              ))}
+            </select>
           </div>
           
           <div>
@@ -294,6 +336,7 @@ export default function UsersPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [user, setUser] = useState(null);
@@ -308,13 +351,22 @@ export default function UsersPage() {
       console.log('Current user role:', parsedUser.role);
       console.log('Current user tenant:', parsedUser.tenant);
     }
-    fetchUsers();
   }, []);
+
+  useEffect(() => {
+    fetchUsers();
+    // Reset pagination when filter changes
+    setCurrentPage(1);
+  }, [statusFilter]);
 
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/users?includeInactive=true', {
+      const query =
+        statusFilter === 'all'
+          ? 'includeInactive=true'
+          : `status=${encodeURIComponent(statusFilter)}`;
+      const response = await fetch(`http://localhost:5000/api/users?${query}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -445,6 +497,49 @@ export default function UsersPage() {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-900">Users Management</h1>
           <div className="flex items-center gap-4">
+            <div className="inline-flex items-center rounded-md border border-gray-300 bg-white shadow-sm overflow-hidden" role="tablist" aria-label="Status filter">
+              <button
+                type="button"
+                onClick={() => setStatusFilter('all')}
+                aria-pressed={statusFilter === 'all'}
+                title="Show all users"
+                className={`px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  statusFilter === 'all'
+                    ? 'bg-blue-600 text-white'
+                    : 'hover:bg-gray-50 text-gray-700'
+                }`}
+              >
+                All
+              </button>
+              <div className="w-px h-5 bg-gray-200" />
+              <button
+                type="button"
+                onClick={() => setStatusFilter('active')}
+                aria-pressed={statusFilter === 'active'}
+                title="Show active users"
+                className={`px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  statusFilter === 'active'
+                    ? 'bg-green-600 text-white'
+                    : 'hover:bg-gray-50 text-gray-700'
+                }`}
+              >
+                Active
+              </button>
+              <div className="w-px h-5 bg-gray-200" />
+              <button
+                type="button"
+                onClick={() => setStatusFilter('inactive')}
+                aria-pressed={statusFilter === 'inactive'}
+                title="Show inactive users"
+                className={`px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  statusFilter === 'inactive'
+                    ? 'bg-red-600 text-white'
+                    : 'hover:bg-gray-50 text-gray-700'
+                }`}
+              >
+                Inactive
+              </button>
+            </div>
             <div className="relative">
               <Input
                 type="text"

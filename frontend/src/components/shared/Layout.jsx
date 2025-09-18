@@ -14,7 +14,7 @@ function Layout({ children, title, user }) {
 		menuItems = [
 			{ href: "/superadmin/overview", label: "Overview" },
 			{ href: "/superadmin/users", label: "Users" },
-			{ href: "/admin/media", label: "Media" },
+			{ href: "/superadmin/media", label: "Media" },
 			{ href: "/superadmin/roles", label: "Roles" },
 			{ href: "/superadmin/settings", label: "System Settings" },
 			{ href: "/superadmin/analytics", label: "Analytics" },
@@ -43,7 +43,7 @@ function Layout({ children, title, user }) {
 		];
 	}
 	return (
-		<div className="min-h-screen bg-gray-50">
+		<div className="min-h-screen" style={{ backgroundColor: 'var(--bg-color, #F9FAFB)', color: 'var(--text-color, #111827)' }}>
 			<Header title={title} user={user} onMenuClick={handleOpenMenu} />
 			<div className="flex">
 				<Sidebar title={title} menuItems={menuItems} user={user} isOpen={sidebarOpen} onClose={handleCloseMenu} onLinkClick={handleCloseMenu} />

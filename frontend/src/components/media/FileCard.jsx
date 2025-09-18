@@ -71,7 +71,7 @@ const FileCard = ({ file, viewMode, selected, onSelect, onPreview, onDelete, onD
         
         <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mr-4">
           {(file.fileUrl || file.fullUrl) && file.type === 'image' ? (
-            <img src={file.fileUrl || file.fullUrl} alt={file.title || file.filename} className="w-full h-full object-cover rounded-lg" />
+            <img src={file.fileUrl || file.fullUrl} alt={file.title || file.filename} className="w-full h-full object-cover rounded-lg" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
           ) : (
             getFileIcon(file.type)
           )}
@@ -133,6 +133,7 @@ const FileCard = ({ file, viewMode, selected, onSelect, onPreview, onDelete, onD
             alt={file.title || file.filename}
             className="w-full h-full object-cover cursor-pointer"
             onClick={onPreview}
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
           />
         ) : (
           <div 

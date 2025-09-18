@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Upload, X, CheckCircle, AlertCircle } from 'lucide-react';
 import { apiRequest } from '../../utils/api';
 
-const UploadPanel = ({ onUploadSuccess }) => {
+const UploadPanel = ({ onUploadSuccess, currentFilter }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [uploads, setUploads] = useState([]);
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -10,6 +10,7 @@ const UploadPanel = ({ onUploadSuccess }) => {
   const [notes, setNotes] = useState('');
   const [format, setFormat] = useState('webp');
   const [isUploading, setIsUploading] = useState(false);
+  const [jsonText, setJsonText] = useState('');
   const fileInputRef = useRef(null);
 
   const handleDragOver = (e) => {
@@ -50,8 +51,31 @@ const UploadPanel = ({ onUploadSuccess }) => {
       alert('Title is required');
       return;
     }
-    
-    if (selectedFiles.length === 0) {
+    // If JSON filter is active and textarea has content, create a virtual .json file
+    let filesToUpload = selectedFiles;
+    if ((currentFilter === 'json') && jsonText.trim()) {
+      try {
+        // Validate JSON
+        JSON.parse(jsonText);
+      } catch (e) {
+        alert('Invalid JSON. Please fix the syntax.');
+        return;
+      }
+      const blob = new Blob([jsonText], { type: 'application/json' });
+      const filename = `${title.trim().replace(/\s+/g, '_')}.json`;
+      const virtualFile = new File([blob], filename, { type: 'application/json' });
+      const vf = {
+        id: Date.now() + Math.random(),
+        file: virtualFile,
+        name: virtualFile.name,
+        size: virtualFile.size,
+        type: virtualFile.type
+      };
+      filesToUpload = [...selectedFiles, vf];
+      setSelectedFiles(filesToUpload);
+    }
+
+    if (filesToUpload.length === 0) {
       alert('Please select files to upload');
       return;
     }
@@ -59,7 +83,7 @@ const UploadPanel = ({ onUploadSuccess }) => {
     setIsUploading(true);
     
     // Convert selected files to upload objects
-    const newUploads = selectedFiles.map(file => ({
+    const newUploads = filesToUpload.map(file => ({
       id: file.id,
       file: file.file,
       progress: 0,
@@ -76,6 +100,7 @@ const UploadPanel = ({ onUploadSuccess }) => {
     
     setIsUploading(false);
     setSelectedFiles([]);
+    setJsonText('');
   };
   
   const uploadFile = async (upload) => {
@@ -174,7 +199,7 @@ const UploadPanel = ({ onUploadSuccess }) => {
           ref={fileInputRef}
           type="file"
           multiple
-          accept="image/*,video/*,audio/*,.pdf,.doc,.docx"
+          accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.json,application/json"
           onChange={handleFileSelect}
           className="hidden"
         />
@@ -209,6 +234,22 @@ const UploadPanel = ({ onUploadSuccess }) => {
           />
         </div>
 
+        {currentFilter === 'json' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              JSON Content
+            </label>
+            <textarea
+              value={jsonText}
+              onChange={(e) => setJsonText(e.target.value)}
+              placeholder={'{\n  "key": "value"\n}'}
+              rows={8}
+              className="w-full font-mono text-sm px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <p className="text-xs text-gray-500 mt-1">If provided, this will be uploaded as a .json file named after the title.</p>
+          </div>
+        )}
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Format
@@ -226,14 +267,14 @@ const UploadPanel = ({ onUploadSuccess }) => {
         </div>
         
         {/* Upload Button */}
-        {selectedFiles.length > 0 && (
+        {(selectedFiles.length > 0 || (currentFilter === 'json' && jsonText.trim())) && (
           <div className="flex items-center space-x-2">
             <button
               onClick={uploadFiles}
               disabled={isUploading || !title.trim()}
               className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition-colors"
             >
-              {isUploading ? 'Uploading...' : `Upload ${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''}`}
+              {isUploading ? 'Uploading...' : 'Upload'}
             </button>
             <button
               onClick={clearAll}

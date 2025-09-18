@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug User Info</title>
+</head>
+<body>
+    <h1>Current User Debug</h1>
+    <div id="output"></div>
+    
+    <script>
+        const user = JSON.parse(localStorage.getItem('user') || 'null');
+        const token = localStorage.getItem('token');
+        
+        document.getElementById('output').innerHTML = `
+            <h2>User Info:</h2>
+            <pre>${JSON.stringify(user, null, 2)}</pre>
+            <h2>Token:</h2>
+            <pre>${token ? token.substring(0, 50) + '...' : 'No token'}</pre>
+            <h2>User Role:</h2>
+            <pre>${user?.role || 'No role'}</pre>
+        `;
+    </script>
+</body>
+</html>

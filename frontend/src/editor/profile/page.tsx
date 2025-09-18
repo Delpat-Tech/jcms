@@ -17,6 +17,8 @@ export default function UserProfilePage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [strength, setStrength] = useState(0);
+  const [hint, setHint] = useState('');
 
   const apiBase = useMemo(() => (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_URL) ? process.env.REACT_APP_API_URL : '', []);
   const authHeaders = () => ({ 'Authorization': `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' });
@@ -47,6 +49,14 @@ export default function UserProfilePage() {
 
   const handleChangePassword = async () => {
     if (!newPassword || newPassword !== confirmPassword) { setError('Passwords do not match'); return; }
+    // frontend policy mirror
+    const missing = [];
+    if (newPassword.length < 8) missing.push('8+ chars');
+    if (!/[A-Z]/.test(newPassword)) missing.push('uppercase');
+    if (!/[a-z]/.test(newPassword)) missing.push('lowercase');
+    if (!/[0-9]/.test(newPassword)) missing.push('number');
+    if (!/[^A-Za-z0-9]/.test(newPassword)) missing.push('special');
+    if (missing.length) { setError('Password requirements not met: ' + missing.join(', ')); return; }
     setSaving(true); setMessage(''); setError('');
     try {
       const res = await fetch(`${apiBase}/api/profile/change-password`, {
@@ -125,7 +135,13 @@ export default function UserProfilePage() {
             <label className="text-xs text-gray-600">Current Password</label>
             <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="border rounded px-3 py-2 text-sm" />
             <label className="text-xs text-gray-600">New Password</label>
-            <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="border rounded px-3 py-2 text-sm" />
+            <input type="password" value={newPassword} onChange={(e) => {
+              const v = e.target.value; setNewPassword(v);
+              let s = 0; if (v.length >= 8) s++; if (/[A-Z]/.test(v)) s++; if (/[a-z]/.test(v)) s++; if (/[0-9]/.test(v)) s++; if (/[^A-Za-z0-9]/.test(v)) s++; setStrength(s);
+              const m = []; if (v && v.length < 8) m.push('8+ chars'); if (v && !/[A-Z]/.test(v)) m.push('uppercase'); if (v && !/[a-z]/.test(v)) m.push('lowercase'); if (v && !/[0-9]/.test(v)) m.push('number'); if (v && !/[^A-Za-z0-9]/.test(v)) m.push('special'); setHint(m.length?`Missing: ${m.join(', ')}`:'Looks good');
+            }} className="border rounded px-3 py-2 text-sm" />
+            <div className="h-2 bg-gray-200 rounded mt-1"><div className={`h-2 rounded ${strength<=2?'bg-red-500':strength===3?'bg-yellow-500':strength===4?'bg-blue-500':'bg-green-600'}`} style={{width: `${(strength/5)*100}%`}} /></div>
+            {newPassword && <div className="text-xs text-gray-600">{hint}</div>}
             <label className="text-xs text-gray-600">Confirm Password</label>
             <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="border rounded px-3 py-2 text-sm" />
             <div className="flex justify-end">

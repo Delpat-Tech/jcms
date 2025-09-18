@@ -28,6 +28,7 @@ const PreviewModal = ({ file, onClose, onNext, onPrev, onDelete, onDownload }) =
           src={file.fileUrl || file.fullUrl} 
           alt={file.title || file.filename}
           className="max-w-full max-h-full object-contain"
+          onError={(e) => { e.currentTarget.replaceWith(document.createTextNode('Preview not available')); }}
         />
       );
     }

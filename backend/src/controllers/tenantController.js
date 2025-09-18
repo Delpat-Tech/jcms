@@ -6,7 +6,9 @@ const fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');
 const { sanitizePath, sanitizeFilename } = require('../utils/pathSanitizer');
+const { validatePassword } = require('../utils/passwordPolicy');
 
+// Legacy combined creation (kept for backward compatibility)
 const createTenant = async (req, res) => {
   try {
     const { name, subdomain, adminUsername, adminEmail, adminPassword } = req.body;
@@ -45,7 +47,7 @@ const createTenant = async (req, res) => {
     });
     await adminUser.save();
 
-    // Create tenant with admin user reference
+    // Create tenant with admin user reference (enforce single admin per tenant)
     const tenant = new Tenant({ 
       name, 
       subdomain, 
@@ -61,6 +63,146 @@ const createTenant = async (req, res) => {
       success: true,
       message: 'Tenant created successfully',
       tenant: { ...tenant.toObject(), adminUser: adminUser }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Create tenant only (no admin user)
+const createTenantOnly = async (req, res) => {
+  try {
+    const { name, subdomain } = req.body;
+
+    if (!name || !subdomain) {
+      return res.status(400).json({ success: false, message: 'Name and subdomain are required' });
+    }
+
+    const existingTenant = await Tenant.findOne({ subdomain });
+    if (existingTenant) {
+      return res.status(400).json({ success: false, message: 'Subdomain already exists' });
+    }
+
+    const tenant = new Tenant({ name, subdomain });
+    await tenant.save();
+
+    res.status(201).json({ success: true, message: 'Tenant created successfully', tenant });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Create or assign tenant admin for an existing tenant
+const createTenantAdmin = async (req, res) => {
+  try {
+    const { tenantId } = req.params;
+    const { username, email, password } = req.body;
+
+    if (!username || !email || !password) {
+      return res.status(400).json({ success: false, message: 'Username, email and password are required' });
+    }
+
+    const tenant = await Tenant.findById(tenantId);
+    if (!tenant) {
+      return res.status(404).json({ success: false, message: 'Tenant not found' });
+    }
+
+    // Ensure tenant does not already have an admin
+    if (tenant.adminUser) {
+      return res.status(400).json({ success: false, message: 'Tenant admin already exists' });
+    }
+
+    // Double-check no other user in tenant has admin role (in case of data drift)
+    const adminRole = await Role.findOne({ name: 'admin' });
+    if (!adminRole) {
+      return res.status(400).json({ success: false, message: 'Admin role not found' });
+    }
+    const existingAdmin = await User.findOne({ tenant: tenantId, role: adminRole._id });
+    if (existingAdmin) {
+      return res.status(400).json({ success: false, message: 'This tenant already has an admin user' });
+    }
+
+    // Uniqueness checks
+    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: 'Username or email already exists' });
+    }
+
+    // Create admin user associated to tenant
+    const adminUser = new User({ username, email, password, role: adminRole._id, tenant: tenantId });
+    await adminUser.save();
+
+    // Link tenant admin
+    tenant.adminUser = adminUser._id;
+    await tenant.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Tenant admin created and linked successfully',
+      tenant: { id: tenant._id, name: tenant.name, subdomain: tenant.subdomain, adminUser: { id: adminUser._id, username, email } }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Public registration: create tenant and its admin together (guarded by REGISTRATION_CODE)
+const registerTenantWithAdmin = async (req, res) => {
+  try {
+    const { registrationCode, name, subdomain, username, email, password } = req.body;
+
+    // Optional guard: if env code is set, it must match
+    if (process.env.REGISTRATION_CODE) {
+      if (!registrationCode || registrationCode !== process.env.REGISTRATION_CODE) {
+        return res.status(403).json({ success: false, message: 'Invalid registration code' });
+      }
+    }
+
+    if (!name || !subdomain || !username || !email || !password) {
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+
+    // Subdomain uniqueness
+    const existingTenant = await Tenant.findOne({ subdomain });
+    if (existingTenant) {
+      return res.status(400).json({ success: false, message: 'Subdomain already exists' });
+    }
+
+    // Username/email uniqueness
+    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: 'Username or email already exists' });
+    }
+
+    // Get admin role
+    const adminRole = await Role.findOne({ name: 'admin' });
+    if (!adminRole) {
+      return res.status(500).json({ success: false, message: 'Admin role not configured' });
+    }
+
+    // Password policy for registration
+    const policy = validatePassword(password || '');
+    if (!policy.valid) {
+      return res.status(400).json({ success: false, message: `Password requirements not met: ${policy.errors.join(', ')}` });
+    }
+
+    // Create admin user (tenant assigned after tenant is created)
+    const adminUser = new User({ username, email, password, role: adminRole._id });
+    await adminUser.save();
+
+    // Create tenant and link admin
+    const tenant = new Tenant({ name, subdomain, adminUser: adminUser._id });
+    await tenant.save();
+
+    // Back-link user to tenant
+    adminUser.tenant = tenant._id;
+    await adminUser.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Tenant and admin registered successfully',
+      tenant: { id: tenant._id, name: tenant.name, subdomain: tenant.subdomain },
+      admin: { id: adminUser._id, username: adminUser.username, email: adminUser.email }
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -694,6 +836,9 @@ const uploadTenantLogo = async (req, res) => {
 
 module.exports = {
   createTenant,
+  createTenantOnly,
+  createTenantAdmin,
+  registerTenantWithAdmin,
   getTenants,
   getTenantById,
   updateTenant,

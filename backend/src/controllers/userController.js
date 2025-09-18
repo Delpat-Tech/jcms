@@ -2,6 +2,9 @@
 const User = require('../models/user');
 const Role = require('../models/role');
 const Image = require('../models/image');
+const File = require('../models/file');
+const Tenant = require('../models/tenant');
+const { validatePassword } = require('../utils/passwordPolicy');
 
 // Create user with role assignment
 const createUserWithRole = async (req, res) => {
@@ -13,6 +16,12 @@ const createUserWithRole = async (req, res) => {
         success: false, 
         message: 'Username, email, and password are required.' 
       });
+    }
+
+    // Password policy
+    const policy = validatePassword(password || '');
+    if (!policy.valid) {
+      return res.status(400).json({ success: false, message: `Password requirements not met: ${policy.errors.join(', ')}` });
     }
 
     // Check user permissions for role assignment
@@ -37,6 +46,14 @@ const createUserWithRole = async (req, res) => {
       return res.status(400).json({
         success: false, 
         message: `Invalid role. You can only create: ${validRoles.join(', ')}` 
+      });
+    }
+
+    // Enforce single-admin-per-tenant: forbid creating 'admin' via this endpoint
+    if (roleName === 'admin') {
+      return res.status(400).json({
+        success: false,
+        message: 'Use /api/tenants/:tenantId/admin to create a tenant admin (one admin per tenant).'
       });
     }
 
@@ -294,6 +311,14 @@ const updateUser = async (req, res) => {
           message: `Invalid role. You can only assign: ${validRoles.join(', ')}` 
         });
       }
+
+      // Prevent assigning 'admin' via generic update; enforce single-admin-per-tenant flow
+      if (role === 'admin') {
+        return res.status(400).json({
+          success: false,
+          message: 'Cannot assign admin role via this endpoint. Use tenant admin creation endpoint.'
+        });
+      }
       
       const roleDoc = await Role.findOne({ name: role });
       if (!roleDoc) {
@@ -374,6 +399,7 @@ const updateUser = async (req, res) => {
 const deleteUser = async (req, res) => {
   try {
     const { userId } = req.params;
+    const { permanent } = req.query;
     
     // Check current user permissions
     const currentUser = await User.findById(req.user.id).populate('role');
@@ -388,12 +414,28 @@ const deleteUser = async (req, res) => {
       });
     }
     
-    // Prevent deleting the only superadmin
+    // Prevent deleting any superadmin; only superadmin can delete admins/editors
     if (targetUser.role.name === 'superadmin') {
       return res.status(403).json({
         success: false, 
-        message: 'Cannot delete the system superadmin'
+        message: 'Cannot delete superadmin user'
       });
+    }
+
+    // Only superadmin can delete admin or editor; admins can delete editors only within their tenant
+    if (currentRole !== 'superadmin') {
+      if (targetUser.role.name === 'admin') {
+        return res.status(403).json({ success: false, message: 'Only superadmin can delete admins' });
+      }
+      if (targetUser.role.name === 'editor') {
+        // Admin can delete editor within same tenant
+        if (currentRole !== 'admin') {
+          return res.status(403).json({ success: false, message: 'Insufficient permissions' });
+        }
+        if (targetUser.tenant && req.user.tenant && targetUser.tenant.toString() !== req.user.tenant.toString()) {
+          return res.status(403).json({ success: false, message: 'Can only modify users within your tenant' });
+        }
+      }
     }
     
     // Admin can only delete editor/viewer, not other admins
@@ -413,7 +455,70 @@ const deleteUser = async (req, res) => {
       });
     }
     
-    // Check if user is already deactivated
+    // If target is an admin (tenant admin)
+    if (targetUser.role.name === 'admin') {
+      // Only superadmin can delete an admin
+      if (currentRole !== 'superadmin') {
+        return res.status(403).json({
+          success: false,
+          message: 'Only superadmin can delete tenant admins'
+        });
+      }
+
+      // For soft delete, block deactivating tenant admin
+      if (permanent !== 'true') {
+        return res.status(403).json({
+          success: false,
+          message: 'Cannot deactivate tenant admin. Use permanent delete to remove tenant and its users.'
+        });
+      }
+    }
+
+    // Permanent delete branch
+    if (permanent === 'true') {
+      // If deleting a tenant admin, cascade delete tenant and all tenant users/data
+      if (targetUser.role.name === 'admin' && targetUser.tenant) {
+        const tenantId = targetUser.tenant._id || targetUser.tenant;
+
+        // Find all users in the tenant
+        const tenantUsers = await User.find({ tenant: tenantId }, '_id');
+        const tenantUserIds = tenantUsers.map(u => u._id);
+
+        // Delete related data for all tenant users
+        await Promise.all([
+          Image.deleteMany({ user: { $in: tenantUserIds } }),
+          File.deleteMany({ user: { $in: tenantUserIds } })
+        ]);
+
+        // Delete all users of the tenant
+        await User.deleteMany({ tenant: tenantId });
+
+        // Finally delete the tenant
+        await Tenant.findByIdAndDelete(tenantId);
+
+        return res.status(200).json({
+          success: true,
+          message: 'Tenant admin and tenant (with all users and data) permanently deleted'
+        });
+      }
+
+      // Otherwise, delete only this user and their related data
+      await Promise.all([
+        Image.deleteMany({ user: userId }),
+        File.deleteMany({ user: userId })
+      ]);
+
+      const deleted = await User.findByIdAndDelete(userId);
+      if (!deleted) {
+        return res.status(404).json({ success: false, message: 'User not found' });
+      }
+      return res.status(200).json({
+        success: true,
+        message: 'User permanently deleted'
+      });
+    }
+
+    // Soft delete branch: Check if user is already deactivated
     if (!targetUser.isActive) {
       return res.status(400).json({
         success: false, 
@@ -491,7 +596,7 @@ const getImagesByUser = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    const { username, currentPassword, newPassword } = req.body;
+    const { username, email, phone, currentPassword, newPassword } = req.body;
     const userId = req.user.id;
 
     const user = await User.findById(userId);
@@ -509,7 +614,23 @@ const updateProfile = async (req, res) => {
       updateData.username = username;
     }
 
+    if (email) {
+      const existingEmail = await User.findOne({ email, _id: { $ne: userId } });
+      if (existingEmail) {
+        return res.status(400).json({ success: false, message: 'Email already exists' });
+      }
+      updateData.email = email;
+    }
+
+    if (phone !== undefined) {
+      updateData.phone = phone;
+    }
+
     if (newPassword) {
+      const policy = validatePassword(newPassword);
+      if (!policy.valid) {
+        return res.status(400).json({ success: false, message: `Password requirements not met: ${policy.errors.join(', ')}` });
+      }
       if (!currentPassword) {
         return res.status(400).json({ success: false, message: 'Current password required' });
       }
@@ -550,6 +671,11 @@ const resetUserPassword = async (req, res) => {
     
     if (!newPassword) {
       return res.status(400).json({ success: false, message: 'New password is required' });
+    }
+
+    const policy = validatePassword(newPassword);
+    if (!policy.valid) {
+      return res.status(400).json({ success: false, message: `Password requirements not met: ${policy.errors.join(', ')}` });
     }
 
     const targetUser = await User.findById(userId).populate('role');

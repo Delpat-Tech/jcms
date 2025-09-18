@@ -10,7 +10,7 @@ export default function AdminAnalyticsPage() {
         </div>
         
         <div className="bg-white p-6 rounded-lg shadow">
-          <p className="text-gray-600">Analytics dashboard for admin users.</p>
+          <p className="text-gray-600">Analytics overview</p>
         </div>
       </div>
     </AdminLayout>

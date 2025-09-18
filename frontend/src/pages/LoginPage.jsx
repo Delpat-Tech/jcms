@@ -10,8 +10,9 @@ function Login() {
   const [message, setMessage] = useState("");
   const { addNotification } = useToasts() || { addNotification: () => {} };
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
-  const MailIcon = () => (
+  const UserIcon = () => (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       width="20"
@@ -22,9 +23,10 @@ function Login() {
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
+      aria-hidden="true"
     >
-      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-      <polyline points="22,6 12,13 2,6"></polyline>
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
     </svg>
   );
 
@@ -88,7 +90,7 @@ function Login() {
       const res = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, password, rememberMe }),
       });
 
       const data = await res.json();
@@ -102,9 +104,15 @@ function Login() {
       console.log("User data:", data);
       
       // Save token and user data to localStorage
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      localStorage.setItem("role", data.user.role.toLowerCase());
+      // Persist session based on rememberMe; also mirror to the other store for compatibility
+      const primary = rememberMe ? localStorage : sessionStorage;
+      const secondary = rememberMe ? sessionStorage : localStorage;
+      primary.setItem("token", data.token);
+      primary.setItem("user", JSON.stringify(data.user));
+      primary.setItem("role", data.user.role.toLowerCase());
+      secondary.setItem("token", data.token);
+      secondary.setItem("user", JSON.stringify(data.user));
+      secondary.setItem("role", data.user.role.toLowerCase());
       
       // Redirect to dashboard
       window.location.href = "/dashboard";
@@ -123,7 +131,7 @@ function Login() {
             <FormField label="Username" htmlFor="username">
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                  <MailIcon />
+                  <UserIcon />
                 </div>
                 <Input
                   id="username"
@@ -166,15 +174,22 @@ function Login() {
                 <input
                   id="remember-me"
                   type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
                   className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                 />
                 <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
                   Remember me
                 </label>
               </div>
-              <a href="#" className="text-sm font-medium text-indigo-600 hover:text-indigo-500 transition-colors">
-                Forgot password?
-              </a>
+              <div className="flex items-center gap-4">
+                <a href="#" className="text-sm font-medium text-indigo-600 hover:text-indigo-500 transition-colors">
+                  Forgot password?
+                </a>
+                <a href="/register" className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors">
+                  Register tenant
+                </a>
+              </div>
             </div>
 
             <Button type="submit" variant="primary" size="lg" className="w-full">

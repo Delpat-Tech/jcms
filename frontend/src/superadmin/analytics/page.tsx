@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import Layout from "../../components/shared/Layout.jsx";
+import SuperAdminLayout from "../layout.tsx";
 import Modal from "../../components/ui/Modal.jsx";
 import { useToasts } from "../../components/util/Toasts.jsx";
 
@@ -56,10 +56,10 @@ function AnalyticsPage() {
     fetchTenantAnalytics(tenant._id);
   };
 
-  if (loading) return <Layout><div>Loading analytics...</div></Layout>;
+  if (loading) return <SuperAdminLayout><div>Loading analytics...</div></SuperAdminLayout>;
 
   return (
-    <Layout>
+    <SuperAdminLayout title="Analytics">
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold">Tenant Analytics</h1>
@@ -221,7 +221,7 @@ function AnalyticsPage() {
           )}
         </Modal>
       </div>
-    </Layout>
+    </SuperAdminLayout>
   );
 }
 

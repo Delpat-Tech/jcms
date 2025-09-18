@@ -20,6 +20,12 @@ const MediaDashboard = () => {
     fetchFiles();
   }, [filterType]);
 
+  const toAbsoluteUrl = (maybeRelative) => {
+    if (!maybeRelative) return '';
+    if (/^https?:\/\//i.test(maybeRelative)) return maybeRelative;
+    return `http://localhost:5000${maybeRelative}`;
+  };
+
   const fetchFiles = async () => {
     try {
       setLoading(true);
@@ -33,7 +39,8 @@ const MediaDashboard = () => {
             ...file, 
             type: 'image',
             filename: file.title,
-            size: file.fileSize || file.size || 0
+            size: file.fileSize || file.size || 0,
+            fullUrl: toAbsoluteUrl(file.fileUrl)
           }))];
         }
       }
@@ -47,7 +54,8 @@ const MediaDashboard = () => {
             type: getFileType(file.originalName || file.filename),
             filename: file.originalName || file.filename,
             title: file.title,
-            size: file.fileSize || file.size || 0
+            size: file.fileSize || file.size || 0,
+            fullUrl: toAbsoluteUrl(file.fileUrl || file.fullUrl)
           }))];
         }
       }
@@ -67,6 +75,7 @@ const MediaDashboard = () => {
     if (['mp4', 'avi', 'mov', 'wmv', 'webm'].includes(ext)) return 'video';
     if (['mp3', 'wav', 'flac', 'aac', 'ogg'].includes(ext)) return 'audio';
     if (['pdf'].includes(ext)) return 'pdf';
+    if (['json'].includes(ext)) return 'json';
     return 'document';
   };
 
@@ -131,12 +140,12 @@ const MediaDashboard = () => {
       {/* Left Panel */}
       <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
         <div className="p-6 space-y-6">
-          <UploadPanel onUploadSuccess={fetchFiles} />
+          <UploadPanel onUploadSuccess={fetchFiles} currentFilter={filterType} />
           
           <div className="space-y-4">
             <h3 className="text-sm font-medium text-gray-900">Filters</h3>
             <div className="space-y-2">
-              {['all', 'image', 'video', 'audio', 'pdf'].map(type => (
+              {['all', 'image', 'video', 'audio', 'pdf', 'json'].map(type => (
                 <label key={type} className="flex items-center">
                   <input
                     type="radio"
@@ -147,7 +156,7 @@ const MediaDashboard = () => {
                     className="w-4 h-4 text-blue-600"
                   />
                   <span className="ml-2 text-sm text-gray-700 capitalize">
-                    {type === 'all' ? 'All Files' : `${type}s`}
+                    {type === 'all' ? 'All Files' : type === 'json' ? 'JSON' : `${type}s`}
                   </span>
                 </label>
               ))}

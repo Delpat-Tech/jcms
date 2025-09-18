@@ -19,7 +19,18 @@ const fileSchema = new mongoose.Schema({
   fileType: {
     type: String,
     required: true,
-    enum: ['image', 'document', 'spreadsheet', 'presentation', 'text'],
+    enum: [
+      'image',
+      'document',
+      'spreadsheet',
+      'presentation',
+      'text',
+      'video',
+      'audio',
+      'archive',
+      'code',
+      'other'
+    ],
   },
   format: { type: String, required: true },
   fileSize: { type: Number, required: true },
