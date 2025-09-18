@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import Layout from "../../components/shared/Layout.jsx";
+import SuperAdminLayout from "../layout.tsx";
 import Button from "../../components/ui/Button.jsx";
 import Table from "../../components/ui/Table.jsx";
 import Modal from "../../components/ui/Modal.jsx";
@@ -115,10 +115,10 @@ function RolesPage() {
     }
   ];
 
-  if (loading) return <Layout><div>Loading...</div></Layout>;
+  if (loading) return <SuperAdminLayout><div>Loading...</div></SuperAdminLayout>;
 
   return (
-    <Layout>
+    <SuperAdminLayout title="Roles Management">
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold">Roles Management</h1>
@@ -163,7 +163,7 @@ function RolesPage() {
           </form>
         </Modal>
       </div>
-    </Layout>
+    </SuperAdminLayout>
   );
 }
 
