@@ -18,6 +18,8 @@ const createImage = async (req, res) => {
 
     const { title } = req.body;
     const userId = req.user.id;
+    
+    console.log('Image upload req.body:', req.body);
 
     if (req.body.notes) {
       try {
@@ -53,6 +55,10 @@ const createImage = async (req, res) => {
     else if (chosenFormat === 'gif') await sharpInstance.gif().toFile(outputPath);
     else if (chosenFormat === 'tiff') await sharpInstance.tiff({ quality: 80 }).toFile(outputPath);
     else if (chosenFormat === 'bmp') await sharpInstance.toFormat('bmp').toFile(outputPath);
+    
+    // Get file size
+    const fileStats = fs.statSync(outputPath);
+    const fileSize = fileStats.size;
 
     const internalPath = outputPath.replace(/\\/g, '/');
     const fileUrl = `${req.protocol}://${req.get('host')}/${internalPath}`;
@@ -65,6 +71,7 @@ const createImage = async (req, res) => {
       internalPath,
       fileUrl,
       format: chosenFormat,
+      fileSize,
       notes: req.body.notes || {},
     });
 

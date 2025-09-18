@@ -115,12 +115,17 @@ const PreviewModal = ({ file, onClose, onNext, onPrev, onDelete, onDownload }) =
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-semibold mb-2">{file.title || file.filename}</h2>
-                <div className="flex items-center space-x-4 text-sm text-gray-300">
+                <div className="flex items-center space-x-4 text-sm text-gray-300 mb-2">
                   <span>{file.format?.toUpperCase()}</span>
                   <span>{file.size ? `${Math.round(file.size / 1024)} KB` : ''}</span>
                   <span>{new Date(file.createdAt).toLocaleDateString()}</span>
                   <span>{file.tenantName || 'System'}</span>
                 </div>
+                {(file.notes?.description || file.notes) && (
+                  <p className="text-sm text-gray-300 italic">
+                    {file.notes?.description || file.notes}
+                  </p>
+                )}
               </div>
               
               <div className="flex items-center space-x-2">

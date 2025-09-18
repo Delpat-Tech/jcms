@@ -25,8 +25,11 @@ const uploadFile = async (req, res) => {
     for (const file of files) {
       if (!file) continue;
 
-      const { title, tenant = 'default', section = 'general' } = req.body;
+      const { title, notes, tenant = 'default', section = 'general' } = req.body;
       const fileTitle = title || file.originalname;
+      
+      console.log('File upload data:', { title, notes, tenant, section });
+      console.log('Creating file with notes:', notes);
 
       const processedFile = await processFile(file, tenant, section);
     
@@ -38,6 +41,7 @@ const uploadFile = async (req, res) => {
         tenant: req.user.tenant?._id || null,
         originalName: file.originalname,
         fileSize: file.size,
+        notes: notes || '',
         ...processedFile
       });
 
@@ -77,7 +81,8 @@ const uploadFile = async (req, res) => {
       originalName: file.originalName,
       fileType: file.fileType,
       format: file.format,
-      fileSize: formatFileSize(file.fileSize),
+      fileSize: file.fileSize, // Keep as number for frontend formatting
+      fileSizeFormatted: formatFileSize(file.fileSize),
       fullUrl: file.fullUrl
     }));
 

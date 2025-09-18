@@ -11,7 +11,7 @@ const MediaDashboard = () => {
   const [selectedFiles, setSelectedFiles] = useState(new Set());
   const [viewMode, setViewMode] = useState('grid');
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState('date');
+  const [sortBy, setSortBy] = useState('uploaded');
   const [filterType, setFilterType] = useState('all');
   const [previewFile, setPreviewFile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -33,7 +33,7 @@ const MediaDashboard = () => {
             ...file, 
             type: 'image',
             filename: file.title,
-            size: file.fileSize || 0
+            size: file.fileSize || file.size || 0
           }))];
         }
       }
@@ -47,7 +47,7 @@ const MediaDashboard = () => {
             type: getFileType(file.originalName || file.filename),
             filename: file.originalName || file.filename,
             title: file.title,
-            size: file.fileSize || 0
+            size: file.fileSize || file.size || 0
           }))];
         }
       }
@@ -70,11 +70,22 @@ const MediaDashboard = () => {
     return 'document';
   };
 
-  const filteredFiles = files.filter(file => {
+  const filteredAndSortedFiles = files.filter(file => {
     const searchText = file.title || file.filename || '';
     const matchesSearch = searchText.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesType = filterType === 'all' || file.type === filterType;
     return matchesSearch && matchesType;
+  }).sort((a, b) => {
+    switch (sortBy) {
+      case 'name':
+        return (a.title || a.filename || '').localeCompare(b.title || b.filename || '');
+      case 'size':
+        return (b.size || 0) - (a.size || 0);
+      case 'uploaded':
+      case 'date':
+      default:
+        return new Date(b.createdAt || b.updatedAt) - new Date(a.createdAt || a.updatedAt);
+    }
   });
 
   const handleFileSelect = (fileId, selected) => {
@@ -175,9 +186,10 @@ const MediaDashboard = () => {
                 onChange={(e) => setSortBy(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               >
-                <option value="date">Sort by Date</option>
+                <option value="uploaded">Sort by Upload Time</option>
                 <option value="name">Sort by Name</option>
                 <option value="size">Sort by Size</option>
+                <option value="date">Sort by Date</option>
               </select>
             </div>
 
@@ -204,7 +216,7 @@ const MediaDashboard = () => {
             <div className="flex items-center justify-center h-64">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
             </div>
-          ) : filteredFiles.length === 0 ? (
+          ) : filteredAndSortedFiles.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-gray-500">
               <Upload className="w-12 h-12 mb-4" />
               <h3 className="text-lg font-medium mb-2">No files found</h3>
@@ -215,7 +227,7 @@ const MediaDashboard = () => {
               ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
               : 'space-y-2'
             }>
-              {filteredFiles.map(file => (
+              {filteredAndSortedFiles.map(file => (
                 <FileCard
                   key={file._id}
                   file={file}

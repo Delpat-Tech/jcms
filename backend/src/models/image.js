@@ -24,6 +24,10 @@ const imageSchema = new mongoose.Schema({
     required: true,
     enum: ['webp', 'avif', 'jpg', 'jpeg', 'png', 'gif', 'tiff', 'bmp'],
   },
+  fileSize: {
+    type: Number,
+    default: 0
+  },
   notes: {
     type: mongoose.Schema.Types.Mixed,
     default: {}

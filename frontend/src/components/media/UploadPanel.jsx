@@ -5,8 +5,11 @@ import { apiRequest } from '../../utils/api';
 const UploadPanel = ({ onUploadSuccess }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [uploads, setUploads] = useState([]);
+  const [selectedFiles, setSelectedFiles] = useState([]);
   const [title, setTitle] = useState('');
+  const [notes, setNotes] = useState('');
   const [format, setFormat] = useState('webp');
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
 
   const handleDragOver = (e) => {
@@ -32,21 +35,49 @@ const UploadPanel = ({ onUploadSuccess }) => {
   };
 
   const handleFiles = (files) => {
-    files.forEach(file => {
-      const uploadId = Date.now() + Math.random();
-      const upload = {
-        id: uploadId,
-        file,
-        progress: 0,
-        status: 'uploading',
-        error: null
-      };
-      
-      setUploads(prev => [...prev, upload]);
-      uploadFile(upload);
-    });
+    const newFiles = Array.from(files).map(file => ({
+      id: Date.now() + Math.random(),
+      file,
+      name: file.name,
+      size: file.size,
+      type: file.type
+    }));
+    setSelectedFiles(prev => [...prev, ...newFiles]);
   };
 
+  const uploadFiles = async () => {
+    if (!title.trim()) {
+      alert('Title is required');
+      return;
+    }
+    
+    if (selectedFiles.length === 0) {
+      alert('Please select files to upload');
+      return;
+    }
+    
+    setIsUploading(true);
+    
+    // Convert selected files to upload objects
+    const newUploads = selectedFiles.map(file => ({
+      id: file.id,
+      file: file.file,
+      progress: 0,
+      status: 'uploading',
+      error: null
+    }));
+    
+    setUploads(newUploads);
+    
+    // Upload each file
+    for (const upload of newUploads) {
+      await uploadFile(upload);
+    }
+    
+    setIsUploading(false);
+    setSelectedFiles([]);
+  };
+  
   const uploadFile = async (upload) => {
     try {
       const formData = new FormData();
@@ -54,10 +85,17 @@ const UploadPanel = ({ onUploadSuccess }) => {
       
       if (isImage) {
         formData.append('image', upload.file);
-        formData.append('title', title || upload.file.name.split('.')[0]);
+        formData.append('title', title.trim());
         formData.append('format', format);
+        if (notes.trim()) {
+          formData.append('notes', JSON.stringify({ description: notes.trim() }));
+        }
       } else {
         formData.append('files', upload.file);
+        formData.append('title', title.trim());
+        if (notes.trim()) {
+          formData.append('notes', notes.trim());
+        }
       }
 
       const endpoint = isImage ? '/api/images' : '/api/files/upload-multiple';
@@ -75,7 +113,6 @@ const UploadPanel = ({ onUploadSuccess }) => {
             : u
         ));
         onUploadSuccess?.();
-        setTitle(''); // Clear title after successful upload
       } else {
         throw new Error(result.message);
       }
@@ -88,8 +125,19 @@ const UploadPanel = ({ onUploadSuccess }) => {
     }
   };
 
+  const removeSelectedFile = (fileId) => {
+    setSelectedFiles(prev => prev.filter(f => f.id !== fileId));
+  };
+  
   const removeUpload = (uploadId) => {
     setUploads(prev => prev.filter(u => u.id !== uploadId));
+  };
+  
+  const clearAll = () => {
+    setSelectedFiles([]);
+    setUploads([]);
+    setTitle('');
+    setNotes('');
   };
 
   return (
@@ -132,18 +180,32 @@ const UploadPanel = ({ onUploadSuccess }) => {
         />
       </div>
 
-      {/* Title and Format Controls */}
+      {/* Title, Notes and Format Controls */}
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Title (optional)
+            Title <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Enter title for uploaded files"
+            required
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Notes (optional)
+          </label>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Add description or notes about the files"
+            rows={3}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
           />
         </div>
 
@@ -162,7 +224,55 @@ const UploadPanel = ({ onUploadSuccess }) => {
             <option value="avif">AVIF</option>
           </select>
         </div>
+        
+        {/* Upload Button */}
+        {selectedFiles.length > 0 && (
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={uploadFiles}
+              disabled={isUploading || !title.trim()}
+              className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+            >
+              {isUploading ? 'Uploading...' : `Upload ${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''}`}
+            </button>
+            <button
+              onClick={clearAll}
+              disabled={isUploading}
+              className="px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:bg-gray-100 rounded-lg transition-colors"
+            >
+              Clear
+            </button>
+          </div>
+        )}
       </div>
+      
+      {/* Selected Files */}
+      {selectedFiles.length > 0 && (
+        <div className="space-y-2">
+          <h4 className="text-sm font-medium text-gray-900">Selected Files</h4>
+          {selectedFiles.map(file => (
+            <div key={file.id} className="bg-blue-50 rounded-lg p-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-sm font-medium text-gray-900 truncate">
+                    {file.name}
+                  </span>
+                  <p className="text-xs text-gray-500">
+                    {(file.size / 1024).toFixed(1)} KB
+                  </p>
+                </div>
+                <button
+                  onClick={() => removeSelectedFile(file.id)}
+                  disabled={isUploading}
+                  className="text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Upload Progress */}
       {uploads.length > 0 && (

@@ -5,7 +5,6 @@ require("dotenv").config({ path: path.resolve(__dirname, '../.env') });
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
-const upload = multer({ storage: multer.memoryStorage() });
 const connectDB = require("./config/db");
 const { runSeeds } = require('./seeds');
 const logger = require('./config/logger');
@@ -31,7 +30,7 @@ if (process.env.AUTO_SEED === 'true') {
     } catch (error) {
       logger.error('Auto-seeding failed', { error: error.message, seedType });
     }
-  }, 2000); // Wait 2 seconds for DB connection
+  }, 2000);
 }
 
 // Middleware
@@ -44,7 +43,6 @@ const localhostRegex = /^http:\/\/(localhost|127\.0\.0\.1)(:\\d+)?$/;
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow non-browser or same-origin requests (no Origin header)
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
     if (allowLocalhostWildcard && localhostRegex.test(origin)) return callback(null, true);
@@ -67,162 +65,33 @@ app.use('/uploads', (req, res, next) => {
 }, express.static(path.join(__dirname, '..', 'uploads')));
 app.use(express.urlencoded({ extended: true }));
 
-// Dashboard routes (first)
-app.get("/", (req, res) => {
-  res.send("JCMS API Server - Use /api endpoints");
-});
-
-app.get("/admin", (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'admin-panel.html'));
-});
-
-app.get("/admin-panel", (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'admin-panel.html'));
-});
-
-app.get("/admin-dashboard.html", (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'admin-dashboard.html'));
-});
-
-app.get("/test", (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'test-websocket.html'));
-});
-
-app.get("/test-websocket.html", (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'test-websocket.html'));
-});
-
-// (Test routes unchanged)
-
 // Health check route
 app.get("/api/health", (req, res) => {
   res.status(200).json({ status: "ok", message: "Server is running", port: PORT, timestamp: new Date() });
 });
 
-// Simple ping endpoint
-app.get("/ping", (req, res) => {
-  res.json({ message: "pong", server: "JCMS", port: PORT });
-});
-
-// Logger test route
-app.get("/api/test-logger", (req, res) => {
-  logger.info('Logger test - INFO level', { test: true, timestamp: new Date() });
-  logger.warn('Logger test - WARN level', { test: true });
-  logger.error('Logger test - ERROR level', { test: true, error: 'This is a test error' });
-  res.json({ success: true, message: 'Logger test completed - check console' });
-});
-
-// Debug login route
-app.post("/api/debug-login", async (req, res) => {
-  const User = require('./models/user');
-  console.log('Request body:', req.body);
-  console.log('Content-Type:', req.headers['content-type']);
-  
+// Debug notes endpoint
+app.get('/api/debug-notes', async (req, res) => {
   try {
-    const users = await User.find().populate('role');
-    res.json({ 
-      receivedData: req.body,
-      contentType: req.headers['content-type'],
-      users: users.map(u => ({ email: u.email, username: u.username, role: u.role?.name }))
-    });
-  } catch (error) {
-    res.json({ error: error.message, receivedData: req.body });
-  }
-});
-
-// Test notification route
-app.post("/api/test-notification", (req, res) => {
-  const notification = {
-    action: 'test_action',
-    message: 'Test notification',
-    timestamp: new Date(),
-    data: {
-      username: 'TestUser',
-      resource: 'TestResource',
-      userRole: 'admin',
-      details: { ip: '127.0.0.1' },
-      ...req.body
-    }
-  };
-  
-  console.log('Sending notification to', global.io.engine.clientsCount, 'clients');
-  global.io.emit('admin_notification', notification);
-  console.log('Notification sent:', notification);
-  
-  res.json({ success: true, message: 'Notification sent', clients: global.io.engine.clientsCount });
-});
-
-// Test activity tracking
-app.post("/api/test-activity", async (req, res) => {
-  try {
-    const { notifyAdmins } = require('./services/socketService');
+    const Image = require('./models/image');
+    const File = require('./models/file');
     
-    // Simulate multiple activities
-    for (let i = 0; i < 5; i++) {
-      await notifyAdmins('test_upload', {
-        userId: '507f1f77bcf86cd799439011',
-        username: 'TestUser',
-        resource: 'TestResource',
-        resourceId: `test-${i}`,
-        userRole: 'admin',
-        details: { ip: '127.0.0.1', test: true }
-      });
-    }
+    const images = await Image.find({}).limit(5).select('title notes');
+    const files = await File.find({}).limit(5).select('title notes');
     
-    res.json({ success: true, message: 'Activity test completed' });
+    res.json({ success: true, images, files });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// Debug analytics data
-app.get("/api/debug-analytics/:tenantId", async (req, res) => {
-  try {
-    const User = require('./models/user');
-    const Image = require('./models/image');
-    const File = require('./models/file');
-    
-    const tenantId = req.params.tenantId;
-    
-    const [allUsers, allImages, allFiles] = await Promise.all([
-      User.find({}).select('tenant username'),
-      Image.find({}).select('tenant title'),
-      File.find({}).select('tenant filename')
-    ]);
-    
-    res.json({ 
-      success: true,
-      tenantId,
-      counts: {
-        totalUsers: allUsers.length,
-        totalImages: allImages.length,
-        totalFiles: allFiles.length
-      },
-      samples: {
-        users: allUsers.slice(0, 3),
-        images: allImages.slice(0, 3),
-        files: allFiles.slice(0, 3)
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
 
-// Simple tenant logo upload route
-app.post('/api/tenants/:tenantId/logo', async (req, res) => {
-  try {
-    res.json({ success: true, message: 'Logo upload endpoint working', tenantId: req.params.tenantId });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
 
 // Import and mount API routes
-const imagesRoutes = require('./routes/imagesRoutes'); // Unified images API
-const fileRoutes = require('./routes/fileRoutes'); // New file routes
+const imagesRoutes = require('./routes/imagesRoutes');
+const fileRoutes = require('./routes/fileRoutes');
 const authRoutes = require('./routes/authRoutes');
-const usersRoutes = require('./routes/usersRoutes'); // Unified users API
+const usersRoutes = require('./routes/usersRoutes');
 const superadminRoutes = require('./routes/superadminRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
@@ -230,11 +99,12 @@ const tenantRoutes = require('./routes/tenantRoutes');
 const tenantAnalyticsRoutes = require('./routes/tenantAnalyticsRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 
-app.use('/api/images', imagesRoutes); // Unified images API for all roles
-app.use('/api/files', fileRoutes); // New file API for all file types
+// Mount resize endpoints before main images routes to prevent conflicts
+app.use('/api/images', imagesRoutes);
+app.use('/api/files', fileRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/api/users', usersRoutes); // Unified users API
-app.use('/api/profile', profileRoutes); // User profile management
+app.use('/api/users', usersRoutes);
+app.use('/api/profile', profileRoutes);
 app.use('/api/superadmin', superadminRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/analytics', analyticsRoutes);
@@ -257,7 +127,6 @@ app.use((err, req, res, next) => {
     return res.status(400).json({ success: false, message: err.message });
   }
 
-  // Fallback for other errors
   logger.error('Unhandled server error', { 
     error: err.message, 
     stack: err.stack,
@@ -273,24 +142,14 @@ app.use((err, req, res, next) => {
 
 // Start server
 const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-  logger.info('Server started successfully', { port: PORT });
+  console.log(`🚀 JCMS Server running on port ${PORT}`);
+  console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`🔧 Debug notes: http://localhost:${PORT}/api/debug-notes`);
 });
 
-// Initialize Socket.io - Simple setup
-const { Server } = require('socket.io');
-const io = new Server(server, {
-  cors: { origin: "*", methods: ["GET", "POST"] }
-});
-
-io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
-  socket.join('admins');
-  
-  socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
-  });
-});
-
-// Global io for notifications
+// Initialize WebSocket
+const { initializeSocket } = require('./services/socketService');
+const io = initializeSocket(server);
 global.io = io;
+
+module.exports = app;

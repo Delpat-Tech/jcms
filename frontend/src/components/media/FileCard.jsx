@@ -4,6 +4,8 @@ import { Eye, Download, Edit3, Trash2, Play, FileText, Music, Archive } from 'lu
 const FileCard = ({ file, viewMode, selected, onSelect, onPreview, onDelete, onDownload }) => {
   const [isRenaming, setIsRenaming] = useState(false);
   const [newTitle, setNewTitle] = useState(file.title || '');
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [dropdownTimeout, setDropdownTimeout] = useState(null);
 
   const handleDelete = async (file) => {
     if (window.confirm('Are you sure you want to delete this file?')) {
@@ -23,6 +25,10 @@ const FileCard = ({ file, viewMode, selected, onSelect, onPreview, onDelete, onD
     }
   };
 
+  const handleImageDownload = (imageId, size) => {
+    window.open(`http://localhost:5000/api/images/${imageId}/${size}`, '_blank');
+  };
+
   const getFileIcon = (type) => {
     switch (type) {
       case 'video': return <Play className="w-8 h-8 text-blue-500" />;
@@ -34,7 +40,7 @@ const FileCard = ({ file, viewMode, selected, onSelect, onPreview, onDelete, onD
   };
 
   const formatFileSize = (bytes) => {
-    if (!bytes) return '0 B';
+    if (!bytes || bytes === 0) return '0 B';
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -76,6 +82,11 @@ const FileCard = ({ file, viewMode, selected, onSelect, onPreview, onDelete, onD
           <p className="text-xs text-gray-500">
             {file.format?.toUpperCase()} • {formatFileSize(file.size)} • {formatDate(file.createdAt)}
           </p>
+          {(file.notes?.description || file.notes) && (
+            <p className="text-xs text-gray-600 italic truncate" title={file.notes?.description || file.notes}>
+              {file.notes?.description || file.notes}
+            </p>
+          )}
         </div>
         
         <div className="flex items-center space-x-2">
@@ -164,9 +175,16 @@ const FileCard = ({ file, viewMode, selected, onSelect, onPreview, onDelete, onD
         )}
         
         {/* Metadata */}
-        <p className="text-xs text-gray-500 mb-3">
+        <p className="text-xs text-gray-500 mb-2">
           {formatFileSize(file.size)} • {formatDate(file.createdAt)}
         </p>
+        
+        {/* Notes */}
+        {(file.notes?.description || file.notes) && (
+          <p className="text-xs text-gray-600 mb-3 italic line-clamp-2" title={file.notes?.description || file.notes}>
+            {file.notes?.description || file.notes}
+          </p>
+        )}
         
         {/* Owner */}
         <div className="flex items-center justify-between mb-3">
@@ -185,13 +203,69 @@ const FileCard = ({ file, viewMode, selected, onSelect, onPreview, onDelete, onD
             >
               <Eye className="w-4 h-4" />
             </button>
-            <button
-              onClick={() => handleDownload(file)}
-              className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg"
-              title="Download"
-            >
-              <Download className="w-4 h-4" />
-            </button>
+            {file.type === 'image' ? (
+              <div className="relative">
+                <button
+                  className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg"
+                  title="Download Options"
+                  onMouseEnter={() => {
+                    if (dropdownTimeout) clearTimeout(dropdownTimeout);
+                    setShowDropdown(true);
+                  }}
+                  onMouseLeave={() => {
+                    const timeout = setTimeout(() => setShowDropdown(false), 300);
+                    setDropdownTimeout(timeout);
+                  }}
+                >
+                  <Download className="w-4 h-4" />
+                </button>
+                {showDropdown && (
+                  <div 
+                    className="absolute bottom-full left-0 mb-2 bg-white border rounded-lg shadow-lg p-2 z-10 min-w-max"
+                    onMouseEnter={() => {
+                      if (dropdownTimeout) clearTimeout(dropdownTimeout);
+                    }}
+                    onMouseLeave={() => {
+                      const timeout = setTimeout(() => setShowDropdown(false), 200);
+                      setDropdownTimeout(timeout);
+                    }}
+                  >
+                    <button
+                      onClick={() => handleImageDownload(file._id, 'thumbnail')}
+                      className="block w-full text-left px-3 py-1 text-xs hover:bg-gray-100 rounded whitespace-nowrap"
+                    >
+                      Thumbnail (150x150)
+                    </button>
+                    <button
+                      onClick={() => handleImageDownload(file._id, 'medium')}
+                      className="block w-full text-left px-3 py-1 text-xs hover:bg-gray-100 rounded whitespace-nowrap"
+                    >
+                      Medium (800x600)
+                    </button>
+                    <button
+                      onClick={() => handleImageDownload(file._id, 'large')}
+                      className="block w-full text-left px-3 py-1 text-xs hover:bg-gray-100 rounded whitespace-nowrap"
+                    >
+                      Large (1920x1080)
+                    </button>
+                    <button
+                      onClick={() => handleDownload(file)}
+                      className="block w-full text-left px-3 py-1 text-xs hover:bg-gray-100 rounded whitespace-nowrap"
+                    >
+                      Original
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={() => handleDownload(file)}
+                className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg"
+                title="Download"
+              >
+                <Download className="w-4 h-4" />
+              </button>
+            )}
             <button
               onClick={() => setIsRenaming(true)}
               className="p-2 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg"

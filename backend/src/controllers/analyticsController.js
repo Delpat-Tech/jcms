@@ -1,28 +1,26 @@
 // controllers/analyticsController.js
 const User = require('../models/user');
 const Image = require('../models/image');
-const File = require('../models/file');
 
 const getDashboardStats = async (req, res) => {
   try {
     const [
       totalUsers,
       totalImages,
-      totalFiles,
-      recentUploads,
+      recentImages,
       usersByRole,
       uploadsByDay
     ] = await Promise.all([
       User.countDocuments(),
-      Image.countDocuments(),
+      
       File.countDocuments(),
-      File.find().sort({ createdAt: -1 }).limit(5).populate('user', 'username'),
+      Image.find().sort({ createdAt: -1 }).limit(5).populate('user', 'username'),
       User.aggregate([
         { $lookup: { from: 'roles', localField: 'role', foreignField: '_id', as: 'role' } },
         { $unwind: '$role' },
         { $group: { _id: '$role.name', count: { $sum: 1 } } }
       ]),
-      File.aggregate([
+      Image.aggregate([
         { $group: { 
           _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
           count: { $sum: 1 }
@@ -37,8 +35,8 @@ const getDashboardStats = async (req, res) => {
       data: {
         totalUsers,
         totalImages,
-        totalFiles,
-        recentUploads,
+        
+        recentUploads: recentImages,
         usersByRole,
         uploadsByDay
       }
@@ -48,46 +46,7 @@ const getDashboardStats = async (req, res) => {
   }
 };
 
-const getFileStats = async (req, res) => {
-  try {
-    const [
-      filesByType,
-      filesByFormat,
-      storageUsage,
-      topUploaders
-    ] = await Promise.all([
-      File.aggregate([
-        { $group: { _id: '$fileType', count: { $sum: 1 } } }
-      ]),
-      File.aggregate([
-        { $group: { _id: '$format', count: { $sum: 1 } } }
-      ]),
-      File.aggregate([
-        { $group: { _id: null, totalSize: { $sum: '$fileSize' } } }
-      ]),
-      File.aggregate([
-        { $group: { _id: '$user', count: { $sum: 1 } } },
-        { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'user' } },
-        { $unwind: '$user' },
-        { $project: { username: '$user.username', count: 1 } },
-        { $sort: { count: -1 } },
-        { $limit: 5 }
-      ])
-    ]);
-
-    res.json({
-      success: true,
-      data: {
-        filesByType,
-        filesByFormat,
-        totalStorageUsed: storageUsage[0]?.totalSize || 0,
-        topUploaders
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
+ 
 
 const getUserActivity = async (req, res) => {
   try {
@@ -100,17 +59,15 @@ const getUserActivity = async (req, res) => {
       newUsers,
       userActivity
     ] = await Promise.all([
-      File.distinct('user', { createdAt: { $gte: startDate } }),
+      Image.distinct('user', { createdAt: { $gte: startDate } }),
       User.countDocuments({ createdAt: { $gte: startDate } }),
       User.aggregate([
-        { $lookup: { from: 'files', localField: '_id', foreignField: 'user', as: 'files' } },
         { $lookup: { from: 'images', localField: '_id', foreignField: 'user', as: 'images' } },
         { $project: {
           username: 1,
           email: 1,
-          fileCount: { $size: '$files' },
           imageCount: { $size: '$images' },
-          totalUploads: { $add: [{ $size: '$files' }, { $size: '$images' }] }
+          totalUploads: { $size: '$images' }
         }},
         { $sort: { totalUploads: -1 } },
         { $limit: 10 }
@@ -156,12 +113,12 @@ const getSecurityInsights = async (req, res) => {
     const [failedLogins, suspiciousActivity, fileAccessPatterns] = await Promise.all([
       // Mock failed login attempts (you'd track these in a separate collection)
       Promise.resolve([{ ip: '192.168.1.100', attempts: 5, lastAttempt: new Date() }]),
-      File.aggregate([
+      Image.aggregate([
         { $match: { createdAt: { $gte: new Date(Date.now() - 24*60*60*1000) } } },
         { $group: { _id: '$user', uploads: { $sum: 1 } } },
         { $match: { uploads: { $gt: 50 } } } // Suspicious: >50 uploads/day
       ]),
-      File.aggregate([
+      Image.aggregate([
         { $group: { _id: { hour: { $hour: '$createdAt' }, user: '$user' }, count: { $sum: 1 } } },
         { $sort: { count: -1 } }
       ])
@@ -176,12 +133,12 @@ const getSecurityInsights = async (req, res) => {
 const getContentInsights = async (req, res) => {
   try {
     const [duplicateFiles, largestFiles, formatTrends, conversionStats] = await Promise.all([
-      File.aggregate([
+      Image.aggregate([
         { $group: { _id: { name: '$originalName', size: '$fileSize' }, count: { $sum: 1 }, files: { $push: '$_id' } } },
         { $match: { count: { $gt: 1 } } }
       ]),
-      File.find().sort({ fileSize: -1 }).limit(10).populate('user', 'username'),
-      File.aggregate([
+      Image.find().sort({ fileSize: -1 }).limit(10).populate('user', 'username'),
+      Image.aggregate([
         { $group: { _id: { format: '$format', month: { $month: '$createdAt' } }, count: { $sum: 1 } } },
         { $sort: { '_id.month': -1 } }
       ]),
@@ -199,12 +156,12 @@ const getPredictiveAnalytics = async (req, res) => {
   try {
     const thirtyDaysAgo = new Date(Date.now() - 30*24*60*60*1000);
     const [growthRate, storageProjection, userEngagement] = await Promise.all([
-      File.aggregate([
+      Image.aggregate([
         { $match: { createdAt: { $gte: thirtyDaysAgo } } },
         { $group: { _id: { $dayOfMonth: '$createdAt' }, count: { $sum: 1 } } },
         { $sort: { '_id': 1 } }
       ]),
-      File.aggregate([
+      Image.aggregate([
         { $group: { _id: null, avgSize: { $avg: '$fileSize' }, totalFiles: { $sum: 1 } } }
       ]),
       User.aggregate([
@@ -239,7 +196,7 @@ const getPerformanceMetrics = async (req, res) => {
     const [avgUploadTime, peakUsageHours, errorRates] = await Promise.all([
       // Mock upload time tracking (you'd implement this in upload middleware)
       Promise.resolve({ avgTime: 2.3, slowestUploads: [{ file: 'large.pdf', time: 15.2 }] }),
-      File.aggregate([
+      Image.aggregate([
         { $group: { _id: { $hour: '$createdAt' }, count: { $sum: 1 } } },
         { $sort: { count: -1 } },
         { $limit: 5 }
@@ -256,7 +213,6 @@ const getPerformanceMetrics = async (req, res) => {
 
 module.exports = {
   getDashboardStats,
-  getFileStats,
   getUserActivity,
   getSystemHealth,
   getSecurityInsights,
