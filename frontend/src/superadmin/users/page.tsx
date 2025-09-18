@@ -297,6 +297,8 @@ export default function UsersPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [user, setUser] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [usersPerPage] = useState(10);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -376,6 +378,29 @@ export default function UsersPage() {
     u.tenant?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+  const startIndex = (currentPage - 1) * usersPerPage;
+  const endIndex = startIndex + usersPerPage;
+  const currentUsers = filteredUsers.slice(startIndex, endIndex);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handlePrevious = () => {
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
+  };
+
+  const handleNext = () => {
+    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+  };
+
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
   const columns = [
     { key: 'username', label: 'Name', render: (user) => (
       <button 
@@ -440,21 +465,59 @@ export default function UsersPage() {
             <div className="p-8 text-center">Loading users...</div>
           ) : (
             <Table 
-              data={filteredUsers}
+              data={currentUsers}
               columns={columns}
             />
           )}
         </div>
 
-        {filteredUsers.length > 10 && (
+        {totalPages > 1 && (
           <div className="flex justify-center">
             <div className="flex items-center gap-2">
-              <button className="px-3 py-1 border rounded">←</button>
-              <span className="px-3 py-1 bg-blue-600 text-white rounded">1</span>
-              <button className="px-3 py-1 border rounded">2</button>
-              <button className="px-3 py-1 border rounded">3</button>
-              <button className="px-3 py-1 border rounded">→</button>
+              <button 
+                onClick={handlePrevious}
+                disabled={currentPage === 1}
+                className={`px-3 py-1 border rounded ${
+                  currentPage === 1 
+                    ? 'text-gray-400 cursor-not-allowed' 
+                    : 'hover:bg-gray-50'
+                }`}
+              >
+                ←
+              </button>
+              
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  onClick={() => handlePageChange(page)}
+                  className={`px-3 py-1 rounded ${
+                    currentPage === page
+                      ? 'bg-blue-600 text-white'
+                      : 'border hover:bg-gray-50'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+              
+              <button 
+                onClick={handleNext}
+                disabled={currentPage === totalPages}
+                className={`px-3 py-1 border rounded ${
+                  currentPage === totalPages 
+                    ? 'text-gray-400 cursor-not-allowed' 
+                    : 'hover:bg-gray-50'
+                }`}
+              >
+                →
+              </button>
             </div>
+          </div>
+        )}
+        
+        {filteredUsers.length > 0 && (
+          <div className="text-center text-sm text-gray-500">
+            Showing {startIndex + 1}-{Math.min(endIndex, filteredUsers.length)} of {filteredUsers.length} users
           </div>
         )}
       </div>
