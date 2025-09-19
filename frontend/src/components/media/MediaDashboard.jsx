@@ -13,12 +13,18 @@ const MediaDashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('uploaded');
   const [filterType, setFilterType] = useState('all');
+  const [ownerFilter, setOwnerFilter] = useState('all'); // 'all' or 'mine'
   const [previewFile, setPreviewFile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      setCurrentUser(JSON.parse(userData));
+    }
     fetchFiles();
-  }, [filterType]);
+  }, [filterType, ownerFilter]);
 
   const toAbsoluteUrl = (maybeRelative) => {
     if (!maybeRelative) return '';
@@ -32,7 +38,8 @@ const MediaDashboard = () => {
       let allFiles = [];
       
       if (filterType === 'all' || filterType === 'image') {
-        const imageResponse = await apiRequest('/api/images');
+        const imageUrl = ownerFilter === 'mine' ? '/api/images?own=true' : '/api/images';
+        const imageResponse = await apiRequest(imageUrl);
         const imageResult = await imageResponse.json();
         if (imageResult.success) {
           allFiles = [...allFiles, ...(imageResult.data || []).map(file => ({ 
@@ -143,8 +150,39 @@ const MediaDashboard = () => {
         <div className="p-6 space-y-6">
           <UploadPanel onUploadSuccess={fetchFiles} currentFilter={filterType} />
           
+          {/* Owner Filter - Only show for admin/superadmin */}
+          {currentUser && (currentUser.role === 'admin' || currentUser.role === 'superadmin') && (
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium text-gray-900">View</h3>
+              <div className="space-y-2">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="ownerFilter"
+                    value="all"
+                    checked={ownerFilter === 'all'}
+                    onChange={(e) => setOwnerFilter(e.target.value)}
+                    className="w-4 h-4 text-blue-600"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">All Files</span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="ownerFilter"
+                    value="mine"
+                    checked={ownerFilter === 'mine'}
+                    onChange={(e) => setOwnerFilter(e.target.value)}
+                    className="w-4 h-4 text-blue-600"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">My Files</span>
+                </label>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-4">
-            <h3 className="text-sm font-medium text-gray-900">Filters</h3>
+            <h3 className="text-sm font-medium text-gray-900">File Type</h3>
             <div className="space-y-2">
               {['all', 'image', 'video', 'audio', 'pdf', 'json'].map(type => (
                 <label key={type} className="flex items-center">
