@@ -14,35 +14,16 @@ function Login() {
   const [rememberMe, setRememberMe] = useState(false);
 
   const UserIcon = () => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
       <circle cx="12" cy="7" r="4" />
     </svg>
   );
 
   const KeyIcon = () => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="7.5" cy="15.5" r="5.5"></circle>
       <path d="m21 2-9.6 9.6"></path>
       <path d="m15.5 7.5 3 3L22 7l-3-3"></path>
@@ -50,34 +31,16 @@ function Login() {
   );
 
   const EyeIcon = () => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
       <circle cx="12" cy="12" r="3"></circle>
     </svg>
   );
 
   const EyeOffIcon = () => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
       <line x1="1" y1="1" x2="23" y2="23"></line>
     </svg>
@@ -90,7 +53,7 @@ function Login() {
     try {
       const res = await authApi.login({ username, password, rememberMe });
       const data = await res.json();
-      
+
       if (!data.success) {
         throw new Error(data.message || "Login failed");
       }
@@ -98,9 +61,7 @@ function Login() {
       setMessage("✅ Login successful!");
       addNotification('success', 'Logged in', `Welcome ${data.user.username}`);
       console.log("User data:", data);
-      
-      // Save token and user data to localStorage
-      // Persist session based on rememberMe; also mirror to the other store for compatibility
+
       const primary = rememberMe ? localStorage : sessionStorage;
       const secondary = rememberMe ? sessionStorage : localStorage;
       primary.setItem("token", data.token);
@@ -109,8 +70,7 @@ function Login() {
       secondary.setItem("token", data.token);
       secondary.setItem("user", JSON.stringify(data.user));
       secondary.setItem("role", data.user.role.toLowerCase());
-      
-      // Redirect to dashboard
+
       window.location.href = "/dashboard";
     } catch (err) {
       setMessage("❌ " + err.message);
@@ -119,10 +79,18 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-6 text-center">JCMS Login</h2>
+        <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-8">
+          {/* Logo/Brand */}
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+              <span className="text-2xl font-bold text-white">J</span>
+            </div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome back</h2>
+            <p className="text-gray-600">Sign in to your JCMS account</p>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <FormField label="Username" htmlFor="username">
               <div className="relative">
@@ -136,7 +104,7 @@ function Login() {
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="Enter your username"
                   required
-                  className="pl-10 py-3"
+                  className="pl-10 py-3 border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
                 />
               </div>
             </FormField>
@@ -153,12 +121,12 @@ function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
                   required
-                  className="pl-10 pr-12 py-3"
+                  className="pl-10 pr-12 py-3 border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-indigo-600 transition-colors"
                 >
                   {showPassword ? <EyeOffIcon /> : <EyeIcon />}
                 </button>
@@ -178,22 +146,36 @@ function Login() {
                   Remember me
                 </label>
               </div>
-              <div className="flex items-center gap-4">
-                <a href="#" className="text-sm font-medium text-indigo-600 hover:text-indigo-500 transition-colors">
-                  Forgot password?
-                </a>
-                <a href="/register" className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors">
-                  Register tenant
-                </a>
-              </div>
+              <button type="button" className="text-sm font-medium text-indigo-600 hover:text-indigo-500 transition-colors">
+                Forgot password?
+              </button>
             </div>
 
-            <Button type="submit" variant="primary" size="lg" className="w-full">
+            <Button type="submit" variant="primary" size="lg" className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700">
               Sign In
             </Button>
 
-            {message && <p className="text-sm text-gray-600">{message}</p>}
+            {message && (
+              <div className={`p-3 rounded-lg text-sm ${
+                message.includes('✅') 
+                  ? 'bg-green-50 text-green-700 border border-green-200' 
+                  : 'bg-red-50 text-red-700 border border-red-200'
+              }`}>
+                {message}
+              </div>
+            )}
           </form>
+
+          <div className="mt-8 pt-6 border-t border-gray-200">
+            <div className="text-center">
+              <p className="text-sm text-gray-600">
+                Don't have a tenant?{" "}
+                <a href="/register" className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors">
+                  Register a new tenant
+                </a>
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
