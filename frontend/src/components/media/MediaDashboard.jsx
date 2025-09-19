@@ -40,7 +40,8 @@ const MediaDashboard = () => {
             type: 'image',
             filename: file.title,
             size: file.fileSize || file.size || 0,
-            fullUrl: toAbsoluteUrl(file.fileUrl)
+            fullUrl: toAbsoluteUrl(file.fileUrl),
+            userInfo: file.user
           }))];
         }
       }

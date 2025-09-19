@@ -51,6 +51,11 @@ export default function RegisterTenant() {
       <div className="w-full max-w-lg">
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
           <h2 className="text-2xl font-semibold text-gray-900 mb-6 text-center">Register Tenant & Admin</h2>
+          <div className="text-center mb-4">
+            <p className="text-sm text-gray-600">
+              Already have an account? <a href="/" className="text-blue-600 hover:text-blue-800 underline">Login here</a>
+            </p>
+          </div>
           <form onSubmit={handleSubmit} className="space-y-5">
             <FormField label="Registration Code (if required)" htmlFor="registrationCode">
               <Input id="registrationCode" value={form.registrationCode} onChange={(e) => setForm({ ...form, registrationCode: e.target.value })} placeholder="Optional" />

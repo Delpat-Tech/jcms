@@ -187,11 +187,18 @@ const FileCard = ({ file, viewMode, selected, onSelect, onPreview, onDelete, onD
           </p>
         )}
         
-        {/* Owner */}
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">
-            {file.tenantName || 'System'}
-          </span>
+        {/* Owner & Creator */}
+        <div className="space-y-2 mb-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">
+              {file.tenantName || 'System'}
+            </span>
+          </div>
+          {file.userInfo && (
+            <div className="text-xs text-gray-500">
+              <span className="font-medium">Created by:</span> {file.userInfo.username}
+            </div>
+          )}
         </div>
         
         {/* Actions */}

@@ -113,7 +113,7 @@ const getImages = async (req, res) => {
       }
     }
     
-    const images = await Image.find(filter);
+    const images = await Image.find(filter).populate('user', 'username email');
     res.status(200).json({ 
       success: true, 
       data: images,
