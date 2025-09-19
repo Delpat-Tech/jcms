@@ -46,35 +46,28 @@ function AddUserModal({ onClose, onUserAdded }) {
       const token = localStorage.getItem('token');
       let endpoint, requestBody;
 
-      // Admin creation: require tenant selection and hit dedicated endpoint
+      // Require tenant selection for all roles
+      if (!formData.tenantId) {
+        setError('Please select a tenant');
+        return;
+      }
+
+      // Admin creation: use dedicated endpoint
       if (formData.role === 'admin') {
-        if (!formData.tenantId) {
-          setError('Please select a tenant for the admin');
-          return;
-        }
         endpoint = `http://localhost:5000/api/tenants/${formData.tenantId}/admin`;
         requestBody = {
           username: formData.username,
           email: formData.email,
           password: formData.password
         };
-      } else if (formData.tenantId) {
-        // Non-admin but tenant-scoped user creation
+      } else {
+        // Non-admin tenant-scoped user creation
         endpoint = `http://localhost:5000/api/tenants/${formData.tenantId}/users`;
         requestBody = {
           username: formData.username,
           email: formData.email,
           password: formData.password,
           roleName: formData.role
-        };
-      } else {
-        // Create standalone user (no tenant)
-        endpoint = 'http://localhost:5000/api/users';
-        requestBody = {
-          username: formData.username,
-          email: formData.email,
-          password: formData.password,
-          role: formData.role
         };
       }
 
@@ -176,9 +169,9 @@ function AddUserModal({ onClose, onUserAdded }) {
               value={formData.tenantId}
               onChange={(e) => setFormData({ ...formData, tenantId: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required={formData.role === 'admin'}
+              required
             >
-              <option value="">{formData.role === 'admin' ? 'Select tenant (required for admin)' : 'Select tenant (optional)'}</option>
+              <option value="">Select tenant (required)</option>
               {tenants.map((t) => (
                 <option key={t._id} value={t._id}>{t.name} {t.subdomain ? `(${t.subdomain})` : ''}</option>
               ))}
