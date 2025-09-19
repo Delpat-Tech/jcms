@@ -76,15 +76,18 @@ export default function UserOverview() {
       // Current tenant context
       const ctxRes = await tenantSwitchingApi.getMyContext();
       const ctxData = await ctxRes.json();
+      console.log('Tenant context response:', ctxData); // DEBUG
       if (ctxData && ctxData.success !== false) {
         setCurrentTenant(ctxData.tenant || ctxData.data || ctxData);
       }
       // My tenants
       const tRes = await tenantSwitchingApi.getMyTenants();
       const tData = await tRes.json();
+      console.log('My tenants response:', tData); // DEBUG
       const tenants = Array.isArray(tData) ? tData : (tData.tenants || tData.data || []);
       setMyTenants(tenants);
     } catch (e) {
+      console.error('Error loading tenant info:', e); // DEBUG
       setTenantError('Failed to load tenant info');
     } finally {
       setTenantLoading(false);

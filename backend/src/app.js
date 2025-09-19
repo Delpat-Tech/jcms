@@ -75,6 +75,7 @@ app.use('/api/tenants', require('./routes/tenantRoutes'));
 app.use('/api/tenant-analytics', require('./routes/tenantAnalyticsRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/activity', require('./routes/activityRoutes'));
+app.use('/api/tenant-switching', require('./routes/tenantSwitchingRoutes'));
 
 // Public settings endpoint
 app.get('/api/settings', async (req, res) => {
