@@ -3,6 +3,7 @@ import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
 import FormField from "../components/ui/FormField";
 import { useToasts } from "../components/util/Toasts";
+import { authApi } from "../api";
 
 function Login() {
   const [username, setUsername] = useState("");
@@ -87,12 +88,7 @@ function Login() {
     setMessage("Logging in...");
 
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password, rememberMe }),
-      });
-
+      const res = await authApi.login({ username, password, rememberMe });
       const data = await res.json();
       
       if (!data.success) {

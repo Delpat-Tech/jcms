@@ -1,5 +1,6 @@
 // components/TenantSwitcher.jsx
 import React, { useState, useEffect, useRef } from 'react';
+import { tenantSwitchingApi } from '../api';
 import './TenantSwitcher.css';
 
 const TenantSwitcher = ({ onTenantChange, currentTenant }) => {
@@ -29,23 +30,15 @@ const TenantSwitcher = ({ onTenantChange, currentTenant }) => {
 
   const fetchAccessibleTenants = async () => {
     try {
-      const token = localStorage.getItem('jcms_token');
-      const response = await fetch('/api/tenant-switching/my/tenants', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setTenants(data.tenants);
-        
-        // If no current tenant is set, set the first available tenant
-        if (!selectedTenant && data.tenants.length > 0) {
-          setSelectedTenant(data.tenants[0]);
-          if (onTenantChange) {
-            onTenantChange(data.tenants[0]);
-          }
+      const response = await tenantSwitchingApi.getMyTenants();
+      const data = await response.json();
+      setTenants(data.tenants);
+      
+      // If no current tenant is set, set the first available tenant
+      if (!selectedTenant && data.tenants.length > 0) {
+        setSelectedTenant(data.tenants[0]);
+        if (onTenantChange) {
+          onTenantChange(data.tenants[0]);
         }
       }
     } catch (error) {
@@ -61,28 +54,13 @@ const TenantSwitcher = ({ onTenantChange, currentTenant }) => {
 
     try {
       setLoading(true);
-      const token = localStorage.getItem('jcms_token');
+      const response = await tenantSwitchingApi.switchTenant(tenant.id);
+      const data = await response.json();
+      setSelectedTenant(data.tenant);
+      setIsOpen(false);
       
-      const response = await fetch('/api/tenant-switching/my/switch', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ tenantId: tenant.id })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setSelectedTenant(data.tenant);
-        setIsOpen(false);
-        
-        if (onTenantChange) {
-          onTenantChange(data.tenant);
-        }
-      } else {
-        const error = await response.json();
-        console.error('Failed to switch tenant:', error.message);
+      if (onTenantChange) {
+        onTenantChange(data.tenant);
       }
     } catch (error) {
       console.error('Error switching tenant:', error);

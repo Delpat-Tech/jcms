@@ -4,6 +4,7 @@ import Button from '../../components/ui/Button.jsx';
 import Input from '../../components/ui/Input.jsx';
 import FormField from '../../components/ui/FormField.jsx';
 import { useTheme } from '../../contexts/ThemeContext.jsx';
+import { settingsApi } from '../../api';
 
 export default function SettingsPage() {
   const { refreshSettings, isDarkMode, setDarkMode } = useTheme();
@@ -35,10 +36,7 @@ export default function SettingsPage() {
 
   const fetchSettings = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/superadmin/settings', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await settingsApi.getSuperadmin();
       const data = await response.json();
       if (data.success) {
         setSettings(data.settings);
@@ -56,15 +54,7 @@ export default function SettingsPage() {
     setMessage('');
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/superadmin/settings', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(settings)
-      });
+      const response = await settingsApi.updateSuperadmin(settings);
       const data = await response.json();
       if (data.success) {
         setMessage('Settings saved successfully!');

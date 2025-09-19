@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import AdminLayout from '../layout.tsx';
 import Button from "../../components/ui/Button.jsx";
+import { userApi, imageApi, activityApi } from '../../api';
 
 export default function AdminOverview() {
   const [user, setUser] = useState(null);
@@ -15,24 +16,16 @@ export default function AdminOverview() {
 
   const fetchDashboardData = async () => {
     try {
-      const token = localStorage.getItem('token');
-      
       // Fetch users count
-      const usersRes = await fetch(`${process.env.REACT_APP_API_URL}/api/users`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const usersRes = await userApi.getAll();
       const usersData = await usersRes.json();
       
       // Fetch images count
-      const imagesRes = await fetch(`${process.env.REACT_APP_API_URL}/api/images`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const imagesRes = await imageApi.getAll();
       const imagesData = await imagesRes.json();
       
       // Fetch activity logs
-      const activityRes = await fetch(`${process.env.REACT_APP_API_URL}/api/activity`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const activityRes = await activityApi.getAll();
       const activityData = await activityRes.json();
       
       setStats({

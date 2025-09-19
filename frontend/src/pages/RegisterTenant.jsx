@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Input from "../components/ui/Input.jsx";
 import Button from "../components/ui/Button.jsx";
 import FormField from "../components/ui/FormField.jsx";
+import { tenantApi } from "../api";
 
 export default function RegisterTenant() {
   const [form, setForm] = useState({
@@ -31,11 +32,7 @@ export default function RegisterTenant() {
     if (!/[^A-Za-z0-9]/.test(v)) missing.push('special');
     if (missing.length) { setMessage('❌ Password requirements not met: ' + missing.join(', ')); setLoading(false); return; }
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/tenants/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form)
-      });
+      const res = await tenantApi.register(form);
       const data = await res.json();
       if (!data.success) throw new Error(data.message || "Registration failed");
       setMessage("✅ Registered. You can now log in as the admin.");

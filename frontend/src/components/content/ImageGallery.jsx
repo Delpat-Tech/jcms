@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { apiRequest } from '../../utils/api';
+import { imageApi } from '../../api';
 
 function ImageGallery({ refreshTrigger }) {
   const [images, setImages] = useState([]);
@@ -7,8 +7,7 @@ function ImageGallery({ refreshTrigger }) {
 
   const fetchImages = async () => {
     try {
-      const response = await apiRequest('/api/images');
-      
+      const response = await imageApi.getAll();
       const result = await response.json();
       if (result.success) {
         setImages(result.data);
@@ -28,10 +27,7 @@ function ImageGallery({ refreshTrigger }) {
     if (!window.confirm('Are you sure you want to delete this image?')) return;
 
     try {
-      const response = await apiRequest(`/api/images/${imageId}`, {
-        method: 'DELETE'
-      });
-
+      const response = await imageApi.delete(imageId);
       const result = await response.json();
       if (result.success) {
         setImages(images.filter(img => img._id !== imageId));

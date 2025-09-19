@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Edit3 } from 'lucide-react';
 import TenantLogoEditor from './TenantLogoEditor';
-import { apiRequest } from '../utils/api';
+import { tenantApi } from '../api';
 
 const TenantLogo = ({ user }) => {
   const [tenantLogo, setTenantLogo] = useState(null);
@@ -21,7 +21,7 @@ const TenantLogo = ({ user }) => {
 
   const fetchTenantLogo = async () => {
     try {
-      const response = await apiRequest(`/api/tenants/${user.tenant._id}`);
+      const response = await tenantApi.getById(user.tenant._id);
       const result = await response.json();
       if (result.success) {
         setTenantLogo(result.tenant.branding?.logo);
@@ -40,7 +40,7 @@ const TenantLogo = ({ user }) => {
 
   const fetchTenants = async () => {
     try {
-      const response = await apiRequest('/api/tenants');
+      const response = await tenantApi.getAll();
       const result = await response.json();
       if (result.success) {
         setTenants(result.tenants);

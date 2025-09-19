@@ -4,7 +4,7 @@ import UploadPanel from './UploadPanel';
 import FileCard from './FileCard';
 import PreviewModal from './PreviewModal';
 import BulkActions from './BulkActions';
-import { apiRequest } from '../../utils/api';
+import { imageApi, fileApi } from '../../api';
 
 const MediaDashboard = () => {
   const [files, setFiles] = useState([]);
@@ -38,8 +38,7 @@ const MediaDashboard = () => {
       let allFiles = [];
       
       if (filterType === 'all' || filterType === 'image') {
-        const imageUrl = ownerFilter === 'mine' ? '/api/images?own=true' : '/api/images';
-        const imageResponse = await apiRequest(imageUrl);
+        const imageResponse = await imageApi.getAll(ownerFilter === 'mine');
         const imageResult = await imageResponse.json();
         if (imageResult.success) {
           allFiles = [...allFiles, ...(imageResult.data || []).map(file => ({ 
@@ -54,7 +53,7 @@ const MediaDashboard = () => {
       }
       
       if (filterType === 'all' || filterType !== 'image') {
-        const fileResponse = await apiRequest('/api/files');
+        const fileResponse = await fileApi.getAll();
         const fileResult = await fileResponse.json();
         if (fileResult.success) {
           allFiles = [...allFiles, ...(fileResult.files || []).map(file => ({ 
@@ -117,8 +116,9 @@ const MediaDashboard = () => {
 
   const handleDeleteFile = async (file) => {
     try {
-      const endpoint = file.type === 'image' ? `/api/images/${file._id}` : `/api/files/${file._id}`;
-      const response = await apiRequest(endpoint, { method: 'DELETE' });
+      const response = file.type === 'image' 
+        ? await imageApi.delete(file._id)
+        : await fileApi.delete(file._id);
       const result = await response.json();
       
       if (result.success) {

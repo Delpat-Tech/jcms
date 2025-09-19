@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Upload, X, Check } from 'lucide-react';
-import { apiRequest } from '../utils/api';
+import { tenantApi } from '../api';
 
 const TenantLogoEditor = ({ tenantId, currentLogo, onLogoUpdate }) => {
   const [uploading, setUploading] = useState(false);
@@ -18,10 +18,7 @@ const TenantLogoEditor = ({ tenantId, currentLogo, onLogoUpdate }) => {
       const formData = new FormData();
       formData.append('logo', file);
 
-      const response = await apiRequest(`/api/tenants/${tenantId}/logo`, {
-        method: 'POST',
-        body: formData
-      });
+      const response = await tenantApi.uploadLogo(tenantId, formData);
 
       const result = await response.json();
       if (result.success) {

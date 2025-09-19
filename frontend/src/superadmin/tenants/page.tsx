@@ -4,6 +4,7 @@ import Button from "../../components/ui/Button.jsx";
 import Input from "../../components/ui/Input.jsx";
 import Table from "../../components/ui/Table.jsx";
 import Modal from "../../components/ui/Modal.jsx";
+import { tenantApi, imageApi, fileApi } from '../../api';
 
 function CreateTenantModal({ onClose, onTenantCreated }) {
   const [formData, setFormData] = useState({
@@ -23,16 +24,7 @@ function CreateTenantModal({ onClose, onTenantCreated }) {
     setError('');
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/tenants', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(formData)
-      });
-
+      const response = await tenantApi.create(formData);
       const data = await response.json();
       
       if (data.success) {
@@ -205,10 +197,7 @@ function TenantDetailsModal({ tenant, onClose, onTenantUpdated }) {
   const fetchTenantUsers = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/tenants/${tenant._id}/users`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await tenantApi.getUsers(tenant._id);
       const data = await response.json();
       if (data.success) {
         // Fetch image and file counts for each user
@@ -216,12 +205,8 @@ function TenantDetailsModal({ tenant, onClose, onTenantUpdated }) {
           (data.users || []).map(async (user) => {
             try {
               const [imagesRes, filesRes] = await Promise.all([
-                fetch(`http://localhost:5000/api/users/${user._id}/images`, {
-                  headers: { 'Authorization': `Bearer ${token}` }
-                }),
-                fetch(`http://localhost:5000/api/files`, {
-                  headers: { 'Authorization': `Bearer ${token}` }
-                })
+                imageApi.getByUser(user._id),
+                fileApi.getAll()
               ]);
               
               const imagesData = await imagesRes.json();
@@ -258,10 +243,7 @@ function TenantDetailsModal({ tenant, onClose, onTenantUpdated }) {
   const fetchTenantStats = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/tenants/${tenant._id}/stats`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await tenantApi.getStats(tenant._id);
       const data = await response.json();
       if (data.success) {
         setStats(data.stats);
@@ -275,10 +257,7 @@ function TenantDetailsModal({ tenant, onClose, onTenantUpdated }) {
 
   const exportUsers = async (format = 'json') => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/tenants/${tenant._id}/users/export?format=${format}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await tenantApi.exportUsers(tenant._id, format);
       
       if (format === 'csv') {
         const csvData = await response.text();
@@ -492,10 +471,7 @@ export default function TenantsPage() {
 
   const fetchTenants = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/tenants', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await tenantApi.getAll();
       const data = await response.json();
       if (data.success) {
         setTenants(data.tenants || []);
@@ -511,11 +487,7 @@ export default function TenantsPage() {
     if (!window.confirm('Are you sure you want to delete this tenant? This will delete all associated users and data.')) return;
     
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/tenants/${tenantId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await tenantApi.delete(tenantId);
       
       if (response.ok) {
         fetchTenants();

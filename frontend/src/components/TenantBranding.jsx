@@ -1,5 +1,6 @@
 // components/TenantBranding.jsx
 import React, { useState, useEffect } from 'react';
+import { tenantBrandingApi, tenantApi } from '../api';
 import './TenantBranding.css';
 
 const TenantBranding = ({ tenantId, onBrandingChange }) => {
@@ -51,19 +52,11 @@ const TenantBranding = ({ tenantId, onBrandingChange }) => {
 
   const fetchBranding = async () => {
     try {
-      const token = localStorage.getItem('jcms_token');
-      const response = await fetch(`/api/tenant-branding/${tenantId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setBranding(data.tenant.branding);
-        if (onBrandingChange) {
-          onBrandingChange(data.tenant.branding);
-        }
+      const response = await tenantBrandingApi.get(tenantId);
+      const data = await response.json();
+      setBranding(data.tenant.branding);
+      if (onBrandingChange) {
+        onBrandingChange(data.tenant.branding);
       }
     } catch (error) {
       console.error('Error fetching branding:', error);
@@ -73,30 +66,16 @@ const TenantBranding = ({ tenantId, onBrandingChange }) => {
   const updateBranding = async (updates) => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('jcms_token');
+      const response = await tenantBrandingApi.update(tenantId, updates);
+      const data = await response.json();
+      setBranding(data.tenant.branding);
+      setMessage('Branding updated successfully!');
       
-      const response = await fetch(`/api/tenant-branding/${tenantId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(updates)
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setBranding(data.tenant.branding);
-        setMessage('Branding updated successfully!');
-        
-        if (onBrandingChange) {
-          onBrandingChange(data.tenant.branding);
-        }
-        
-        setTimeout(() => setMessage(''), 3000);
-      } else {
-        throw new Error('Failed to update branding');
+      if (onBrandingChange) {
+        onBrandingChange(data.tenant.branding);
       }
+      
+      setTimeout(() => setMessage(''), 3000);
     } catch (error) {
       setMessage('Error updating branding: ' + error.message);
       setTimeout(() => setMessage(''), 3000);
@@ -108,29 +87,16 @@ const TenantBranding = ({ tenantId, onBrandingChange }) => {
   const uploadLogo = async (file) => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('jcms_token');
       const formData = new FormData();
       formData.append('logo', file);
-
-      const response = await fetch(`/api/tenants/${tenantId}/logo`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setBranding(prev => ({
-          ...prev,
-          logo: data.logo
-        }));
-        setMessage('Logo uploaded successfully!');
-        setTimeout(() => setMessage(''), 3000);
-      } else {
-        throw new Error('Failed to upload logo');
-      }
+      const response = await tenantApi.uploadLogo(tenantId, formData);
+      const data = await response.json();
+      setBranding(prev => ({
+        ...prev,
+        logo: data.logo
+      }));
+      setMessage('Logo uploaded successfully!');
+      setTimeout(() => setMessage(''), 3000);
     } catch (error) {
       setMessage('Error uploading logo: ' + error.message);
       setTimeout(() => setMessage(''), 3000);
@@ -175,21 +141,11 @@ const TenantBranding = ({ tenantId, onBrandingChange }) => {
     if (window.confirm('Are you sure you want to reset all branding to defaults? This cannot be undone.')) {
       try {
         setLoading(true);
-        const token = localStorage.getItem('jcms_token');
-        
-        const response = await fetch(`/api/tenant-branding/${tenantId}/reset`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setBranding(data.tenant.branding);
-          setMessage('Branding reset to defaults successfully!');
-          setTimeout(() => setMessage(''), 3000);
-        }
+        const response = await tenantBrandingApi.reset(tenantId);
+        const data = await response.json();
+        setBranding(data.tenant.branding);
+        setMessage('Branding reset to defaults successfully!');
+        setTimeout(() => setMessage(''), 3000);
       } catch (error) {
         setMessage('Error resetting branding: ' + error.message);
         setTimeout(() => setMessage(''), 3000);

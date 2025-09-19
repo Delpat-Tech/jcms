@@ -4,6 +4,7 @@ import Button from "../../components/ui/Button.jsx";
 import Input from "../../components/ui/Input.jsx";
 import Table from "../../components/ui/Table.jsx";
 import Modal from "../../components/ui/Modal.jsx";
+import { userApi, imageApi, fileApi } from '../../api';
 
 function AddUserModal({ onClose, onUserAdded }) {
   const [formData, setFormData] = useState({
@@ -21,16 +22,7 @@ function AddUserModal({ onClose, onUserAdded }) {
     setError('');
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(formData)
-      });
-
+      const response = await userApi.create(formData);
       const data = await response.json();
       
       if (data.success) {
@@ -135,17 +127,10 @@ function UserDetailsModal({ user, onClose }) {
 
   const fetchUserDetails = async () => {
     try {
-      const token = localStorage.getItem('token');
       const [userRes, imagesRes, filesRes] = await Promise.all([
-        fetch(`http://localhost:5000/api/users/${user._id}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        fetch(`http://localhost:5000/api/users/${user._id}/images`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        fetch(`http://localhost:5000/api/files`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
+        userApi.getById(user._id),
+        imageApi.getByUser(user._id),
+        fileApi.getAll()
       ]);
 
       const userData = await userRes.json();
@@ -251,10 +236,7 @@ export default function AdminUsersPage() {
 
   const fetchUsers = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/users?includeInactive=true', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await userApi.getAll(true);
       const data = await response.json();
       if (data.success && data.data) {
         setUsers(data.data || []);
@@ -273,16 +255,9 @@ export default function AdminUsersPage() {
     if (!window.confirm(`Are you sure you want to ${action} this user?`)) return;
     
     try {
-      const token = localStorage.getItem('token');
-      const endpoint = isActive 
-        ? `http://localhost:5000/api/users/${userId}`
-        : `http://localhost:5000/api/users/${userId}/reactivate`;
-      const method = isActive ? 'DELETE' : 'POST';
-      
-      const response = await fetch(endpoint, {
-        method,
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = isActive 
+        ? await userApi.delete(userId)
+        : await userApi.reactivate(userId);
       
       if (response.ok) {
         fetchUsers();

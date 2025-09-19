@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { settingsApi } from '../api';
 
 const ThemeContext = createContext();
 
@@ -41,9 +42,7 @@ export const ThemeProvider = ({ children }) => {
       const token = localStorage.getItem('token');
       if (!token) return;
       
-      const response = await fetch('http://localhost:5000/api/settings', {
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-      });
+      const response = await settingsApi.get();
       const data = await response.json();
       if (data.success) {
         setSettings(data.settings);

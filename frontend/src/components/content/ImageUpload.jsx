@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { apiRequest } from '../../utils/api';
+import { imageApi } from '../../api';
 
 function ImageUpload({ onUploadSuccess }) {
   const [file, setFile] = useState(null);
@@ -32,11 +32,7 @@ function ImageUpload({ onUploadSuccess }) {
     formData.append('format', format);
 
     try {
-      const response = await apiRequest('/api/images', {
-        method: 'POST',
-        body: formData
-      });
-
+      const response = await imageApi.upload(formData);
       const result = await response.json();
       
       if (result.success) {

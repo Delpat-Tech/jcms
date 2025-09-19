@@ -1,6 +1,7 @@
 // components/TenantDashboard.jsx
 import React, { useState, useEffect } from 'react';
 import TenantSwitcher from './TenantSwitcher';
+import { tenantSwitchingApi, tenantAnalyticsApiWithTimeframe } from '../api';
 import './TenantDashboard.css';
 
 const TenantDashboard = () => {
@@ -22,13 +23,7 @@ const TenantDashboard = () => {
 
   const fetchCurrentContext = async () => {
     try {
-      const token = localStorage.getItem('jcms_token');
-      const response = await fetch('/api/tenant-switching/my/context', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
+      const response = await tenantSwitchingApi.getMyContext();
       if (response.ok) {
         const data = await response.json();
         if (data.tenant) {
@@ -45,14 +40,7 @@ const TenantDashboard = () => {
 
     try {
       setLoading(true);
-      const token = localStorage.getItem('jcms_token');
-      
-      const response = await fetch(`/api/tenant-analytics/${currentTenant.id}/dashboard?timeframe=${timeframe}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
+      const response = await tenantAnalyticsApiWithTimeframe.getDashboard(currentTenant.id, timeframe);
       if (response.ok) {
         const data = await response.json();
         setDashboardData(data.dashboard);

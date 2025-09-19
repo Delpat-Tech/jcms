@@ -4,6 +4,7 @@ import UserLayout from '../layout.tsx';
 import Button from '../../components/ui/Button.jsx';
 import DashboardWidget, { StatsWidget, ListWidget } from '../../components/common/DashboardWidget.jsx';
 import { Link } from 'react-router-dom';
+import { imageApi, fileApi, tenantSwitchingApi } from '../../api';
 
 export default function UserOverview() {
   const [user, setUser] = useState(null);
@@ -44,7 +45,7 @@ export default function UserOverview() {
     setRecentError(null);
     try {
       // Images (supports ?own=true per imagesRoutes)
-      const imgRes = await fetch(`${apiBase}/api/images?own=true`, { headers: authHeaders() });
+      const imgRes = await imageApi.getAll(true);
       const imgData = await imgRes.json();
       const imgs = Array.isArray(imgData) ? imgData : (imgData.images || []);
       setImagesCount(imgs.length);
@@ -53,7 +54,7 @@ export default function UserOverview() {
       setRecentImages(sortedImgs.slice(0, 5));
 
       // Files (no explicit own filter exposed; fallback to all and sort)
-      const fileRes = await fetch(`${apiBase}/api/files`, { headers: authHeaders() });
+      const fileRes = await fileApi.getAll();
       const fileJson = await fileRes.json();
       const files = Array.isArray(fileJson) ? fileJson : (fileJson.files || []);
       setFilesCount(files.length);
@@ -73,13 +74,13 @@ export default function UserOverview() {
     setTenantError(null);
     try {
       // Current tenant context
-      const ctxRes = await fetch(`${apiBase}/api/tenant-switch/my/context`, { headers: authHeaders() });
+      const ctxRes = await tenantSwitchingApi.getMyContext();
       const ctxData = await ctxRes.json();
       if (ctxData && ctxData.success !== false) {
         setCurrentTenant(ctxData.tenant || ctxData.data || ctxData);
       }
       // My tenants
-      const tRes = await fetch(`${apiBase}/api/tenant-switch/my/tenants`, { headers: authHeaders() });
+      const tRes = await tenantSwitchingApi.getMyTenants();
       const tData = await tRes.json();
       const tenants = Array.isArray(tData) ? tData : (tData.tenants || tData.data || []);
       setMyTenants(tenants);

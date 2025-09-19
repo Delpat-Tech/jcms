@@ -2,6 +2,7 @@
 import React, { useMemo, useState } from 'react';
 import UserLayout from '../layout.tsx';
 import Button from '../../components/ui/Button.jsx';
+import { profileApi } from '../../api';
 
 export default function UserProfilePage() {
   const [profile, setProfile] = useState(() => {
@@ -26,11 +27,7 @@ export default function UserProfilePage() {
   const handleUpdateProfile = async () => {
     setSaving(true); setMessage(''); setError('');
     try {
-      const res = await fetch(`${apiBase}/api/profile`, {
-        method: 'PUT',
-        headers: authHeaders(),
-        body: JSON.stringify({ name, email, username })
-      });
+      const res = await profileApi.update({ name, email, username });
       const data = await res.json();
       if (data && data.success !== false) {
         setMessage('Profile updated');
@@ -59,11 +56,7 @@ export default function UserProfilePage() {
     if (missing.length) { setError('Password requirements not met: ' + missing.join(', ')); return; }
     setSaving(true); setMessage(''); setError('');
     try {
-      const res = await fetch(`${apiBase}/api/profile/change-password`, {
-        method: 'PUT',
-        headers: authHeaders(),
-        body: JSON.stringify({ currentPassword, newPassword })
-      });
+      const res = await profileApi.changePassword({ currentPassword, newPassword });
       const data = await res.json();
       if (data && data.success !== false) {
         setMessage('Password changed');
@@ -81,11 +74,7 @@ export default function UserProfilePage() {
   const handleChangeUsername = async () => {
     setSaving(true); setMessage(''); setError('');
     try {
-      const res = await fetch(`${apiBase}/api/profile/change-username`, {
-        method: 'PUT',
-        headers: authHeaders(),
-        body: JSON.stringify({ username })
-      });
+      const res = await profileApi.changeUsername({ username });
       const data = await res.json();
       if (data && data.success !== false) {
         setMessage('Username changed');

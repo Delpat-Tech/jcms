@@ -1,6 +1,6 @@
 // seed.js - Seed Runner Script
-const { runSeeds } = require('./src/seeds');
-const logger = require('./src/config/logger');
+const { runSeeds } = require('.');
+const logger = require('../config/logger');
 
 const main = async () => {
   const seedType = process.argv[2] || 'core';

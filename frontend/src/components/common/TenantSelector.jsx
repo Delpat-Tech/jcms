@@ -1,5 +1,6 @@
 // components/common/TenantSelector.jsx
 import React, { useState, useEffect, useRef } from 'react';
+import { tenantSwitchingApi } from '../../api';
 import './TenantSelector.css';
 
 const TenantSelector = ({ 
@@ -51,20 +52,9 @@ const TenantSelector = ({
     try {
       setLoading(true);
       setError(null);
-      
-      const token = localStorage.getItem('jcms_token');
-      const response = await fetch('/api/tenant-switching/my/tenants', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setTenants(data.tenants || []);
-      } else {
-        throw new Error('Failed to fetch tenants');
-      }
+      const response = await tenantSwitchingApi.getMyTenants();
+      const data = await response.json();
+      setTenants(data.tenants || []);
     } catch (err) {
       setError(err.message);
       console.error('Error fetching tenants:', err);
@@ -76,17 +66,7 @@ const TenantSelector = ({
   const handleTenantSelect = async (tenant) => {
     try {
       setLoading(true);
-      
-      const token = localStorage.getItem('jcms_token');
-      const response = await fetch('/api/tenant-switching/switch', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ tenantId: tenant.id })
-      });
-
+      const response = await tenantSwitchingApi.switch(tenant.id);
       if (response.ok) {
         onTenantChange(tenant);
         setIsOpen(false);

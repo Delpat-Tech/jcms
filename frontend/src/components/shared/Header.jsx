@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import TenantLogo from '../TenantLogo';
 import { useTheme } from '../../contexts/ThemeContext';
+import { notificationApi } from '../../api';
 
 function Header({ title = "JCMS", user, onMenuClick }) {
     const [showUserDropdown, setShowUserDropdown] = useState(false);
@@ -26,10 +27,7 @@ function Header({ title = "JCMS", user, onMenuClick }) {
     const fetchNotifications = async () => {
         try {
             setLoadingNotifs(true);
-            const token = localStorage.getItem('token');
-            const res = await fetch(`${process.env.REACT_APP_API_URL}/api/notifications`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const res = await notificationApi.getAll();
             const data = await res.json();
             if (data?.success && Array.isArray(data.notifications)) {
                 setNotifications(data.notifications);

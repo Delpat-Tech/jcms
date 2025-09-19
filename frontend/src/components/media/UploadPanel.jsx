@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Upload, X, CheckCircle, AlertCircle } from 'lucide-react';
-import { apiRequest } from '../../utils/api';
+import { imageApi, fileApi } from '../../api';
 
 const UploadPanel = ({ onUploadSuccess, currentFilter }) => {
   const [isDragging, setIsDragging] = useState(false);
@@ -123,11 +123,9 @@ const UploadPanel = ({ onUploadSuccess, currentFilter }) => {
         }
       }
 
-      const endpoint = isImage ? '/api/images' : '/api/files/upload-multiple';
-      const response = await apiRequest(endpoint, {
-        method: 'POST',
-        body: formData
-      });
+      const response = isImage 
+        ? await imageApi.upload(formData)
+        : await fileApi.upload(formData);
 
       const result = await response.json();
       

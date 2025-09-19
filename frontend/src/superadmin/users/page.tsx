@@ -4,6 +4,7 @@ import Button from "../../components/ui/Button.jsx";
 import Input from "../../components/ui/Input.jsx";
 import Table from "../../components/ui/Table.jsx";
 import Modal from "../../components/ui/Modal.jsx";
+import { tenantApi, userApi, imageApi, fileApi } from '../../api';
 
 function AddUserModal({ onClose, onUserAdded }) {
   const [formData, setFormData] = useState({
@@ -24,9 +25,7 @@ function AddUserModal({ onClose, onUserAdded }) {
     const loadTenants = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch('http://localhost:5000/api/tenants', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const res = await tenantApi.getAll();
         const data = await res.json();
         if (data.success && Array.isArray(data.tenants)) {
           setTenants(data.tenants);
@@ -236,15 +235,9 @@ function UserDetailsModal({ user, onClose }) {
     try {
       const token = localStorage.getItem('token');
       const [userRes, imagesRes, filesRes] = await Promise.all([
-        fetch(`http://localhost:5000/api/users/${user._id}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        fetch(`http://localhost:5000/api/users/${user._id}/images`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        fetch(`http://localhost:5000/api/files`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
+        userApi.getById(user._id),
+        imageApi.getByUser(user._id),
+        fileApi.getAll()
       ]);
 
       const userData = await userRes.json();
@@ -366,9 +359,7 @@ export default function UsersPage() {
         statusFilter === 'all'
           ? 'includeInactive=true'
           : `status=${encodeURIComponent(statusFilter)}`;
-      const response = await fetch(`http://localhost:5000/api/users?${query}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await userApi.getAll(query.includes('includeInactive'));
       const data = await response.json();
       if (data.success && data.data) {
         setUsers(data.data || []);
@@ -411,10 +402,7 @@ export default function UsersPage() {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/users/${userId}?permanent=true`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await userApi.delete(userId, true);
       
       if (response.ok) {
         fetchUsers();

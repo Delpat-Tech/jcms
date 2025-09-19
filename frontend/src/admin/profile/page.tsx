@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import AdminLayout from '../layout.tsx';
 import Input from '../../components/ui/Input.jsx';
 import Button from '../../components/ui/Button.jsx';
+import { profileApi } from '../../api';
 
 export default function AdminProfilePage() {
   const [form, setForm] = useState({ username: '', email: '', phone: '' });
@@ -18,12 +19,7 @@ export default function AdminProfilePage() {
     setSaving(true);
     setMessage('');
     try {
-      const token = (localStorage.getItem('token') || sessionStorage.getItem('token'));
-      const res = await fetch('http://localhost:5000/api/profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify(form)
-      });
+      const res = await profileApi.update(form);
       const data = await res.json();
       if (!data.success) throw new Error(data.message || 'Failed to update profile');
       setMessage('Profile updated');
