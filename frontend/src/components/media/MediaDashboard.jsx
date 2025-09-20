@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Grid, List, Upload } from 'lucide-react';
 import UploadPanel from './UploadPanel';
 import FileCard from './FileCard';
 import PreviewModal from './PreviewModal';
-import BulkActions from './BulkActions';
 import TrioLoader from '../ui/TrioLoader.jsx';
 import { imageApi, fileApi } from '../../api';
 
@@ -19,21 +18,24 @@ const MediaDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
 
-  useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      setCurrentUser(JSON.parse(userData));
-    }
-    fetchFiles();
-  }, [filterType, ownerFilter]);
-
   const toAbsoluteUrl = (maybeRelative) => {
     if (!maybeRelative) return '';
     if (/^https?:\/\//i.test(maybeRelative)) return maybeRelative;
     return `http://localhost:5000${maybeRelative}`;
   };
 
-  const fetchFiles = async () => {
+  const getFileType = (filename) => {
+    if (!filename) return 'document';
+    const ext = filename.split('.').pop().toLowerCase();
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'].includes(ext)) return 'image';
+    if (['mp4', 'avi', 'mov', 'wmv', 'webm'].includes(ext)) return 'video';
+    if (['mp3', 'wav', 'flac', 'aac', 'ogg'].includes(ext)) return 'audio';
+    if (['pdf'].includes(ext)) return 'pdf';
+    if (['json'].includes(ext)) return 'json';
+    return 'document';
+  };
+
+  const fetchFiles = useCallback(async () => {
     try {
       setLoading(true);
       let allFiles = [];
@@ -74,18 +76,15 @@ const MediaDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
-  
-  const getFileType = (filename) => {
-    if (!filename) return 'document';
-    const ext = filename.split('.').pop().toLowerCase();
-    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'].includes(ext)) return 'image';
-    if (['mp4', 'avi', 'mov', 'wmv', 'webm'].includes(ext)) return 'video';
-    if (['mp3', 'wav', 'flac', 'aac', 'ogg'].includes(ext)) return 'audio';
-    if (['pdf'].includes(ext)) return 'pdf';
-    if (['json'].includes(ext)) return 'json';
-    return 'document';
-  };
+  }, [filterType, ownerFilter]);
+
+  useEffect(() => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      setCurrentUser(JSON.parse(userData));
+    }
+    fetchFiles();
+  }, [fetchFiles]);
 
   const filteredAndSortedFiles = files.filter(file => {
     const searchText = file.title || file.filename || '';
@@ -233,25 +232,24 @@ const MediaDashboard = () => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
               >
-                <option value="uploaded">Sort by Upload Time</option>
-                <option value="name">Sort by Name</option>
-                <option value="size">Sort by Size</option>
-                <option value="date">Sort by Date</option>
+                <option value="uploaded">Recently Uploaded</option>
+                <option value="name">Name</option>
+                <option value="size">Size</option>
               </select>
             </div>
-
-            <div className="flex border border-gray-300 rounded-lg">
+            
+            <div className="flex items-center space-x-2">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2 ${viewMode === 'grid' ? 'bg-blue-50 text-blue-600' : 'text-gray-400'}`}
+                className={`p-2 rounded ${viewMode === 'grid' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
               >
                 <Grid className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-2 ${viewMode === 'list' ? 'bg-blue-50 text-blue-600' : 'text-gray-400'}`}
+                className={`p-2 rounded ${viewMode === 'list' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
               >
                 <List className="w-4 h-4" />
               </button>
@@ -259,36 +257,32 @@ const MediaDashboard = () => {
           </div>
         </div>
 
-        {/* File Grid */}
+        {/* File Grid/List */}
         <div className="flex-1 p-6 overflow-auto">
           {loading ? (
             <div className="flex items-center justify-center h-64">
-              <div className="flex flex-col items-center space-y-4">
-                <TrioLoader size="50" color="#3b82f6" />
-                <p className="text-gray-600">Loading media files...</p>
-              </div>
+              <TrioLoader size="48" color="#3b82f6" />
             </div>
           ) : filteredAndSortedFiles.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64 text-gray-500">
-              <Upload className="w-12 h-12 mb-4" />
-              <h3 className="text-lg font-medium mb-2">No files found</h3>
-              <p className="text-sm">Upload files to get started</p>
+            <div className="text-center py-12">
+              <Upload className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900">No files</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                {searchQuery ? 'No files match your search.' : 'Get started by uploading a file.'}
+              </p>
             </div>
           ) : (
-            <div className={viewMode === 'grid' 
-              ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
-              : 'space-y-2'
-            }>
-              {filteredAndSortedFiles.map(file => (
+            <div className={viewMode === 'grid' ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4' : 'space-y-2'}>
+              {filteredAndSortedFiles.map((file) => (
                 <FileCard
                   key={file._id}
                   file={file}
                   viewMode={viewMode}
                   selected={selectedFiles.has(file._id)}
-                  onSelect={(selected) => handleFileSelect(file._id, selected)}
-                  onPreview={() => setPreviewFile(file)}
+                  onSelect={handleFileSelect}
                   onDelete={handleDeleteFile}
                   onDownload={handleDownloadFile}
+                  onPreview={setPreviewFile}
                 />
               ))}
             </div>
@@ -296,15 +290,11 @@ const MediaDashboard = () => {
         </div>
       </div>
 
+      {/* Preview Modal */}
       {previewFile && (
         <PreviewModal
           file={previewFile}
           onClose={() => setPreviewFile(null)}
-          onDelete={(file) => {
-            handleDeleteFile(file);
-            setPreviewFile(null);
-          }}
-          onDownload={handleDownloadFile}
         />
       )}
     </div>

@@ -210,6 +210,12 @@ export default function ContentEditor() {
       if (!silent) showMessage('Please enter a title', 'error');
       return;
     }
+    // Ensure there is actual content (strip HTML tags)
+    const plainText = (content || '').replace(/<[^>]*>/g, '').trim();
+    if (!plainText) {
+      if (!silent) showMessage('Please add some content before saving a draft', 'error');
+      return;
+    }
     
     setSaving(true);
     const contentData = {
@@ -236,16 +242,21 @@ export default function ContentEditor() {
       });
       
       if (response.ok) {
-        const data = await response.json();
-        setCurrentEditId(data.id);
-        if (!silent) showMessage('Draft saved successfully!', 'success');
-        fetchContentList(); // Refresh the list
+        const result = await response.json();
+        if (result.success) {
+          setCurrentEditId(result.id || result.data._id);
+          if (!silent) showMessage('Draft saved successfully!', 'success');
+          fetchContentList(); // Refresh the list
+        } else {
+          throw new Error(result.message || 'Save failed');
+        }
       } else {
-        throw new Error('Save failed');
+        const errorResult = await response.json();
+        throw new Error(errorResult.message || 'Save failed');
       }
     } catch (error) {
       console.error('Save error:', error);
-      if (!silent) showMessage('Failed to save draft', 'error');
+      if (!silent) showMessage('Failed to save draft: ' + error.message, 'error');
     } finally {
       setSaving(false);
     }
@@ -283,15 +294,21 @@ export default function ContentEditor() {
       });
       
       if (response.ok) {
-        showMessage('Content published successfully!', 'success');
-        clearForm();
-        fetchContentList();
+        const result = await response.json();
+        if (result.success) {
+          showMessage('Content published successfully!', 'success');
+          clearForm();
+          fetchContentList();
+        } else {
+          throw new Error(result.message || 'Publish failed');
+        }
       } else {
-        throw new Error('Publish failed');
+        const errorResult = await response.json();
+        throw new Error(errorResult.message || 'Publish failed');
       }
     } catch (error) {
       console.error('Publish error:', error);
-      showMessage('Failed to publish content', 'error');
+      showMessage('Failed to publish content: ' + error.message, 'error');
     } finally {
       setSaving(false);
     }
@@ -300,6 +317,12 @@ export default function ContentEditor() {
   const handleSchedule = async () => {
     if (!title.trim() || !scheduleAt) {
       showMessage('Please enter a title and schedule date', 'error');
+      return;
+    }
+    // Ensure there is actual content (strip HTML tags)
+    const plainText = (content || '').replace(/<[^>]*>/g, '').trim();
+    if (!plainText) {
+      showMessage('Please add some content before scheduling', 'error');
       return;
     }
     
@@ -329,15 +352,21 @@ export default function ContentEditor() {
       });
       
       if (response.ok) {
-        showMessage('Content scheduled successfully!', 'success');
-        clearForm();
-        fetchContentList();
+        const result = await response.json();
+        if (result.success) {
+          showMessage('Content scheduled successfully!', 'success');
+          clearForm();
+          fetchContentList();
+        } else {
+          throw new Error(result.message || 'Schedule failed');
+        }
       } else {
-        throw new Error('Schedule failed');
+        const errorResult = await response.json();
+        throw new Error(errorResult.message || 'Schedule failed');
       }
     } catch (error) {
       console.error('Schedule error:', error);
-      showMessage('Failed to schedule content', 'error');
+      showMessage('Failed to schedule content: ' + error.message, 'error');
     } finally {
       setSaving(false);
     }
@@ -370,17 +399,23 @@ export default function ContentEditor() {
       });
       
       if (response.ok) {
-        const data = await response.json();
-        // Separate content by status
-        setDrafts(data.filter(item => item.status === 'draft'));
-        setPublished(data.filter(item => item.status === 'published'));
-        setScheduled(data.filter(item => item.status === 'scheduled'));
+        const result = await response.json();
+        // Check if result has success property
+        if (result.success) {
+          // Separate content by status
+          setDrafts(result.data.filter(item => item.status === 'draft'));
+          setPublished(result.data.filter(item => item.status === 'published'));
+          setScheduled(result.data.filter(item => item.status === 'scheduled'));
+        } else {
+          throw new Error(result.message || 'Failed to fetch content');
+        }
       } else {
-        throw new Error('Failed to fetch content');
+        const errorResult = await response.json();
+        throw new Error(errorResult.message || 'Failed to fetch content');
       }
     } catch (error) {
       console.error('Fetch error:', error);
-      setListError('Failed to load content');
+      setListError('Failed to load content: ' + error.message);
     } finally {
       setListLoading(false);
     }
@@ -388,46 +423,67 @@ export default function ContentEditor() {
   
   const loadIntoEditor = async (item) => {
     try {
-      const response = await fetch(`${API_BASE}/api/content/${item.id}`, {
+      const response = await fetch(`${API_BASE}/api/content/${item.id || item._id}`, {
         headers: getAuthHeaders(),
       });
       
       if (response.ok) {
-        const data = await response.json();
-        setTitle(data.title || '');
-        setContent(data.content || '');
-        setExcerpt(data.excerpt || '');
-        setType(data.type || 'article');
-        setStatus(data.status || 'draft');
-        setTags(data.tags || []);
-        setCoverImageUrl(data.coverImageUrl || '');
-        setCurrentEditId(data.id);
-        setActiveTab('editor');
+        const result = await response.json();
+        if (result.success) {
+          const data = result.data;
+          setTitle(data.title || '');
+          setContent(data.content || '');
+          setExcerpt(data.excerpt || '');
+          setType(data.type || 'article');
+          setStatus(data.status || 'draft');
+          setTags(data.tags || []);
+          setCoverImageUrl(data.coverImageUrl || '');
+          setCurrentEditId(data.id || data._id);
+          setActiveTab('editor');
+        } else {
+          throw new Error(result.message || 'Failed to load content');
+        }
+      } else {
+        const errorResult = await response.json();
+        throw new Error(errorResult.message || 'Failed to load content');
       }
     } catch (error) {
       console.error('Load error:', error);
-      showMessage('Failed to load content', 'error');
+      showMessage('Failed to load content: ' + error.message, 'error');
     }
   };
-  
-  const handleDelete = async (id, name) => {
-    if (!window.confirm(`Are you sure you want to delete "${name}"?`)) return;
-    
+
+  // Open a read-only preview of a published item
+  const handleViewContent = async (item) => {
     try {
-      const response = await fetch(`${API_BASE}/api/content/${id}`, {
-        method: 'DELETE',
+      const id = item._id || item.id;
+      if (!id) return;
+      const res = await fetch(`${API_BASE}/api/content/${id}`, {
         headers: getAuthHeaders(),
       });
-      
-      if (response.ok) {
-        showMessage('Content deleted successfully!', 'success');
-        fetchContentList();
+      if (res.ok) {
+        const result = await res.json();
+        if (result.success) {
+          const data = result.data;
+          setTitle(data.title || '');
+          setContent(data.content || '');
+          setExcerpt(data.excerpt || '');
+          setType(data.type || 'article');
+          setStatus(data.status || 'published');
+          setTags(data.tags || []);
+          setCoverImageUrl(data.coverImageUrl || '');
+          setCurrentEditId(data._id || data.id);
+          setPreviewOpen(true);
+        } else {
+          throw new Error(result.message || 'Failed to load content for preview');
+        }
       } else {
-        throw new Error('Delete failed');
+        const err = await res.json();
+        throw new Error(err.message || 'Failed to load content for preview');
       }
     } catch (error) {
-      console.error('Delete error:', error);
-      showMessage('Failed to delete content', 'error');
+      console.error('View error:', error);
+      showMessage('Failed to open preview: ' + error.message, 'error');
     }
   };
 
@@ -771,7 +827,7 @@ export default function ContentEditor() {
               <div className="space-y-4">
                 {(activeTab === 'drafts' ? drafts : 
                   activeTab === 'published' ? published : scheduled).map((item) => (
-                  <div key={item.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 hover:scale-[1.01]">
+                  <div key={item._id || item.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 hover:scale-[1.01]">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <h3 className="font-medium text-gray-900 truncate">{item.title || item.name}</h3>
@@ -786,18 +842,16 @@ export default function ContentEditor() {
                         >
                           ✏️ Edit
                         </button>
-                        {activeTab === 'published' && item.url && (
-                          <a
-                            href={item.url}
-                            target="_blank"
-                            rel="noreferrer"
+                        {activeTab === 'published' && (
+                          <button
+                            onClick={() => handleViewContent(item)}
                             className="bg-green-100 hover:bg-green-200 text-green-700 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105"
                           >
                             👁️ View
-                          </a>
+                          </button>
                         )}
                         <button
-                          onClick={() => handleDelete(item.id, item.title || item.name)}
+                          onClick={() => handleDelete(item._id || item.id, item.title || item.name)}
                           className="bg-red-100 hover:bg-red-200 text-red-700 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105"
                         >
                           🗑️ Delete

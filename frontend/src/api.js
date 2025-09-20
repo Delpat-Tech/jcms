@@ -202,10 +202,31 @@ export const imageProcessingApi = {
   getSize: (id, size) => api.get(`/api/images/${id}/size/${size}`)
 };
 
-export const healthApi = {
-  check: () => api.get('/api/health'),
-  debugNotes: () => api.get('/api/debug-notes'),
-  debugOrphaned: () => api.get('/api/debug-orphaned')
+export const contentApi = {
+  getAll: () => api.get('/api/content'),
+  getById: (id) => api.get(`/api/content/${id}`),
+  getByStatus: (status) => api.get(`/api/content/status/${status}`),
+  create: (contentData) => api.post('/api/content', contentData),
+  update: (id, contentData) => api.put(`/api/content/${id}`, contentData),
+  delete: (id) => api.delete(`/api/content/${id}`),
+  publish: (id) => api.post(`/api/content/${id}/publish`),
+  schedule: (id, data) => api.post(`/api/content/${id}/schedule`, data)
+};
+
+export const uploadApi = {
+  image: (formData) => api.post('/api/upload/image', formData)
+};
+
+export const editorStatsApi = {
+  getDashboard: () => api.get('/api/editor/dashboard'),
+  getContentStats: () => api.get('/api/editor/content-stats'),
+  getRecentActivity: () => api.get('/api/editor/recent-activity')
+};
+
+export const helpApi = {
+  sendContact: (data) => api.post('/api/help/contact', data),
+  getArticles: (query = '') => api.get(`/api/help/articles${query ? `?search=${query}` : ''}`),
+  getFAQ: () => api.get('/api/help/faq')
 };
 
 export { ApiError };

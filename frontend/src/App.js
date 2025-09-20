@@ -6,6 +6,7 @@ import RegisterTenant from "./pages/RegisterTenant.jsx";
 import ErrorBoundary from "./components/util/ErrorBoundary";
 import { ToastProvider } from "./components/util/Toasts";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import AuthGuard from "./components/auth/AuthGuard";
 
 // SuperAdmin Pages
 import SuperAdminOverview from "./superadmin/overview/page.jsx";
@@ -26,11 +27,11 @@ import AdminAnalytics from "./admin/analytics/page.tsx";
 import AdminProfile from "./admin/profile/page.tsx";
 
 // User/Editor Pages
-import EditorOverview from "./editor/overview/page.tsx";
+import EditorOverview from "./editor/overview/page.jsx";
 import EditorContent from "./editor/content/page.jsx";
-import EditorMedia from "./editor/media/page.tsx";
+import EditorMedia from "./editor/media/page.jsx";
 import EditorProfile from "./editor/profile/page.jsx";
-import EditorHelp from "./editor/help/page.tsx";
+import EditorHelp from "./editor/help/page.jsx";
 
 function App() {
   const storedUser = localStorage.getItem("user") || sessionStorage.getItem("user") || 'null';
@@ -56,29 +57,29 @@ function App() {
             <Route path="/register" element={<RegisterTenant />} />
             
             {/* SuperAdmin Routes */}
-            <Route path="/superadmin/overview" element={<SuperAdminOverview />} />
-            <Route path="/superadmin/users" element={<SuperAdminUsers />} />
-            <Route path="/superadmin/roles" element={<SuperAdminRoles />} />
-            <Route path="/superadmin/analytics" element={<SuperAdminAnalytics />} />
-            <Route path="/superadmin/tenants" element={<SuperAdminTenants />} />
-            <Route path="/superadmin/media" element={<SuperAdminMediaPage />} />
-            <Route path="/superadmin/settings" element={<SuperAdminSettings />} />
-            <Route path="/superadmin/profile" element={<SuperAdminProfile />} />
+            <Route path="/superadmin/overview" element={<AuthGuard requiredRole="superadmin"><SuperAdminOverview /></AuthGuard>} />
+            <Route path="/superadmin/users" element={<AuthGuard requiredRole="superadmin"><SuperAdminUsers /></AuthGuard>} />
+            <Route path="/superadmin/roles" element={<AuthGuard requiredRole="superadmin"><SuperAdminRoles /></AuthGuard>} />
+            <Route path="/superadmin/analytics" element={<AuthGuard requiredRole="superadmin"><SuperAdminAnalytics /></AuthGuard>} />
+            <Route path="/superadmin/tenants" element={<AuthGuard requiredRole="superadmin"><SuperAdminTenants /></AuthGuard>} />
+            <Route path="/superadmin/media" element={<AuthGuard requiredRole="superadmin"><SuperAdminMediaPage /></AuthGuard>} />
+            <Route path="/superadmin/settings" element={<AuthGuard requiredRole="superadmin"><SuperAdminSettings /></AuthGuard>} />
+            <Route path="/superadmin/profile" element={<AuthGuard requiredRole="superadmin"><SuperAdminProfile /></AuthGuard>} />
             
             {/* Admin Routes */}
-            <Route path="/admin/overview" element={<AdminOverview />} />
-            <Route path="/admin/users" element={<AdminUsers />} />
-            <Route path="/admin/content" element={<AdminContent />} />
-            <Route path="/admin/media" element={<AdminMedia />} />
-            <Route path="/admin/analytics" element={<AdminAnalytics />} />
-            <Route path="/admin/profile" element={<AdminProfile />} />
+            <Route path="/admin/overview" element={<AuthGuard requiredRole="admin"><AdminOverview /></AuthGuard>} />
+            <Route path="/admin/users" element={<AuthGuard requiredRole="admin"><AdminUsers /></AuthGuard>} />
+            <Route path="/admin/content" element={<AuthGuard requiredRole="admin"><AdminContent /></AuthGuard>} />
+            <Route path="/admin/media" element={<AuthGuard requiredRole="admin"><AdminMedia /></AuthGuard>} />
+            <Route path="/admin/analytics" element={<AuthGuard requiredRole="admin"><AdminAnalytics /></AuthGuard>} />
+            <Route path="/admin/profile" element={<AuthGuard requiredRole="admin"><AdminProfile /></AuthGuard>} />
             
             {/* User/Editor Routes */}
-            <Route path="/user/overview" element={<EditorOverview />} />
-            <Route path="/user/content" element={<EditorContent />} />
-            <Route path="/user/media" element={<EditorMedia />} />
-            <Route path="/user/profile" element={<EditorProfile />} />
-            <Route path="/user/help" element={<EditorHelp />} />
+            <Route path="/user/overview" element={<AuthGuard requiredRole="editor"><EditorOverview /></AuthGuard>} />
+            <Route path="/user/content" element={<AuthGuard requiredRole="editor"><EditorContent /></AuthGuard>} />
+            <Route path="/user/media" element={<AuthGuard requiredRole="editor"><EditorMedia /></AuthGuard>} />
+            <Route path="/user/profile" element={<AuthGuard requiredRole="editor"><EditorProfile /></AuthGuard>} />
+            <Route path="/user/help" element={<AuthGuard requiredRole="editor"><EditorHelp /></AuthGuard>} />
             
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
