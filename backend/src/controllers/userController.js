@@ -212,12 +212,19 @@ const getUserById = async (req, res) => {
     }
     
     // Tenant isolation - non-superadmin users can only view users from their tenant
-    if (currentRole !== 'superadmin' && user.tenant && req.user.tenant && 
-        user.tenant.toString() !== req.user.tenant.toString()) {
-      return res.status(403).json({
-        success: false, 
-        message: 'Access denied. Cannot view users from other tenants.' 
-      });
+    if (currentRole !== 'superadmin' && currentRole !== 'admin') {
+      const currentUserTenant = req.user.tenant?._id || req.user.tenant;
+      const targetUserTenant = user.tenant?._id || user.tenant;
+      
+      // If both users have tenants, they must match
+      if (currentUserTenant && targetUserTenant) {
+        if (currentUserTenant.toString() !== targetUserTenant.toString()) {
+          return res.status(403).json({
+            success: false, 
+            message: 'Access denied. Cannot view users from other tenants.' 
+          });
+        }
+      }
     }
 
     res.status(200).json({ success: true, data: user });
@@ -281,12 +288,17 @@ const updateUser = async (req, res) => {
     }
     
     // Tenant isolation - non-superadmin users can only update users from their tenant
-    if (currentRole !== 'superadmin' && targetUser.tenant && req.user.tenant && 
-        targetUser.tenant.toString() !== req.user.tenant.toString()) {
-      return res.status(403).json({
-        success: false, 
-        message: 'Cannot modify users from other tenants'
-      });
+    if (currentRole !== 'superadmin') {
+      const currentUserTenant = req.user.tenant?._id || req.user.tenant;
+      const targetUserTenant = targetUser.tenant?._id || targetUser.tenant;
+      
+      if (currentUserTenant && targetUserTenant && 
+          currentUserTenant.toString() !== targetUserTenant.toString()) {
+        return res.status(403).json({
+          success: false, 
+          message: 'Cannot modify users from other tenants'
+        });
+      }
     }
 
     const updateData = {};
@@ -422,20 +434,20 @@ const deleteUser = async (req, res) => {
       });
     }
 
-    // Only superadmin can delete admin or editor; admins can delete editors only within their tenant
-    if (currentRole !== 'superadmin') {
-      if (targetUser.role.name === 'admin') {
-        return res.status(403).json({ success: false, message: 'Only superadmin can delete admins' });
+    // Permission checks based on role hierarchy
+    if (currentRole === 'admin') {
+      // Admin can only deactivate editor/viewer users in their tenant
+      if (!['editor', 'viewer'].includes(targetUser.role.name)) {
+        return res.status(403).json({
+          success: false, 
+          message: 'Admin can only deactivate editor and viewer users'
+        });
       }
-      if (targetUser.role.name === 'editor') {
-        // Admin can delete editor within same tenant
-        if (currentRole !== 'admin') {
-          return res.status(403).json({ success: false, message: 'Insufficient permissions' });
-        }
-        if (targetUser.tenant && req.user.tenant && targetUser.tenant.toString() !== req.user.tenant.toString()) {
-          return res.status(403).json({ success: false, message: 'Can only modify users within your tenant' });
-        }
-      }
+    } else if (currentRole !== 'superadmin') {
+      return res.status(403).json({
+        success: false, 
+        message: 'Insufficient permissions to deactivate users'
+      });
     }
     
     // Admin can only delete editor/viewer, not other admins
@@ -447,12 +459,17 @@ const deleteUser = async (req, res) => {
     }
     
     // Tenant isolation - non-superadmin users can only delete users from their tenant
-    if (currentRole !== 'superadmin' && targetUser.tenant && req.user.tenant && 
-        targetUser.tenant.toString() !== req.user.tenant.toString()) {
-      return res.status(403).json({
-        success: false, 
-        message: 'Cannot delete users from other tenants'
-      });
+    if (currentRole !== 'superadmin') {
+      const currentUserTenant = req.user.tenant?._id || req.user.tenant;
+      const targetUserTenant = targetUser.tenant?._id || targetUser.tenant;
+      
+      if (currentUserTenant && targetUserTenant && 
+          currentUserTenant.toString() !== targetUserTenant.toString()) {
+        return res.status(403).json({
+          success: false, 
+          message: 'Cannot delete users from other tenants'
+        });
+      }
     }
     
     // If target is an admin (tenant admin)
@@ -751,12 +768,17 @@ const reactivateUser = async (req, res) => {
     }
     
     // Tenant isolation
-    if (currentRole !== 'superadmin' && targetUser.tenant && req.user.tenant && 
-        targetUser.tenant.toString() !== req.user.tenant.toString()) {
-      return res.status(403).json({
-        success: false, 
-        message: 'Cannot reactivate users from other tenants'
-      });
+    if (currentRole !== 'superadmin') {
+      const currentUserTenant = req.user.tenant?._id || req.user.tenant;
+      const targetUserTenant = targetUser.tenant?._id || targetUser.tenant;
+      
+      if (currentUserTenant && targetUserTenant && 
+          currentUserTenant.toString() !== targetUserTenant.toString()) {
+        return res.status(403).json({
+          success: false, 
+          message: 'Cannot reactivate users from other tenants'
+        });
+      }
     }
     
     // Reactivate user

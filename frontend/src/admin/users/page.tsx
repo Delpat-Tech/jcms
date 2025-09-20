@@ -267,6 +267,20 @@ export default function AdminUsersPage() {
     }
   };
 
+  const handlePermanentDelete = async (userId, username) => {
+    if (!window.confirm(`Are you sure you want to PERMANENTLY DELETE ${username}? This action cannot be undone and will delete all their data.`)) return;
+    
+    try {
+      const response = await userApi.delete(userId, true);
+      
+      if (response.ok) {
+        fetchUsers();
+      }
+    } catch (error) {
+      console.error('Error permanently deleting user:', error);
+    }
+  };
+
   const filteredUsers = users.filter(u => 
     u.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.email?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -307,6 +321,13 @@ export default function AdminUsersPage() {
             title={user.isActive ? "Deactivate user" : "Reactivate user"}
           >
             {user.isActive ? 'Deactivate' : 'Activate'}
+          </button>
+          <button 
+            onClick={() => handlePermanentDelete(user._id, user.username)}
+            className="px-2 py-1 text-xs font-medium rounded bg-red-600 text-white hover:bg-red-700"
+            title="Permanently delete user and all their data"
+          >
+            Delete
           </button>
         </div>
       )
