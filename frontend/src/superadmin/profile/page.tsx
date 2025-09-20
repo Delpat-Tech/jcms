@@ -1,9 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import AdminLayout from '../layout.tsx';
+import SuperAdminLayout from '../layout.tsx';
 import Button from '../../components/ui/Button.jsx';
 import { profileApi } from '../../api';
 
-export default function AdminProfilePage() {
+export default function SuperAdminProfilePage() {
   const [profile, setProfile] = useState(() => {
     try { return JSON.parse(localStorage.getItem('user') || 'null'); } catch { return null; }
   });
@@ -89,7 +89,7 @@ export default function AdminProfilePage() {
   };
 
   return (
-    <AdminLayout title="Profile">
+    <SuperAdminLayout title="Profile">
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold">Profile Settings</h1>
@@ -130,6 +130,6 @@ export default function AdminProfilePage() {
           </div>
         </div>
       </div>
-    </AdminLayout>
+    </SuperAdminLayout>
   );
 }

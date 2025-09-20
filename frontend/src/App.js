@@ -15,6 +15,7 @@ import SuperAdminAnalytics from "./superadmin/analytics/page.tsx";
 import SuperAdminTenants from "./superadmin/tenants/page.tsx";
 import SuperAdminSettings from "./superadmin/settings/page.tsx";
 import SuperAdminMediaPage from "./superadmin/media/page.tsx";
+import SuperAdminProfile from "./superadmin/profile/page.tsx";
 
 // Admin Pages
 import AdminOverview from "./admin/overview/page.tsx";
@@ -62,6 +63,7 @@ function App() {
             <Route path="/superadmin/tenants" element={<SuperAdminTenants />} />
             <Route path="/superadmin/media" element={<SuperAdminMediaPage />} />
             <Route path="/superadmin/settings" element={<SuperAdminSettings />} />
+            <Route path="/superadmin/profile" element={<SuperAdminProfile />} />
             
             {/* Admin Routes */}
             <Route path="/admin/overview" element={<AdminOverview />} />

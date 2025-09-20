@@ -8,9 +8,8 @@ export default function UserProfilePage() {
   const [profile, setProfile] = useState(() => {
     try { return JSON.parse(localStorage.getItem('user') || 'null'); } catch { return null; }
   });
-  const [name, setName] = useState(profile?.name || profile?.username || '');
-  const [email, setEmail] = useState(profile?.email || '');
   const [username, setUsername] = useState(profile?.username || '');
+  const [email, setEmail] = useState(profile?.email || '');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -27,11 +26,11 @@ export default function UserProfilePage() {
   const handleUpdateProfile = async () => {
     setSaving(true); setMessage(''); setError('');
     try {
-      const res = await profileApi.update({ name, email, username });
+      const res = await profileApi.update({ username, email });
       const data = await res.json();
       if (data && data.success !== false) {
         setMessage('Profile updated');
-        const updated = { ...(profile || {}), name, email, username };
+        const updated = { ...(profile || {}), username, email };
         setProfile(updated);
         localStorage.setItem('user', JSON.stringify(updated));
       } else {
@@ -104,8 +103,8 @@ export default function UserProfilePage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white p-4 rounded-lg border space-y-3">
             <div className="text-sm font-medium text-gray-900">Personal Info</div>
-            <label className="text-xs text-gray-600">Name</label>
-            <input value={name} onChange={(e) => setName(e.target.value)} className="border rounded px-3 py-2 text-sm" />
+            <label className="text-xs text-gray-600">Username</label>
+            <input value={username} onChange={(e) => setUsername(e.target.value)} className="border rounded px-3 py-2 text-sm" />
             <label className="text-xs text-gray-600">Email</label>
             <input value={email} onChange={(e) => setEmail(e.target.value)} className="border rounded px-3 py-2 text-sm" />
             <div className="flex justify-end">
@@ -115,12 +114,6 @@ export default function UserProfilePage() {
 
           <div className="bg-white p-4 rounded-lg border space-y-3">
             <div className="text-sm font-medium text-gray-900">Account</div>
-            <label className="text-xs text-gray-600">Username</label>
-            <input value={username} onChange={(e) => setUsername(e.target.value)} className="border rounded px-3 py-2 text-sm" />
-            <div className="flex justify-end">
-              <Button variant="secondary" onClick={handleChangeUsername} disabled={saving}>Change Username</Button>
-            </div>
-            <div className="h-px bg-gray-200 my-2" />
             <label className="text-xs text-gray-600">Current Password</label>
             <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="border rounded px-3 py-2 text-sm" />
             <label className="text-xs text-gray-600">New Password</label>

@@ -19,6 +19,7 @@ function Layout({ children, title, user }) {
 			{ href: "/superadmin/settings", label: "System Settings" },
 			{ href: "/superadmin/analytics", label: "Analytics" },
 			{ href: "/superadmin/tenants", label: "Tenants" },
+			{ href: "/superadmin/profile", label: "Profile" },
 		];
 	} else if (role === "admin") {
 		menuItems = [

@@ -133,8 +133,8 @@ export const analyticsApi = {
 export const profileApi = {
   get: () => api.get('/api/profile'),
   update: (data) => api.put('/api/profile', data),
-  changePassword: (data) => api.post('/api/profile/change-password', data),
-  changeUsername: (data) => api.post('/api/profile/change-username', data)
+  changePassword: (data) => api.put('/api/profile/change-password', data),
+  changeUsername: (data) => api.put('/api/profile/change-username', data)
 };
 
 export const notificationApi = {
