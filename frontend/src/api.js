@@ -125,9 +125,16 @@ export const tenantApi = {
 };
 
 export const analyticsApi = {
+  // Dashboard & sections
   getDashboard: () => api.get('/api/analytics/dashboard'),
-  getUsers: () => api.get('/api/analytics/users'),
-  getFiles: () => api.get('/api/analytics/files')
+  getUsers: (params = '') => api.get(`/api/analytics/users${params}`),
+  getSystem: () => api.get('/api/analytics/system'),
+  getSecurity: () => api.get('/api/analytics/security'),
+  getContent: () => api.get('/api/analytics/content'),
+  getPredictions: () => api.get('/api/analytics/predictions'),
+  getPerformance: () => api.get('/api/analytics/performance'),
+  // Backward compatibility
+  getFiles: () => api.get('/api/analytics/content')
 };
 
 export const profileApi = {

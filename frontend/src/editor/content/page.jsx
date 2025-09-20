@@ -14,7 +14,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
       onChange(content);
     }
   };
-  
+ 
   const execCommand = (command, value = null) => {
     document.execCommand(command, false, value);
     editorRef.current.focus();
@@ -484,6 +484,33 @@ export default function ContentEditor() {
     } catch (error) {
       console.error('View error:', error);
       showMessage('Failed to open preview: ' + error.message, 'error');
+    }
+  };
+
+  // Delete content item
+  const handleDelete = async (id, name) => {
+    if (!id) return;
+    if (!window.confirm(`Are you sure you want to delete "${name || 'this item'}"?`)) return;
+    try {
+      const response = await fetch(`${API_BASE}/api/content/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          showMessage('Content deleted successfully!', 'success');
+          fetchContentList();
+        } else {
+          throw new Error(result.message || 'Delete failed');
+        }
+      } else {
+        const errorResult = await response.json();
+        throw new Error(errorResult.message || 'Delete failed');
+      }
+    } catch (error) {
+      console.error('Delete error:', error);
+      showMessage('Failed to delete content: ' + error.message, 'error');
     }
   };
 

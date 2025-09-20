@@ -23,7 +23,7 @@ import AdminOverview from "./admin/overview/page.tsx";
 import AdminUsers from "./admin/users/page.tsx";
 import AdminContent from "./admin/content/page.tsx";
 import AdminMedia from "./admin/media/page.tsx";
-import AdminAnalytics from "./admin/analytics/page.tsx";
+import AdminAnalytics from "./admin/analytics/page.jsx";
 import AdminProfile from "./admin/profile/page.tsx";
 
 // User/Editor Pages

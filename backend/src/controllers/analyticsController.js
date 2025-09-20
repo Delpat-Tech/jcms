@@ -1,26 +1,29 @@
 // controllers/analyticsController.js
 const User = require('../models/user');
 const Image = require('../models/image');
+const File = require('../models/file');
 
 const getDashboardStats = async (req, res) => {
   try {
+    const tenantFilter = req.tenantFilter || {};
     const [
       totalUsers,
-      totalImages,
+      totalFiles,
       recentImages,
       usersByRole,
       uploadsByDay
     ] = await Promise.all([
-      User.countDocuments(),
-      
-      File.countDocuments(),
-      Image.find().sort({ createdAt: -1 }).limit(5).populate('user', 'username'),
+      User.countDocuments(tenantFilter),
+      File.countDocuments(tenantFilter),
+      Image.find(tenantFilter).sort({ createdAt: -1 }).limit(5).populate('user', 'username'),
       User.aggregate([
         { $lookup: { from: 'roles', localField: 'role', foreignField: '_id', as: 'role' } },
         { $unwind: '$role' },
+        ...(tenantFilter.tenant ? [{ $match: { tenant: tenantFilter.tenant } }] : []),
         { $group: { _id: '$role.name', count: { $sum: 1 } } }
       ]),
       Image.aggregate([
+        ...(tenantFilter.tenant ? [{ $match: { tenant: tenantFilter.tenant } }] : []),
         { $group: { 
           _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
           count: { $sum: 1 }
@@ -34,8 +37,7 @@ const getDashboardStats = async (req, res) => {
       success: true,
       data: {
         totalUsers,
-        totalImages,
-        
+        totalFiles,
         recentUploads: recentImages,
         usersByRole,
         uploadsByDay
@@ -46,10 +48,9 @@ const getDashboardStats = async (req, res) => {
   }
 };
 
- 
-
 const getUserActivity = async (req, res) => {
   try {
+    const tenantFilter = req.tenantFilter || {};
     const { days = 30 } = req.query;
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - parseInt(days));
@@ -59,9 +60,10 @@ const getUserActivity = async (req, res) => {
       newUsers,
       userActivity
     ] = await Promise.all([
-      Image.distinct('user', { createdAt: { $gte: startDate } }),
-      User.countDocuments({ createdAt: { $gte: startDate } }),
+      Image.distinct('user', { createdAt: { $gte: startDate }, ...tenantFilter }),
+      User.countDocuments({ createdAt: { $gte: startDate }, ...tenantFilter }),
       User.aggregate([
+        ...(tenantFilter.tenant ? [{ $match: { tenant: tenantFilter.tenant } }] : []),
         { $lookup: { from: 'images', localField: '_id', foreignField: 'user', as: 'images' } },
         { $project: {
           username: 1,
@@ -110,15 +112,17 @@ const getSystemHealth = async (req, res) => {
 
 const getSecurityInsights = async (req, res) => {
   try {
+    const tenantFilter = req.tenantFilter || {};
     const [failedLogins, suspiciousActivity, fileAccessPatterns] = await Promise.all([
       // Mock failed login attempts (you'd track these in a separate collection)
       Promise.resolve([{ ip: '192.168.1.100', attempts: 5, lastAttempt: new Date() }]),
       Image.aggregate([
-        { $match: { createdAt: { $gte: new Date(Date.now() - 24*60*60*1000) } } },
+        { $match: { createdAt: { $gte: new Date(Date.now() - 24*60*60*1000) }, ...tenantFilter } },
         { $group: { _id: '$user', uploads: { $sum: 1 } } },
         { $match: { uploads: { $gt: 50 } } } // Suspicious: >50 uploads/day
       ]),
       Image.aggregate([
+        ...(tenantFilter.tenant ? [{ $match: { tenant: tenantFilter.tenant } }] : []),
         { $group: { _id: { hour: { $hour: '$createdAt' }, user: '$user' }, count: { $sum: 1 } } },
         { $sort: { count: -1 } }
       ])
@@ -132,13 +136,16 @@ const getSecurityInsights = async (req, res) => {
 
 const getContentInsights = async (req, res) => {
   try {
+    const tenantFilter = req.tenantFilter || {};
     const [duplicateFiles, largestFiles, formatTrends, conversionStats] = await Promise.all([
       Image.aggregate([
+        ...(tenantFilter.tenant ? [{ $match: { tenant: tenantFilter.tenant } }] : []),
         { $group: { _id: { name: '$originalName', size: '$fileSize' }, count: { $sum: 1 }, files: { $push: '$_id' } } },
         { $match: { count: { $gt: 1 } } }
       ]),
-      Image.find().sort({ fileSize: -1 }).limit(10).populate('user', 'username'),
+      Image.find(tenantFilter).sort({ fileSize: -1 }).limit(10).populate('user', 'username'),
       Image.aggregate([
+        ...(tenantFilter.tenant ? [{ $match: { tenant: tenantFilter.tenant } }] : []),
         { $group: { _id: { format: '$format', month: { $month: '$createdAt' } }, count: { $sum: 1 } } },
         { $sort: { '_id.month': -1 } }
       ]),
@@ -154,17 +161,20 @@ const getContentInsights = async (req, res) => {
 
 const getPredictiveAnalytics = async (req, res) => {
   try {
+    const tenantFilter = req.tenantFilter || {};
     const thirtyDaysAgo = new Date(Date.now() - 30*24*60*60*1000);
     const [growthRate, storageProjection, userEngagement] = await Promise.all([
       Image.aggregate([
-        { $match: { createdAt: { $gte: thirtyDaysAgo } } },
+        { $match: { createdAt: { $gte: thirtyDaysAgo }, ...tenantFilter } },
         { $group: { _id: { $dayOfMonth: '$createdAt' }, count: { $sum: 1 } } },
         { $sort: { '_id': 1 } }
       ]),
       Image.aggregate([
+        ...(tenantFilter.tenant ? [{ $match: { tenant: tenantFilter.tenant } }] : []),
         { $group: { _id: null, avgSize: { $avg: '$fileSize' }, totalFiles: { $sum: 1 } } }
       ]),
       User.aggregate([
+        ...(tenantFilter.tenant ? [{ $match: { tenant: tenantFilter.tenant } }] : []),
         { $lookup: { from: 'files', localField: '_id', foreignField: 'user', as: 'recentFiles', pipeline: [{ $match: { createdAt: { $gte: thirtyDaysAgo } } }] } },
         { $project: { username: 1, activityScore: { $size: '$recentFiles' } } },
         { $match: { activityScore: { $gt: 0 } } }

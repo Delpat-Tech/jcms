@@ -2,22 +2,19 @@ import React, { useEffect, useMemo, useState } from 'react';
 import AdminLayout from '../layout.tsx';
 import { analyticsApi } from '../../api';
 
-type RoleStat = { _id: string; count: number };
-type UploadByDay = { _id: string; count: number };
-
 export default function AdminAnalyticsPage() {
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
 
-  const [dashboard, setDashboard] = useState<any>(null);
-  const [userStats, setUserStats] = useState<any>(null);
-  const [system, setSystem] = useState<any>(null);
-  const [security, setSecurity] = useState<any>(null);
-  const [content, setContent] = useState<any>(null);
-  const [predictions, setPredictions] = useState<any>(null);
-  const [performance, setPerformance] = useState<any>(null);
+  const [dashboard, setDashboard] = useState(null);
+  const [userStats, setUserStats] = useState(null);
+  const [system, setSystem] = useState(null);
+  const [security, setSecurity] = useState(null);
+  const [content, setContent] = useState(null);
+  const [predictions, setPredictions] = useState(null);
+  const [performance, setPerformance] = useState(null);
 
-  const [days, setDays] = useState<number>(30);
+  const [days, setDays] = useState(30);
 
   useEffect(() => {
     let isMounted = true;
@@ -43,7 +40,7 @@ export default function AdminAnalyticsPage() {
         setContent(cnt.success ? cnt.data : null);
         setPredictions(pred.success ? pred.data : null);
         setPerformance(perf.success ? perf.data : null);
-      } catch (e: any) {
+      } catch (e) {
         if (!isMounted) return;
         setError(e.message || 'Failed to load analytics');
       } finally {
@@ -53,8 +50,8 @@ export default function AdminAnalyticsPage() {
     return () => { isMounted = false; };
   }, [days]);
 
-  const uploadsSeries: UploadByDay[] = useMemo(() => (dashboard?.uploadsByDay || []).slice().reverse(), [dashboard]);
-  const maxUploads = useMemo(() => Math.max(1, ...uploadsSeries.map((d: UploadByDay) => d.count)), [uploadsSeries]);
+  const uploadsSeries = useMemo(() => (dashboard?.uploadsByDay || []).slice().reverse(), [dashboard]);
+  const maxUploads = useMemo(() => Math.max(1, ...uploadsSeries.map((d) => d.count)), [uploadsSeries]);
 
   return (
     <AdminLayout title="Analytics">
@@ -93,7 +90,7 @@ export default function AdminAnalyticsPage() {
         {/* Uploads by day bar chart */}
         <Section title="Uploads by Day" subtitle={`Last ${days} days`}>
           <div className="h-44 flex items-end gap-2">
-            {uploadsSeries.map((d: UploadByDay, idx: number) => (
+            {uploadsSeries.map((d, idx) => (
               <div key={idx} className="flex-1 flex flex-col items-center">
                 <div className="w-full bg-indigo-100 hover:bg-indigo-200 transition-colors rounded-t" style={{ height: `${(d.count / maxUploads) * 100}%` }} />
                 <div className="text-[10px] text-gray-500 mt-1 truncate w-full text-center" title={d._id}>{new Date(d._id).toLocaleDateString()}</div>
@@ -108,7 +105,7 @@ export default function AdminAnalyticsPage() {
         {/* Users by role */}
         <Section title="Users by Role">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {(dashboard?.usersByRole || []).map((r: RoleStat) => (
+            {(dashboard?.usersByRole || []).map((r) => (
               <div key={r._id} className="p-4 rounded-lg border bg-white hover:shadow transition-shadow">
                 <div className="text-sm text-gray-500">{r._id}</div>
                 <div className="text-2xl font-bold">{r.count}</div>
@@ -132,7 +129,7 @@ export default function AdminAnalyticsPage() {
                 </tr>
               </thead>
               <tbody>
-                {(dashboard?.recentUploads || []).map((img: any) => (
+                {(dashboard?.recentUploads || []).map((img) => (
                   <tr key={img._id} className="border-t hover:bg-gray-50">
                     <td className="py-2 pr-4">{img.originalName || img.title || img._id}</td>
                     <td className="py-2 pr-4">{img.user?.username || '—'}</td>
@@ -159,7 +156,7 @@ export default function AdminAnalyticsPage() {
           <Section title="Performance">
             <div className="text-sm text-gray-700 space-y-2">
               <div><span className="text-gray-500">Avg Upload Time:</span> {performance?.avgUploadTime?.avgTime ?? '—'} s</div>
-              <div><span className="text-gray-500">Peak Hours:</span> {(performance?.peakUsageHours || []).map((h: any) => h._id).join(', ') || '—'}</div>
+              <div><span className="text-gray-500">Peak Hours:</span> {(performance?.peakUsageHours || []).map((h) => h._id).join(', ') || '—'}</div>
               <div><span className="text-gray-500">Errors:</span> {performance ? `${performance.errorRates?.uploadErrors} upload, ${performance.errorRates?.conversionErrors} conversion, ${performance.errorRates?.authErrors} auth` : '—'}</div>
             </div>
           </Section>
@@ -187,7 +184,7 @@ export default function AdminAnalyticsPage() {
   );
 }
 
-function Section({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
+function Section({ title, subtitle, children }) {
   return (
     <div className="bg-white p-6 rounded-xl shadow border border-gray-100">
       <div className="flex items-center justify-between mb-4">
@@ -201,8 +198,8 @@ function Section({ title, subtitle, children }: { title: string; subtitle?: stri
   );
 }
 
-function StatCard({ icon, label, value, loading, accent = 'indigo' }: { icon: string; label: string; value: any; loading: boolean; accent?: 'indigo' | 'blue' | 'purple' | 'emerald' }) {
-  const accentMap: Record<string, string> = {
+function StatCard({ icon, label, value, loading, accent = 'indigo' }) {
+  const accentMap = {
     indigo: 'from-indigo-50 to-white text-indigo-700 border-indigo-100',
     blue: 'from-blue-50 to-white text-blue-700 border-blue-100',
     purple: 'from-purple-50 to-white text-purple-700 border-purple-100',
