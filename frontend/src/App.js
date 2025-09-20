@@ -27,9 +27,9 @@ import AdminProfile from "./admin/profile/page.tsx";
 
 // User/Editor Pages
 import EditorOverview from "./editor/overview/page.tsx";
-import EditorContent from "./editor/content/page.tsx";
+import EditorContent from "./editor/content/page.jsx";
 import EditorMedia from "./editor/media/page.tsx";
-import EditorProfile from "./editor/profile/page.tsx";
+import EditorProfile from "./editor/profile/page.jsx";
 import EditorHelp from "./editor/help/page.tsx";
 
 function App() {

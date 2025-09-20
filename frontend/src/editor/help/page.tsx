@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useMemo, useState } from 'react';
-import UserLayout from '../layout.tsx';
+import UserLayout from '../layout.jsx';
 import DashboardWidget from '../../components/common/DashboardWidget.jsx';
 import Button from '../../components/ui/Button.jsx';
 

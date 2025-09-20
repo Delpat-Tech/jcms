@@ -1,5 +1,5 @@
 import React from 'react';
-import UserLayout from '../layout.tsx';
+import UserLayout from '../layout.jsx';
 import MediaPage from '../../pages/MediaPage.jsx';
 
 export default function UserMediaPage() {

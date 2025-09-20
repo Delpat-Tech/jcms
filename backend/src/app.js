@@ -65,6 +65,8 @@ app.get('/api/debug-notes', async (req, res) => {
 // API Routes
 app.use('/api/images', require('./routes/imagesRoutes'));
 app.use('/api/files', require('./routes/fileRoutes'));
+app.use('/api/content', require('./routes/contentRoutes'));
+app.use('/api/upload', require('./routes/uploadRoutes'));
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', require('./routes/usersRoutes'));
 app.use('/api/profile', require('./routes/profileRoutes'));

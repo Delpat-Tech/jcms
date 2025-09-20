@@ -1,13 +1,15 @@
 // @ts-nocheck
 import React, { useEffect, useState, useMemo } from 'react';
-import UserLayout from '../layout.tsx';
+import UserLayout from '../layout.jsx';
 import Button from '../../components/ui/Button.jsx';
+import TrioLoader from '../../components/ui/TrioLoader.jsx';
 import DashboardWidget, { StatsWidget, ListWidget } from '../../components/common/DashboardWidget.jsx';
 import { Link } from 'react-router-dom';
 import { imageApi, fileApi, tenantSwitchingApi } from '../../api';
 
 export default function UserOverview() {
   const [user, setUser] = useState(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   // Media stats
   const [imagesCount, setImagesCount] = useState(0);
@@ -34,6 +36,21 @@ export default function UserOverview() {
     if (userData) setUser(JSON.parse(userData));
     fetchMediaCountsAndRecent();
     fetchTenantContext();
+
+    // Update time every minute
+    const timeInterval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+
+    // Auto-refresh data every 5 minutes
+    const dataInterval = setInterval(() => {
+      fetchMediaCountsAndRecent();
+    }, 300000);
+
+    return () => {
+      clearInterval(timeInterval);
+      clearInterval(dataInterval);
+    };
   }, []);
 
   const authHeaders = () => ({ 'Authorization': `Bearer ${localStorage.getItem('token')}` });
@@ -94,18 +111,27 @@ export default function UserOverview() {
     }
   };
 
+  const getGreeting = () => {
+    const hour = currentTime.getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  };
+
   const recentItemsCombined = useMemo(() => {
     const mapImage = (img) => ({
       key: img._id || img.id,
       type: 'image',
       title: img.originalName || img.name || 'Image',
       date: img.createdAt,
+      icon: '🖼️'
     });
     const mapFile = (f) => ({
       key: f._id || f.id,
       type: 'file',
       title: f.originalName || f.name || 'File',
       date: f.createdAt,
+      icon: '📁'
     });
     const combined = [...recentImages.map(mapImage), ...recentFiles.map(mapFile)];
     return combined
@@ -115,81 +141,264 @@ export default function UserOverview() {
 
   return (
     <UserLayout title="Editor Dashboard">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <StatsWidget title="Images" value={imagesCount} loading={mediaLoading} error={mediaError} />
-        <StatsWidget title="Files" value={filesCount} loading={mediaLoading} error={mediaError} />
-        <StatsWidget title="My Tenants" value={myTenants.length} loading={tenantLoading} error={tenantError} />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <DashboardWidget title="My Content" variant="list" className="h-full" actions={<Link to="/user/content"><Button size="sm">Go to Content</Button></Link>}>
-          <div className="flex flex-col gap-3">
-            <div className="text-gray-600 text-sm">Quickly access your drafts, published, and scheduled content.</div>
-            <div className="flex flex-wrap gap-2">
-              <Link to="/user/content"><Button size="sm" variant="secondary">Drafts</Button></Link>
-              <Link to="/user/content"><Button size="sm" variant="secondary">Published</Button></Link>
-              <Link to="/user/content"><Button size="sm" variant="secondary">Scheduled</Button></Link>
-            </div>
+      {/* Welcome Header */}
+      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 rounded-2xl p-8 mb-8 text-white shadow-2xl">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">
+              {getGreeting()}, {user?.username || 'Editor'}! 👋
+            </h1>
+            <p className="text-blue-100 text-lg">
+              {currentTime.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </p>
+            <p className="text-blue-200 text-sm mt-1">
+              Ready to create amazing content?
+            </p>
           </div>
-        </DashboardWidget>
-        <DashboardWidget title="Content Creation" variant="default" actions={<Link to="/user/content"><Button size="sm">New Article</Button></Link>}>
-          <div className="text-gray-500 text-sm">Start a new article, page, or template. Use the editor for authoring and refinement.</div>
-        </DashboardWidget>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <DashboardWidget title="Media Library" variant="list" actions={<Link to="/user/media"><Button size="sm">Open Media</Button></Link>}>
-          <div className="text-gray-500 text-sm">Manage your images, files, and bulk uploads. Access personal and shared assets.</div>
-        </DashboardWidget>
-        <DashboardWidget title="Profile & Settings" variant="default" actions={<Link to="/user/profile"><Button size="sm">Profile</Button></Link>}>
-          <div className="text-gray-500 text-sm">Update your personal info, password, and preferences. Self-service profile management.</div>
-        </DashboardWidget>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <ListWidget
-          title="Recent Items"
-          items={recentItemsCombined.map(item => ({ key: item.key, content: `${item.type === 'image' ? '🖼️' : '📁'} ${item.title}`, date: item.date }))}
-          loading={recentLoading}
-          error={recentError}
-          maxItems={5}
-          renderItem={(item, idx) => (
-            <div key={item.key || idx} className="flex items-center justify-between py-2 px-2 border-b last:border-b-0">
-              <span className="text-sm text-gray-700">{item.content}</span>
-              <span className="text-xs text-gray-400">{item.date ? new Date(item.date).toLocaleString() : ''}</span>
-            </div>
-          )}
-          emptyMessage="No recent items."
-          onRefresh={fetchMediaCountsAndRecent}
-        />
-        <DashboardWidget title="Tenant Context" variant="list" loading={tenantLoading} error={tenantError} onRefresh={fetchTenantContext}>
-          <div className="text-sm text-gray-600 mb-3">
-            Current Tenant: <span className="font-medium text-gray-900">{currentTenant?.name || currentTenant?.tenantName || 'N/A'}</span>
-          </div>
-          <div className="text-xs text-gray-500 mb-2">You have access to {myTenants.length} tenant{myTenants.length === 1 ? '' : 's'}.</div>
-          <div className="border rounded-md overflow-hidden">
-            {myTenants.slice(0, 5).map((t) => (
-              <div key={t._id || t.id} className="px-3 py-2 text-sm border-b last:border-b-0 flex items-center justify-between">
-                <span className="text-gray-700">{t.name || t.tenantName || t.slug || 'Tenant'}</span>
+          <div className="hidden md:block">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+              <div className="text-2xl mb-2">⏰</div>
+              <div className="text-sm font-medium">
+                {currentTime.toLocaleTimeString('en-US', { 
+                  hour: '2-digit', 
+                  minute: '2-digit' 
+                })}
               </div>
-            ))}
-            {myTenants.length === 0 && (
-              <div className="px-3 py-4 text-sm text-gray-500 text-center">No additional tenants</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300 hover:scale-105">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 mb-1">My Images</p>
+              <p className="text-3xl font-bold text-blue-600">
+                {mediaLoading ? <TrioLoader size="24" color="#2563eb" /> : imagesCount}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">Total uploaded</p>
+            </div>
+            <div className="bg-blue-100 rounded-full p-3">
+              <span className="text-2xl">🖼️</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300 hover:scale-105">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 mb-1">My Files</p>
+              <p className="text-3xl font-bold text-green-600">
+                {mediaLoading ? <TrioLoader size="24" color="#16a34a" /> : filesCount}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">Documents & media</p>
+            </div>
+            <div className="bg-green-100 rounded-full p-3">
+              <span className="text-2xl">📁</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300 hover:scale-105">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 mb-1">My Tenants</p>
+              <p className="text-3xl font-bold text-purple-600">
+                {tenantLoading ? <TrioLoader size="24" color="#9333ea" /> : myTenants.length}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">Access level</p>
+            </div>
+            <div className="bg-purple-100 rounded-full p-3">
+              <span className="text-2xl">🏢</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        {/* Content Creation */}
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-gray-900">Content Creation</h2>
+            <span className="text-2xl">✍️</span>
+          </div>
+          <div className="space-y-4">
+            <Link to="/user/content" className="block">
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 hover:scale-[1.02] group">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">New Article</h3>
+                    <p className="text-sm text-gray-600">Start writing your next masterpiece</p>
+                  </div>
+                  <div className="bg-blue-100 rounded-full p-2 group-hover:bg-blue-200 transition-colors">
+                    <span className="text-lg">📝</span>
+                  </div>
+                </div>
+              </div>
+            </Link>
+            <div className="grid grid-cols-2 gap-3">
+              <Link to="/user/content" className="bg-gray-50 hover:bg-gray-100 rounded-lg p-3 text-center transition-all duration-200 hover:scale-105 group">
+                <div className="text-lg mb-1">📄</div>
+                <div className="text-sm font-medium text-gray-700 group-hover:text-gray-900">Pages</div>
+              </Link>
+              <Link to="/user/content" className="bg-gray-50 hover:bg-gray-100 rounded-lg p-3 text-center transition-all duration-200 hover:scale-105 group">
+                <div className="text-lg mb-1">🎨</div>
+                <div className="text-sm font-medium text-gray-700 group-hover:text-gray-900">Templates</div>
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Media Library */}
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-gray-900">Media Library</h2>
+            <span className="text-2xl">📚</span>
+          </div>
+          <div className="space-y-4">
+            <Link to="/user/media" className="block">
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 hover:scale-[1.02] group">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-gray-900 group-hover:text-green-600 transition-colors">Upload Media</h3>
+                    <p className="text-sm text-gray-600">Add images, documents, and files</p>
+                  </div>
+                  <div className="bg-green-100 rounded-full p-2 group-hover:bg-green-200 transition-colors">
+                    <span className="text-lg">📤</span>
+                  </div>
+                </div>
+              </div>
+            </Link>
+            <div className="grid grid-cols-2 gap-3">
+              <Link to="/user/media" className="bg-gray-50 hover:bg-gray-100 rounded-lg p-3 text-center transition-all duration-200 hover:scale-105 group">
+                <div className="text-lg mb-1">🖼️</div>
+                <div className="text-sm font-medium text-gray-700 group-hover:text-gray-900">Gallery</div>
+              </Link>
+              <Link to="/user/media" className="bg-gray-50 hover:bg-gray-100 rounded-lg p-3 text-center transition-all duration-200 hover:scale-105 group">
+                <div className="text-lg mb-1">📁</div>
+                <div className="text-sm font-medium text-gray-700 group-hover:text-gray-900">Files</div>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Activity & Information */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Recent Items */}
+        <div className="lg:col-span-2 bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-gray-900">Recent Activity</h2>
+            <button 
+              onClick={fetchMediaCountsAndRecent}
+              className="text-gray-500 hover:text-gray-700 transition-colors"
+              disabled={recentLoading}
+            >
+              {recentLoading ? <TrioLoader size="16" color="#6b7280" /> : '🔄'}
+            </button>
+          </div>
+          <div className="space-y-3">
+            {recentError ? (
+              <div className="text-center py-8">
+                <div className="text-4xl mb-2">⚠️</div>
+                <p className="text-gray-500">{recentError}</p>
+              </div>
+            ) : recentItemsCombined.length > 0 ? (
+              recentItemsCombined.map((item, idx) => (
+                <div key={item.key || idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div className="flex items-center space-x-3">
+                    <span className="text-lg">{item.icon}</span>
+                    <div>
+                      <p className="font-medium text-gray-900">{item.title}</p>
+                      <p className="text-sm text-gray-500 capitalize">{item.type}</p>
+                    </div>
+                  </div>
+                  <div className="text-xs text-gray-400">
+                    {item.date ? new Date(item.date).toLocaleDateString() : ''}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <div className="text-4xl mb-2">📂</div>
+                <p className="text-gray-500">No recent activity</p>
+                <p className="text-sm text-gray-400">Start creating content to see your activity here</p>
+              </div>
             )}
           </div>
-        </DashboardWidget>
-      </div>
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <DashboardWidget title="Help & Support" variant="default">
-          <div className="text-gray-500 text-sm mb-2">Access documentation, tutorials, FAQ, or contact support.</div>
-          <ul className="list-disc pl-5 text-sm text-indigo-700">
-            <li><a href="https://docs.yourcms.com" target="_blank" rel="noopener noreferrer">Documentation</a></li>
-            <li><a href="https://docs.yourcms.com/tutorials" target="_blank" rel="noopener noreferrer">Tutorials</a></li>
-            <li><a href="https://docs.yourcms.com/faq" target="_blank" rel="noopener noreferrer">FAQ</a></li>
-            <li><a href="mailto:support@yourcms.com">Contact Support</a></li>
-          </ul>
-        </DashboardWidget>
+        {/* Tenant & Profile Info */}
+        <div className="space-y-6">
+          {/* Tenant Context */}
+          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-900">Workspace</h3>
+              <span className="text-xl">🏢</span>
+            </div>
+            {tenantLoading ? (
+              <div className="text-center py-4">
+                <TrioLoader size="24" color="#6b7280" />
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                  <p className="text-sm font-medium text-purple-700">Current Tenant</p>
+                  <p className="text-lg font-bold text-purple-900">
+                    {currentTenant?.name || currentTenant?.tenantName || 'Default'}
+                  </p>
+                </div>
+                <div className="text-sm text-gray-600">
+                  <p>Access to <span className="font-medium">{myTenants.length}</span> tenant{myTenants.length !== 1 ? 's' : ''}</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Quick Profile & Settings */}
+          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-900">Account</h3>
+              <span className="text-xl">👤</span>
+            </div>
+            <div className="space-y-4">
+              <Link to="/user/profile" className="block">
+                <div className="bg-gray-50 hover:bg-gray-100 rounded-lg p-3 transition-all duration-200 hover:scale-[1.02] group">
+                  <div className="flex items-center space-x-3">
+                    <div className="bg-indigo-100 rounded-full p-2">
+                      <span className="text-sm">⚙️</span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900 group-hover:text-indigo-600 transition-colors">Profile Settings</p>
+                      <p className="text-xs text-gray-500">Update your information</p>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+              <Link to="/user/help" className="block">
+                <div className="bg-gray-50 hover:bg-gray-100 rounded-lg p-3 transition-all duration-200 hover:scale-[1.02] group">
+                  <div className="flex items-center space-x-3">
+                    <div className="bg-green-100 rounded-full p-2">
+                      <span className="text-sm">❓</span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900 group-hover:text-green-600 transition-colors">Help & Support</p>
+                      <p className="text-xs text-gray-500">Get assistance</p>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
     </UserLayout>
   );
