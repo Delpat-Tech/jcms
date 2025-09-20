@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { tenantBrandingApi, tenantApi } from '../api';
 import './TenantBranding.css';
+import TrioLoader from './ui/TrioLoader';
 
 const TenantBranding = ({ tenantId, onBrandingChange }) => {
   const [branding, setBranding] = useState({
@@ -432,7 +433,7 @@ const TenantBranding = ({ tenantId, onBrandingChange }) => {
 
       {loading && (
         <div className="loading-overlay">
-          <div className="spinner"></div>
+          <TrioLoader size="40" color="#3b82f6" />
         </div>
       )}
     </div>

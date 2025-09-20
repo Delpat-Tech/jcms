@@ -161,7 +161,9 @@ export const superadminApi = {
   getRoles: () => api.get('/api/superadmin/roles'),
   createRole: (roleData) => api.post('/api/superadmin/roles', roleData),
   updateRole: (id, roleData) => api.put(`/api/superadmin/roles/${id}`, roleData),
-  deleteRole: (id) => api.delete(`/api/superadmin/roles/${id}`)
+  deleteRole: (id) => api.delete(`/api/superadmin/roles/${id}`),
+  getDashboard: () => api.get('/api/superadmin/dashboard'),
+  getStats: () => api.get('/api/superadmin/stats')
 };
 
 export const tenantAnalyticsApi = {

@@ -1,6 +1,7 @@
 // Toast system using framer-motion and flexible notification types
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import TrioLoader from '../ui/TrioLoader';
 
 // Notification component
 export function Notification({ type, title, message, showIcon = true, duration, onClose }) {
@@ -26,7 +27,7 @@ export function Notification({ type, title, message, showIcon = true, duration, 
       <svg className="h-5 w-5 text-red-500" fill="none" viewBox="0 0 20 20"><path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M6 6l8 8M6 14L14 6"/></svg>
     ),
     loading: (
-      <svg className="h-5 w-5 animate-spin text-gray-500" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+      <TrioLoader size="20" color="#6b7280" />
     ),
   };
 

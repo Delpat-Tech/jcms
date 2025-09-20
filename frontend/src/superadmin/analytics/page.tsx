@@ -1,21 +1,24 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import SuperAdminLayout from "../layout.tsx";
 import Modal from "../../components/ui/Modal.jsx";
 import { useToasts } from "../../components/util/Toasts.jsx";
+import TrioLoader from "../../components/ui/TrioLoader.jsx";
 
 function AnalyticsPage() {
   const [tenants, setTenants] = useState([]);
   const [selectedTenant, setSelectedTenant] = useState(null);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const { addNotification } = useToasts() || { addNotification: () => {} };
 
   const token = localStorage.getItem("token");
 
   const fetchTenantAnalytics = useCallback(async (tenantId) => {
+    setAnalyticsLoading(true);
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/tenant-analytics/${tenantId}`, {
+      const res = await fetch(`http://localhost:5000/api/tenant-analytics/${tenantId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -24,12 +27,14 @@ function AnalyticsPage() {
       }
     } catch (error) {
       addNotification('error', 'Error', 'Failed to fetch analytics');
+    } finally {
+      setAnalyticsLoading(false);
     }
   }, [token, addNotification]);
 
   const fetchTenants = useCallback(async () => {
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/tenants`, {
+      const res = await fetch(`http://localhost:5000/api/tenants`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -53,10 +58,22 @@ function AnalyticsPage() {
 
   const handleTenantChange = (tenant) => {
     setSelectedTenant(tenant);
+    setAnalyticsLoading(true);
     fetchTenantAnalytics(tenant._id);
   };
 
-  if (loading) return <SuperAdminLayout><div>Loading analytics...</div></SuperAdminLayout>;
+  if (loading) {
+    return (
+      <SuperAdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="flex flex-col items-center space-y-4">
+            <TrioLoader size="50" color="#3b82f6" />
+            <p className="text-gray-600">Loading analytics...</p>
+          </div>
+        </div>
+      </SuperAdminLayout>
+    );
+  }
 
   return (
     <SuperAdminLayout title="Analytics">
@@ -101,7 +118,16 @@ function AnalyticsPage() {
           </div>
         )}
 
-        {analytics && (
+        {analyticsLoading && (
+          <div className="flex items-center justify-center py-8">
+            <div className="flex flex-col items-center space-y-2">
+              <TrioLoader size="35" color="#3b82f6" />
+              <p className="text-sm text-gray-600">Loading analytics data...</p>
+            </div>
+          </div>
+        )}
+
+        {analytics && !analyticsLoading && (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="bg-white p-6 rounded-lg shadow">
@@ -200,6 +226,7 @@ function AnalyticsPage() {
             setSelectedImage(null);
           }}
           title="Image Preview"
+          footer={null}
         >
           {selectedImage && (
             <div className="text-center">

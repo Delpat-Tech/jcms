@@ -4,6 +4,7 @@ import UploadPanel from './UploadPanel';
 import FileCard from './FileCard';
 import PreviewModal from './PreviewModal';
 import BulkActions from './BulkActions';
+import TrioLoader from '../ui/TrioLoader.jsx';
 import { imageApi, fileApi } from '../../api';
 
 const MediaDashboard = () => {
@@ -262,7 +263,10 @@ const MediaDashboard = () => {
         <div className="flex-1 p-6 overflow-auto">
           {loading ? (
             <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <div className="flex flex-col items-center space-y-4">
+                <TrioLoader size="50" color="#3b82f6" />
+                <p className="text-gray-600">Loading media files...</p>
+              </div>
             </div>
           ) : filteredAndSortedFiles.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-gray-500">

@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { tenantSwitchingApi } from '../api';
 import './TenantSwitcher.css';
+import TrioLoader from './ui/TrioLoader';
 
 const TenantSwitcher = ({ onTenantChange, currentTenant }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -172,7 +173,7 @@ const TenantSwitcher = ({ onTenantChange, currentTenant }) => {
           
           {loading && (
             <div className="dropdown-loading">
-              <div className="loading-spinner"></div>
+              <TrioLoader size="24" color="#3b82f6" />
               <span>Switching tenant...</span>
             </div>
           )}

@@ -1,6 +1,7 @@
 // components/common/DashboardWidget.jsx
 import React from 'react';
 import './DashboardWidget.css';
+import TrioLoader from '../ui/TrioLoader';
 
 const DashboardWidget = ({ 
   title,
@@ -71,7 +72,7 @@ const DashboardWidget = ({
       <div className="widget-content">
         {loading && (
           <div className="widget-loading">
-            <div className="widget-spinner"></div>
+            <TrioLoader size="30" color="#3b82f6" />
             <span>Loading...</span>
           </div>
         )}

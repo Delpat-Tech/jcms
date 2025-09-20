@@ -13,11 +13,16 @@ const authenticate = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log('Decoded token:', decoded);
+    console.log('JWT_SECRET exists:', !!process.env.JWT_SECRET);
     
     const user = await User.findById(decoded.user.id).populate('role').populate('tenant').select('username email role tenant isActive');
     if (!user) {
+      console.log('User not found for ID:', decoded.user.id);
       return res.status(401).json({ message: 'User not found' });
     }
+    
+    console.log('Found user:', { id: user._id, username: user.username, role: user.role?.name });
     
     // Check if user is active
     if (!user.isActive) {
@@ -33,8 +38,10 @@ const authenticate = async (req, res, next) => {
       isActive: user.isActive
     };
     
+    console.log('Set req.user:', req.user);
     next();
   } catch (err) {
+    console.log('JWT verification error:', err.message);
     res.status(401).json({ message: 'Token is not valid' });
   }
 };

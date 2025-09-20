@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { tenantSwitchingApi } from '../../api';
 import './TenantSelector.css';
+import TrioLoader from '../ui/TrioLoader';
 
 const TenantSelector = ({ 
   currentTenant = null, 
@@ -143,7 +144,7 @@ const TenantSelector = ({
         
         <div className="selector-arrow">
           {loading ? (
-            <div className="spinner-sm"></div>
+            <TrioLoader size="16" color="#6b7280" />
           ) : (
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
               <path d="M4 6l4 4 4-4H4z"/>
@@ -221,7 +222,7 @@ const TenantSelector = ({
                     
                     {loading && tenant.id !== currentTenant?.id && (
                       <div className="loading-indicator">
-                        <div className="spinner-sm"></div>
+                        <TrioLoader size="16" color="#6b7280" />
                       </div>
                     )}
                   </button>

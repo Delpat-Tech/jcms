@@ -57,16 +57,19 @@ router.get('/:tenantId', async (req, res) => {
     const File = require('../models/file');
     const ActivityLog = require('../models/activityLog');
     
-    // For now, show all data to debug
+    const tenantId = req.params.tenantId;
+    
+    // Get tenant-specific data only
     const [users, images, files, activities] = await Promise.all([
-      User.countDocuments({}),
-      Image.countDocuments({}),
-      File.countDocuments({}),
-      ActivityLog.find({}).sort({ createdAt: -1 }).limit(10).populate('userId', 'username')
+      User.countDocuments({ tenant: tenantId }),
+      Image.countDocuments({ tenant: tenantId }),
+      File.countDocuments({ tenant: tenantId }),
+      ActivityLog.find({ tenant: tenantId }).sort({ createdAt: -1 }).limit(10).populate('userId', 'username')
     ]);
     
-    const totalActivities = await ActivityLog.countDocuments({});
+    const totalActivities = await ActivityLog.countDocuments({ tenant: tenantId });
     const todayActivities = await ActivityLog.countDocuments({ 
+      tenant: tenantId,
       createdAt: { $gte: new Date(new Date().setHours(0,0,0,0)) }
     });
     

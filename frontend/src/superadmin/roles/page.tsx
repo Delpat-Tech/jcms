@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import SuperAdminLayout from "../layout.tsx";
 import Button from "../../components/ui/Button.jsx";
 import Table from "../../components/ui/Table.jsx";
@@ -19,7 +19,7 @@ function RolesPage() {
 
   const fetchRoles = useCallback(async () => {
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/superadmin/roles`, {
+      const res = await fetch(`http://localhost:5000/api/superadmin/roles`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -41,8 +41,8 @@ function RolesPage() {
     e.preventDefault();
     try {
       const url = editingRole 
-        ? `${process.env.REACT_APP_API_URL}/api/superadmin/roles/${editingRole._id}`
-        : `${process.env.REACT_APP_API_URL}/api/superadmin/roles`;
+        ? `http://localhost:5000/api/superadmin/roles/${editingRole._id}`
+        : `http://localhost:5000/api/superadmin/roles`;
       
       const res = await fetch(url, {
         method: editingRole ? "PUT" : "POST",
@@ -82,7 +82,7 @@ function RolesPage() {
     if (!window.confirm("Are you sure you want to delete this role?")) return;
     
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/superadmin/roles/${roleId}`, {
+      const res = await fetch(`http://localhost:5000/api/superadmin/roles/${roleId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -102,18 +102,18 @@ function RolesPage() {
   const columns = [
     { key: "name", label: "Name" },
     { key: "description", label: "Description" },
-    { key: "createdAt", label: "Created", render: (value) => new Date(value).toLocaleDateString() },
+    { key: "createdAt", label: "Created", render: (role: any) => new Date(role.createdAt).toLocaleDateString() },
     {
       key: "actions",
       label: "Actions",
-      render: (role) => (
+      render: (role: any) => (
         <div className="space-x-2">
           <Button size="sm" onClick={() => handleEdit(role)}>Edit</Button>
           <Button size="sm" variant="danger" onClick={() => handleDelete(role._id)}>Delete</Button>
         </div>
       )
     }
-  ];
+  ] as any[];
 
   if (loading) return <SuperAdminLayout><div>Loading...</div></SuperAdminLayout>;
 
@@ -125,19 +125,20 @@ function RolesPage() {
           <Button onClick={() => setShowModal(true)}>Add Role</Button>
         </div>
 
-        <Table data={roles} columns={columns} />
+        <Table data={roles} columns={columns} getRowKey={(role) => role._id} />
 
         <Modal
-          isOpen={showModal}
+          open={showModal}
           onClose={() => {
             setShowModal(false);
             setEditingRole(null);
             setFormData({ name: "", description: "" });
           }}
           title={editingRole ? "Edit Role" : "Add Role"}
+          footer={null}
         >
           <form onSubmit={handleSubmit} className="space-y-4">
-            <FormField label="Name" htmlFor="name">
+            <FormField label="Name" htmlFor="name" error={null}>
               <Input
                 id="name"
                 value={formData.name}
@@ -145,7 +146,7 @@ function RolesPage() {
                 required
               />
             </FormField>
-            <FormField label="Description" htmlFor="description">
+            <FormField label="Description" htmlFor="description" error={null}>
               <Input
                 id="description"
                 value={formData.description}

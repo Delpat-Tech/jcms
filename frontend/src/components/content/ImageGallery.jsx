@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { imageApi } from '../../api';
+import TrioLoader from '../ui/TrioLoader';
 
 function ImageGallery({ refreshTrigger }) {
   const [images, setImages] = useState([]);
@@ -42,7 +43,7 @@ function ImageGallery({ refreshTrigger }) {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-32">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <TrioLoader size="40" color="#3b82f6" />
       </div>
     );
   }

@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Upload, X, Check } from 'lucide-react';
 import { tenantApi } from '../api';
+import TrioLoader from './ui/TrioLoader.jsx';
 
 const TenantLogoEditor = ({ tenantId, currentLogo, onLogoUpdate }) => {
   const [uploading, setUploading] = useState(false);
@@ -91,7 +92,7 @@ const TenantLogoEditor = ({ tenantId, currentLogo, onLogoUpdate }) => {
           
           {uploading && (
             <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <TrioLoader size="35" color="#3b82f6" />
             </div>
           )}
         </div>

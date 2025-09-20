@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import TenantSwitcher from './TenantSwitcher';
 import { tenantSwitchingApi, tenantAnalyticsApiWithTimeframe } from '../api';
 import './TenantDashboard.css';
+import TrioLoader from './ui/TrioLoader';
 
 const TenantDashboard = () => {
   const [currentTenant, setCurrentTenant] = useState(null);
@@ -131,7 +132,7 @@ const TenantDashboard = () => {
     return (
       <div className="tenant-dashboard loading-state">
         <div className="loading-content">
-          <div className="spinner"></div>
+          <TrioLoader size="40" color="#3b82f6" />
           <p>Loading tenant context...</p>
         </div>
       </div>
@@ -181,7 +182,7 @@ const TenantDashboard = () => {
       <main className="dashboard-content">
         {loading && (
           <div className="loading-overlay">
-            <div className="spinner"></div>
+            <TrioLoader size="40" color="#3b82f6" />
           </div>
         )}
 

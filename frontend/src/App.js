@@ -8,7 +8,7 @@ import { ToastProvider } from "./components/util/Toasts";
 import { ThemeProvider } from "./contexts/ThemeContext";
 
 // SuperAdmin Pages
-import SuperAdminOverview from "./superadmin/overview/page.tsx";
+import SuperAdminOverview from "./superadmin/overview/page.jsx";
 import SuperAdminUsers from "./superadmin/users/page.tsx";
 import SuperAdminRoles from "./superadmin/roles/page.tsx";
 import SuperAdminAnalytics from "./superadmin/analytics/page.tsx";
