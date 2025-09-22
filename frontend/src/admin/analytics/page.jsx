@@ -129,11 +129,18 @@ export default function AdminAnalyticsPage() {
                 </tr>
               </thead>
               <tbody>
-                {(dashboard?.recentUploads || []).map((img) => (
-                  <tr key={img._id} className="border-t hover:bg-gray-50">
-                    <td className="py-2 pr-4">{img.originalName || img.title || img._id}</td>
-                    <td className="py-2 pr-4">{img.user?.username || '—'}</td>
-                    <td className="py-2 pr-4">{new Date(img.createdAt).toLocaleString()}</td>
+                {(dashboard?.recentUploads || []).map((upload) => (
+                  <tr key={upload._id} className="border-t hover:bg-gray-50">
+                    <td className="py-2 pr-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600">
+                          {upload.type === 'image' ? '🖼️' : '📄'} {upload.type}
+                        </span>
+                        {upload.originalName || upload.title || upload._id}
+                      </div>
+                    </td>
+                    <td className="py-2 pr-4">{upload.user?.username || '—'}</td>
+                    <td className="py-2 pr-4">{new Date(upload.createdAt).toLocaleString()}</td>
                   </tr>
                 ))}
                 {(!dashboard?.recentUploads || dashboard.recentUploads.length === 0) && (

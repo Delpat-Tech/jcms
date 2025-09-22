@@ -100,19 +100,9 @@ function RolesPage() {
   };
 
   const columns = [
-    { key: "name", label: "Name" },
+    { key: "name", label: "Role" },
     { key: "description", label: "Description" },
-    { key: "createdAt", label: "Created", render: (role: any) => new Date(role.createdAt).toLocaleDateString() },
-    {
-      key: "actions",
-      label: "Actions",
-      render: (role: any) => (
-        <div className="space-x-2">
-          <Button size="sm" onClick={() => handleEdit(role)}>Edit</Button>
-          <Button size="sm" variant="danger" onClick={() => handleDelete(role._id)}>Delete</Button>
-        </div>
-      )
-    }
+    { key: "createdAt", label: "Created", render: (role: any) => new Date(role.createdAt).toLocaleDateString() }
   ] as any[];
 
   if (loading) return <SuperAdminLayout><div>Loading...</div></SuperAdminLayout>;
@@ -122,7 +112,6 @@ function RolesPage() {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold">Roles Management</h1>
-          <Button onClick={() => setShowModal(true)}>Add Role</Button>
         </div>
 
         <Table data={roles} columns={columns} getRowKey={(role) => role._id} />

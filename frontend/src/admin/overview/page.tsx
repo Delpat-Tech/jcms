@@ -1,99 +1,294 @@
 import React, { useEffect, useState } from 'react';
 import AdminLayout from '../layout.tsx';
-import Button from "../../components/ui/Button.jsx";
-import { userApi, imageApi, activityApi } from '../../api';
+import Button from '../../components/ui/Button.jsx';
+import { adminApi, userApi, imageApi, fileApi, contentApi, activityApi } from '../../api';
+import TrioLoader from '../../components/ui/TrioLoader.jsx';
+import { useNavigate } from 'react-router-dom';
 
 export default function AdminOverview() {
   const [user, setUser] = useState(null);
-  const [stats, setStats] = useState({ users: 0, images: 0, files: 0, storage: '0 MB' });
-  const [activities, setActivities] = useState([]);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(null);
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
-    if (userData) setUser(JSON.parse(userData));
+    if (userData) {
+      const parsedUser = JSON.parse(userData);
+      setUser(parsedUser);
+    }
     fetchDashboardData();
+
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(() => {
+      fetchDashboardData(true);
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (isRefresh = false) => {
     try {
-      // Fetch users count
-      const usersRes = await userApi.getAll();
-      const usersData = await usersRes.json();
+      setError(null);
+      if (isRefresh) setRefreshing(true);
+      else setLoading(true);
       
-      // Fetch images count
-      const imagesRes = await imageApi.getAll();
-      const imagesData = await imagesRes.json();
+      // Use admin dashboard API instead of individual calls
+      const response = await adminApi.getDashboard();
+      const data = await response.json();
       
-      // Fetch activity logs
-      const activityRes = await activityApi.getAll();
-      const activityData = await activityRes.json();
+      console.log('Admin dashboard response:', data);
       
-      setStats({
-        users: usersData.users?.length || 0,
-        images: imagesData.images?.length || 0,
-        files: 0 // Will be updated when files API is called
-      });
+      if (data.success) {
+        console.log('Dashboard data overview:', data.data.overview);
+        setDashboardData(data.data);
+      } else {
+        throw new Error(data.message || 'Failed to fetch dashboard data');
+      }
       
-      setActivities(activityData.activities?.slice(0, 5) || []);
+      setLastUpdated(new Date());
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/';
+  };
+
+  if (loading) {
+    return (
+      <AdminLayout title="Admin Overview">
+        <div className="flex items-center justify-center h-64">
+          <div className="flex flex-col items-center space-y-4">
+            <TrioLoader size="50" color="#3b82f6" />
+            <p className="text-gray-600">Loading dashboard...</p>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
-    <AdminLayout title="Dashboard Overview">
+    <AdminLayout title="Admin Overview">
       <div className="space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
-          <Button>+ New Content</Button>
-        </div>
-        
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-lg shadow p-6 text-center">
-            <h3 className="text-sm font-medium text-gray-500">Users</h3>
-            <p className="text-3xl font-bold text-gray-900 mt-2">{stats.users}</p>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Tenant Overview</h1>
+            <p className="text-gray-600">Welcome back, {user?.username}</p>
           </div>
-          <div className="bg-white rounded-lg shadow p-6 text-center">
-            <h3 className="text-sm font-medium text-gray-500">Images</h3>
-            <p className="text-3xl font-bold text-gray-900 mt-2">{stats.images}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6 text-center">
-            <h3 className="text-sm font-medium text-gray-500">Files</h3>
-            <p className="text-3xl font-bold text-gray-900 mt-2">{stats.files}</p>
-          </div>
-        </div>
-        
-        {/* Recent Activity */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
-          </div>
-          <div className="p-6">
-            {activities.length > 0 ? (
-              <div className="space-y-3">
-                {activities.map((activity, index) => (
-                  <div key={index} className="flex items-center justify-between py-2">
-                    <div className="flex items-center">
-                      <span className="text-gray-400 mr-2">•</span>
-                      <span className="text-sm text-gray-700">
-                        {activity.username} {activity.action?.toLowerCase()} {activity.resource}
-                        {activity.resourceId && ` (${activity.resourceId.slice(-8)})`}
-                      </span>
-                    </div>
-                    <span className="text-xs text-gray-500">
-                      {new Date(activity.createdAt).toLocaleString()}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                No recent activity
-              </div>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => fetchDashboardData(true)}
+              disabled={refreshing}
+              className="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 flex items-center space-x-2 disabled:opacity-50"
+            >
+              {refreshing ? <TrioLoader size="16" color="#6b7280" /> : <span>🔄</span>}
+              <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
+            </button>
+            {lastUpdated && (
+              <span className="text-xs text-gray-500">
+                Last updated: {lastUpdated.toLocaleTimeString()}
+              </span>
             )}
+            <Button variant="secondary" onClick={handleLogout}>Logout</Button>
           </div>
         </div>
+
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center">
+              <span className="text-red-500 mr-2">⚠️</span>
+              <div className="flex-1">
+                <p className="text-red-700">Error loading dashboard: {error}</p>
+              </div>
+              <button 
+                onClick={() => fetchDashboardData()}
+                className="ml-auto text-red-600 hover:text-red-800 underline"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        )}
+
+        {dashboardData && (
+          <>
+            {/* Overview Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div 
+                className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-all duration-300 cursor-pointer hover:border-blue-300 hover:scale-105"
+                onClick={() => navigate('/admin/users')}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Tenant Users</p>
+                    <p className="text-3xl font-bold text-blue-600 mt-2">{dashboardData.overview?.totalUsers || 0}</p>
+                    <p className="text-sm text-gray-500 mt-1">{dashboardData.overview?.activeUsers || 0} active</p>
+                  </div>
+                  <div className="text-4xl text-blue-500 opacity-20 hover:opacity-40 transition-opacity">👥</div>
+                </div>
+              </div>
+
+              <div 
+                className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-all duration-300 cursor-pointer hover:border-green-300 hover:scale-105"
+                onClick={() => navigate('/admin/content')}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Content</p>
+                    <p className="text-3xl font-bold text-green-600 mt-2">{dashboardData.overview?.totalContent || 0}</p>
+                    <p className="text-sm text-gray-500 mt-1">{dashboardData.overview?.publishedContent || 0} published</p>
+                  </div>
+                  <div className="text-4xl text-green-500 opacity-20 hover:opacity-40 transition-opacity">📝</div>
+                </div>
+              </div>
+
+              <div 
+                className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-all duration-300 cursor-pointer hover:border-purple-300 hover:scale-105"
+                onClick={() => navigate('/admin/media')}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Media Files</p>
+                    <p className="text-3xl font-bold text-purple-600 mt-2">{(dashboardData.overview?.totalImages || 0) + (dashboardData.overview?.totalFiles || 0)}</p>
+                    <p className="text-sm text-gray-500 mt-1">{dashboardData.overview?.totalStorage || 0}MB used</p>
+                    <p className="text-xs text-gray-400 mt-1">Images: {dashboardData.overview?.totalImages || 0}, Files: {dashboardData.overview?.totalFiles || 0}</p>
+                  </div>
+                  <div className="text-4xl text-purple-500 opacity-20 hover:opacity-40 transition-opacity">🖼️</div>
+                </div>
+              </div>
+
+              <div 
+                className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-all duration-300 cursor-pointer hover:border-orange-300 hover:scale-105"
+                onClick={() => navigate('/admin/analytics')}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Analytics</p>
+                    <p className="text-3xl font-bold text-orange-600 mt-2">📊</p>
+                    <p className="text-sm text-gray-500 mt-1">View insights</p>
+                  </div>
+                  <div className="text-4xl text-orange-500 opacity-20 hover:opacity-40 transition-opacity">📈</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md" onClick={() => navigate('/admin/users')}>
+                  <div className="flex items-center space-x-3">
+                    <span className="text-2xl hover:scale-110 transition-transform">👥</span>
+                    <div>
+                      <h3 className="font-medium">Manage Users</h3>
+                      <p className="text-sm text-gray-500">Create editors & viewers</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md" onClick={() => navigate('/admin/content')}>
+                  <div className="flex items-center space-x-3">
+                    <span className="text-2xl hover:scale-110 transition-transform">📝</span>
+                    <div>
+                      <h3 className="font-medium">Content Management</h3>
+                      <p className="text-sm text-gray-500">Create and publish content</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md" onClick={() => navigate('/admin/media')}>
+                  <div className="flex items-center space-x-3">
+                    <span className="text-2xl hover:scale-110 transition-transform">📁</span>
+                    <div>
+                      <h3 className="font-medium">Media Library</h3>
+                      <p className="text-sm text-gray-500">Upload and manage files</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md" onClick={() => navigate('/admin/analytics')}>
+                  <div className="flex items-center space-x-3">
+                    <span className="text-2xl hover:scale-110 transition-transform">📊</span>
+                    <div>
+                      <h3 className="font-medium">Analytics</h3>
+                      <p className="text-sm text-gray-500">Tenant insights</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md" onClick={() => navigate('/admin/profile')}>
+                  <div className="flex items-center space-x-3">
+                    <span className="text-2xl hover:scale-110 transition-transform">⚙️</span>
+                    <div>
+                      <h3 className="font-medium">Profile Settings</h3>
+                      <p className="text-sm text-gray-500">Update your profile</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Stats & Activity */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">User Distribution</h3>
+                <div className="space-y-3">
+                  {Object.entries(dashboardData.usersByRole || {}).map(([role, count]) => (
+                    <div key={role} className="flex justify-between">
+                      <span className="text-sm text-gray-600 capitalize">{role}s</span>
+                      <span className="text-sm font-medium">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div className="px-6 py-4 border-b">
+                  <h3 className="text-lg font-semibold text-gray-900">Recent Activity</h3>
+                </div>
+                <div className="p-6">
+                  {dashboardData.recentActivity && dashboardData.recentActivity.length > 0 ? (
+                    <div className="space-y-3">
+                      {dashboardData.recentActivity.map((activity, index) => (
+                        <div key={index} className="flex justify-between items-center">
+                          <div>
+                            <p className="text-sm font-medium">{activity.username} {activity.action?.toLowerCase()} {activity.resource}</p>
+                            <p className="text-xs text-gray-500">{new Date(activity.createdAt).toLocaleString()}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-center text-gray-500 py-4">No recent activity</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {!dashboardData && !loading && !error && (
+          <div className="text-center py-12">
+            <div className="text-4xl mb-4">📊</div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Data Available</h3>
+            <p className="text-gray-500 mb-4">Dashboard data is not available at the moment.</p>
+            <button 
+              onClick={() => fetchDashboardData()}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md"
+            >
+              Load Dashboard
+            </button>
+          </div>
+        )}
       </div>
     </AdminLayout>
   );

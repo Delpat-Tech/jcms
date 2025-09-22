@@ -10,12 +10,14 @@ const getDashboardStats = async (req, res) => {
       totalUsers,
       totalFiles,
       recentImages,
+      recentFiles,
       usersByRole,
       uploadsByDay
     ] = await Promise.all([
       User.countDocuments(tenantFilter),
       File.countDocuments(tenantFilter),
-      Image.find(tenantFilter).sort({ createdAt: -1 }).limit(5).populate('user', 'username'),
+      Image.find(tenantFilter).sort({ createdAt: -1 }).limit(10).populate('user', 'username'),
+      File.find(tenantFilter).sort({ createdAt: -1 }).limit(10).populate('user', 'username'),
       User.aggregate([
         { $lookup: { from: 'roles', localField: 'role', foreignField: '_id', as: 'role' } },
         { $unwind: '$role' },
@@ -33,12 +35,18 @@ const getDashboardStats = async (req, res) => {
       ])
     ]);
 
+    // Combine and sort recent uploads (images + files)
+    const allUploads = [
+      ...recentImages.map(img => ({ ...img.toObject(), type: 'image' })),
+      ...recentFiles.map(file => ({ ...file.toObject(), type: 'file' }))
+    ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 10);
+
     res.json({
       success: true,
       data: {
         totalUsers,
         totalFiles,
-        recentUploads: recentImages,
+        recentUploads: allUploads,
         usersByRole,
         uploadsByDay
       }

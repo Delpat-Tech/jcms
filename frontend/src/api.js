@@ -160,7 +160,9 @@ export const adminApi = {
   getUsers: () => api.get('/api/admin/users'),
   createUser: (userData) => api.post('/api/admin/users', userData),
   updateUser: (id, userData) => api.put(`/api/admin/users/${id}`, userData),
-  deleteUser: (id) => api.delete(`/api/admin/users/${id}`)
+  deleteUser: (id) => api.delete(`/api/admin/users/${id}`),
+  getDashboard: () => api.get('/api/admin/dashboard'),
+  getStats: () => api.get('/api/admin/stats')
 };
 
 export const superadminApi = {
