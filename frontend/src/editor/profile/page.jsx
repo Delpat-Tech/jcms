@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { User as UserIcon, CalendarDays, FileText, Eye, AlertTriangle, CheckCircle2, Lock, Save, BarChart3 } from 'lucide-react';
 import UserLayout from '../layout.jsx';
 import TrioLoader from '../../components/ui/TrioLoader';
 import { profileApi } from '../../api';
@@ -225,9 +226,7 @@ export default function UserProfilePage() {
       {/* Header with gradient background */}
       <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white p-8 rounded-xl shadow-lg mb-8">
         <div className="flex items-center space-x-6">
-          <div className="w-24 h-24 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-4xl">
-            👤
-          </div>
+          <div className="w-24 h-24 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-4xl"><UserIcon className="w-10 h-10" /></div>
           <div className="flex-1">
             <h1 className="text-3xl font-bold mb-2">
               {firstName || lastName ? `${firstName} ${lastName}`.trim() : username || 'User Profile'}
@@ -235,9 +234,9 @@ export default function UserProfilePage() {
             <p className="text-blue-100 mb-1">@{username}</p>
             <p className="text-blue-100">{email}</p>
             <div className="flex items-center space-x-4 mt-3 text-sm text-blue-100">
-              <span>📅 Joined {new Date(stats.joinDate).toLocaleDateString()}</span>
-              <span>📝 {stats.contentCreated} Content</span>
-              <span>👁️ {stats.totalViews.toLocaleString()} Views</span>
+              <span className="inline-flex items-center gap-1"><CalendarDays className="w-4 h-4" /> Joined {new Date(stats.joinDate).toLocaleDateString()}</span>
+              <span className="inline-flex items-center gap-1"><FileText className="w-4 h-4" /> {stats.contentCreated} Content</span>
+              <span className="inline-flex items-center gap-1"><Eye className="w-4 h-4" /> {stats.totalViews.toLocaleString()} Views</span>
             </div>
           </div>
         </div>
@@ -251,7 +250,7 @@ export default function UserProfilePage() {
             : 'bg-green-100 text-green-800 border border-green-200'
         }`}>
           <div className="flex items-center">
-            <span className="mr-2">{error ? '⚠️' : '✅'}</span>
+            <span className="mr-2">{error ? <AlertTriangle className="inline w-5 h-5" /> : <CheckCircle2 className="inline w-5 h-5" />}</span>
             {message || error}
           </div>
         </div>
@@ -260,8 +259,8 @@ export default function UserProfilePage() {
       {/* Tabs */}
       <div className="flex space-x-1 mb-8 bg-gray-100 p-1 rounded-lg">
         {[
-          { id: 'general', label: '👤 General' },
-          { id: 'security', label: '🔒 Security' }
+          { id: 'general', label: (<span className="inline-flex items-center gap-2"><UserIcon className="w-4 h-4" /> General</span>) },
+          { id: 'security', label: (<span className="inline-flex items-center gap-2"><Lock className="w-4 h-4" /> Security</span>) }
         ].map((tab) => (
           <button
             key={tab.id}
@@ -283,10 +282,7 @@ export default function UserProfilePage() {
         {activeTab === 'general' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-                <span className="mr-2">👤</span>
-                Personal Information
-              </h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center"><UserIcon className="w-4 h-4 mr-2" />Personal Information</h3>
               
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -347,16 +343,13 @@ export default function UserProfilePage() {
                   disabled={saving}
                   className="w-full bg-indigo-500 hover:bg-indigo-600 disabled:bg-indigo-300 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 hover:scale-[1.02] disabled:scale-100"
                 >
-                  {saving ? <TrioLoader size="16" color="white" /> : '💾 Save Changes'}
+                  {saving ? <TrioLoader size="16" color="white" /> : <span className="inline-flex items-center gap-2"><Save className="w-4 h-4" /> Save Changes</span>}
                 </button>
               </div>
             </div>
 
             <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-                <span className="mr-2">📊</span>
-                Account Statistics
-              </h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center"><BarChart3 className="w-4 h-4 mr-2" />Account Statistics</h3>
               
               <div className="space-y-4">
                 {statsLoading ? (
@@ -401,10 +394,7 @@ export default function UserProfilePage() {
         {activeTab === 'security' && (
           <div className="max-w-2xl mx-auto">
             <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-                <span className="mr-2">🔒</span>
-                Change Password
-              </h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center"><Lock className="w-4 h-4 mr-2" />Change Password</h3>
               
               <div className="space-y-4">
                 <div>
@@ -478,7 +468,7 @@ export default function UserProfilePage() {
                   disabled={saving || !currentPassword || !newPassword || newPassword !== confirmPassword}
                   className="w-full bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 hover:scale-[1.02] disabled:scale-100"
                 >
-                  {saving ? <TrioLoader size="16" color="white" /> : '🔒 Change Password'}
+                  {saving ? <TrioLoader size="16" color="white" /> : <span className="inline-flex items-center gap-2"><Lock className="w-4 h-4" /> Change Password</span>}
                 </button>
               </div>
             </div>

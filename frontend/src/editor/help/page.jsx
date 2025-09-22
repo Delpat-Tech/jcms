@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Rocket, BookOpen, CircleHelp, MessageCircle, Search as SearchIcon, AlertTriangle, CheckCircle2, FileText, Image as ImageIcon, Settings as SettingsIcon, BookOpenText, Mail, Link as LinkIcon } from 'lucide-react';
 import UserLayout from '../layout.jsx';
 import DashboardWidget from '../../components/common/DashboardWidget.jsx';
 import Button from '../../components/ui/Button.jsx';
@@ -46,7 +47,7 @@ export default function UserHelpPage() {
       const response = await helpApi.getArticles();
       const data = await response.json();
       if (data.success) {
-        setArticles(data.data || []);
+        setArticles(Array.isArray(data.data) ? data.data : []);
       } else {
         setArticlesError('Failed to load help articles');
       }
@@ -164,7 +165,7 @@ export default function UserHelpPage() {
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 rounded-2xl p-8 mb-8 text-white shadow-2xl">
         <div className="text-center">
-          <h1 className="text-3xl font-bold mb-2">Help & Support 🚀</h1>
+          <h1 className="text-3xl font-bold mb-2 flex items-center justify-center gap-3"><Rocket className="w-7 h-7" /><span>Help & Support</span></h1>
           <p className="text-blue-100 text-lg">
             We're here to help you succeed with your content creation
           </p>
@@ -176,9 +177,7 @@ export default function UserHelpPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
             <div className="text-center">
-              <div className="bg-blue-100 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                <span className="text-2xl">📚</span>
-              </div>
+              <div className="bg-blue-100 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center"><BookOpen className="w-8 h-8 text-blue-600" /></div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Knowledge Base</h3>
               <p className="text-sm text-gray-600">Browse our comprehensive guides and tutorials</p>
             </div>
@@ -186,9 +185,7 @@ export default function UserHelpPage() {
           
           <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
             <div className="text-center">
-              <div className="bg-green-100 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                <span className="text-2xl">❓</span>
-              </div>
+              <div className="bg-green-100 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center"><CircleHelp className="w-8 h-8 text-green-600" /></div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">FAQs</h3>
               <p className="text-sm text-gray-600">Find quick answers to common questions</p>
             </div>
@@ -196,9 +193,7 @@ export default function UserHelpPage() {
           
           <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
             <div className="text-center">
-              <div className="bg-purple-100 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                <span className="text-2xl">💬</span>
-              </div>
+              <div className="bg-purple-100 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center"><MessageCircle className="w-8 h-8 text-purple-600" /></div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Contact Support</h3>
               <p className="text-sm text-gray-600">Get personalized help from our team</p>
             </div>
@@ -208,7 +203,7 @@ export default function UserHelpPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Knowledge Base */}
           <div className="lg:col-span-2 space-y-6">
-            <DashboardWidget title="📚 Knowledge Base" className="bg-white rounded-xl shadow-lg border border-gray-100">
+            <DashboardWidget title="Knowledge Base" icon={<BookOpen className="w-5 h-5" />} className="bg-white rounded-xl shadow-lg border border-gray-100">
               <div className="space-y-4">
                 <div className="relative">
                   <input
@@ -217,9 +212,7 @@ export default function UserHelpPage() {
                     placeholder="Search articles and guides..."
                     className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
-                  <div className="absolute right-3 top-3">
-                    <span className="text-gray-400">🔍</span>
-                  </div>
+                  <div className="absolute right-3 top-3"><SearchIcon className="w-5 h-5 text-gray-400" /></div>
                 </div>
 
                 {loadingArticles ? (
@@ -229,7 +222,7 @@ export default function UserHelpPage() {
                   </div>
                 ) : articlesError ? (
                   <div className="text-center py-8">
-                    <div className="text-4xl mb-2">⚠️</div>
+                    <AlertTriangle className="w-10 h-10 mx-auto mb-2 text-yellow-500" />
                     <p className="text-gray-500">{articlesError}</p>
                   </div>
                 ) : (
@@ -252,13 +245,13 @@ export default function UserHelpPage() {
                               <p className="text-sm text-gray-600 mt-2">{article.description}</p>
                             )}
                           </div>
-                          <span className="text-gray-400 text-sm">📖</span>
+                          <span className="text-gray-400 text-sm"><BookOpenText className="w-4 h-4" /></span>
                         </div>
                       </div>
                     ))}
                     {query && filtered.length === 0 && (
                       <div className="text-center py-8">
-                        <div className="text-4xl mb-2">🔍</div>
+                        <SearchIcon className="w-10 h-10 mx-auto mb-2 text-gray-400" />
                         <p className="text-gray-500">No articles found for "{query}"</p>
                         <p className="text-sm text-gray-400 mt-1">Try different keywords or browse all articles</p>
                       </div>
@@ -269,7 +262,7 @@ export default function UserHelpPage() {
             </DashboardWidget>
 
             {/* FAQs */}
-            <DashboardWidget title="❓ Frequently Asked Questions" className="bg-white rounded-xl shadow-lg border border-gray-100">
+            <DashboardWidget title="Frequently Asked Questions" icon={<CircleHelp className="w-5 h-5" />} className="bg-white rounded-xl shadow-lg border border-gray-100">
               {loadingFaqs ? (
                 <div className="text-center py-8">
                   <TrioLoader size="32" color="#3b82f6" />
@@ -277,7 +270,7 @@ export default function UserHelpPage() {
                 </div>
               ) : faqsError ? (
                 <div className="text-center py-8">
-                  <div className="text-4xl mb-2">⚠️</div>
+                  <AlertTriangle className="w-10 h-10 mx-auto mb-2 text-yellow-500" />
                   <p className="text-gray-500">{faqsError}</p>
                 </div>
               ) : (
@@ -314,12 +307,10 @@ export default function UserHelpPage() {
 
           {/* Contact Form */}
           <div className="space-y-6">
-            <DashboardWidget title="💬 Contact Support" className="bg-white rounded-xl shadow-lg border border-gray-100">
+            <DashboardWidget title="Contact Support" icon={<MessageCircle className="w-5 h-5" />} className="bg-white rounded-xl shadow-lg border border-gray-100">
               {sent ? (
                 <div className="text-center py-8">
-                  <div className="bg-green-100 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                    <span className="text-2xl">✅</span>
-                  </div>
+                  <div className="bg-green-100 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center"><CheckCircle2 className="w-8 h-8 text-green-600" /></div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">Message Sent!</h3>
                   <p className="text-sm text-gray-600 mb-4">
                     Thanks for reaching out! We'll get back to you within 24 hours.
@@ -406,34 +397,34 @@ export default function UserHelpPage() {
             </DashboardWidget>
 
             {/* Quick Links */}
-            <DashboardWidget title="🔗 Quick Links" className="bg-white rounded-xl shadow-lg border border-gray-100">
+            <DashboardWidget title="Quick Links" icon={<LinkIcon className="w-5 h-5" />} className="bg-white rounded-xl shadow-lg border border-gray-100">
               <div className="space-y-3">
                 <a
                   href="/user/content"
                   className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                 >
-                  <span className="text-lg mr-3">📝</span>
+                  <span className="text-lg mr-3"><FileText className="w-5 h-5" /></span>
                   <span className="text-sm font-medium text-gray-900">Create Content</span>
                 </a>
                 <a
                   href="/user/media"
                   className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                 >
-                  <span className="text-lg mr-3">🖼️</span>
+                  <span className="text-lg mr-3"><ImageIcon className="w-5 h-5" /></span>
                   <span className="text-sm font-medium text-gray-900">Manage Media</span>
                 </a>
                 <a
                   href="/user/profile"
                   className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                 >
-                  <span className="text-lg mr-3">⚙️</span>
+                  <span className="text-lg mr-3"><SettingsIcon className="w-5 h-5" /></span>
                   <span className="text-sm font-medium text-gray-900">Profile Settings</span>
                 </a>
                 <a
                   href="mailto:support@jcms.com"
                   className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                 >
-                  <span className="text-lg mr-3">📧</span>
+                  <span className="text-lg mr-3"><Mail className="w-5 h-5" /></span>
                   <span className="text-sm font-medium text-gray-900">Email Support</span>
                 </a>
               </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Sparkles, Pencil, FileText, CheckCircle2, CalendarDays, Settings as SettingsIcon, Image as ImageIcon, Tags, Rocket, Eye, Trash2, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import UserLayout from '../layout';
 import TrioLoader from '../../components/ui/TrioLoader';
@@ -520,7 +521,7 @@ export default function ContentEditor() {
       <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white p-8 rounded-xl shadow-lg mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold mb-2">Content Editor ✨</h1>
+            <h1 className="text-3xl font-bold mb-2 flex items-center gap-3"><Sparkles className="w-7 h-7" /><span>Content Editor</span></h1>
             <p className="text-purple-100">Create amazing content with our powerful editor</p>
           </div>
           <div className="text-right">
@@ -540,10 +541,10 @@ export default function ContentEditor() {
       {/* Tabs */}
       <div className="flex space-x-1 mb-8 bg-gray-100 p-1 rounded-lg">
         {[
-          { id: 'editor', label: '✏️ Editor', count: null },
-          { id: 'drafts', label: '📝 Drafts', count: drafts.length },
-          { id: 'published', label: '✅ Published', count: published.length },
-          { id: 'scheduled', label: '📅 Scheduled', count: scheduled.length }
+          { id: 'editor', label: (<span className="inline-flex items-center gap-2"><Pencil className="w-4 h-4" /> Editor</span>), count: null },
+          { id: 'drafts', label: (<span className="inline-flex items-center gap-2"><FileText className="w-4 h-4" /> Drafts</span>), count: drafts.length },
+          { id: 'published', label: (<span className="inline-flex items-center gap-2"><CheckCircle2 className="w-4 h-4" /> Published</span>), count: published.length },
+          { id: 'scheduled', label: (<span className="inline-flex items-center gap-2"><CalendarDays className="w-4 h-4" /> Scheduled</span>), count: scheduled.length }
         ].map((tab) => (
           <button
             key={tab.id}
@@ -623,10 +624,7 @@ export default function ContentEditor() {
             <div className="lg:col-span-1 space-y-6">
               {/* Publishing Settings */}
               <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <span className="mr-2">⚙️</span>
-                  Settings
-                </h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center"><SettingsIcon className="w-4 h-4 mr-2" />Settings</h3>
                 
                 <div className="space-y-4">
                   {/* Type */}
@@ -637,9 +635,9 @@ export default function ContentEditor() {
                       onChange={(e) => setType(e.target.value)}
                       className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-200"
                     >
-                      <option value="article">📄 Article</option>
-                      <option value="page">📃 Page</option>
-                      <option value="template">🎨 Template</option>
+                      <option value="article">Article</option>
+                      <option value="page">Page</option>
+                      <option value="template">Template</option>
                     </select>
                   </div>
 
@@ -651,9 +649,9 @@ export default function ContentEditor() {
                       onChange={(e) => setStatus(e.target.value)}
                       className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-200"
                     >
-                      <option value="draft">📝 Draft</option>
-                      <option value="published">✅ Published</option>
-                      <option value="scheduled">📅 Scheduled</option>
+                      <option value="draft">Draft</option>
+                      <option value="published">Published</option>
+                      <option value="scheduled">Scheduled</option>
                     </select>
                   </div>
 
@@ -675,10 +673,7 @@ export default function ContentEditor() {
 
               {/* Cover Image */}
               <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <span className="mr-2">🖼️</span>
-                  Cover Image
-                </h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center"><ImageIcon className="w-4 h-4 mr-2" />Cover Image</h3>
                 
                 <div className="space-y-4">
                   <input 
@@ -713,10 +708,7 @@ export default function ContentEditor() {
 
               {/* Tags */}
               <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <span className="mr-2">🏷️</span>
-                  Tags
-                </h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center"><Tags className="w-4 h-4 mr-2" />Tags</h3>
                 
                 <div className="space-y-3">
                   <div className="flex space-x-2">
@@ -755,46 +747,43 @@ export default function ContentEditor() {
 
               {/* Action Buttons */}
               <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <span className="mr-2">🚀</span>
-                  Actions
-                </h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center"><Rocket className="w-4 h-4 mr-2" />Actions</h3>
                 
                 <div className="space-y-3">
                   <button
                     onClick={handlePreview}
                     className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-3 px-4 rounded-lg transition-all duration-200 hover:scale-[1.02]"
                   >
-                    👁️ Preview
+                    <span className="inline-flex items-center gap-2"><Eye className="w-4 h-4" /> Preview</span>
                   </button>
                   <button
                     onClick={() => handleSaveDraft(false)}
                     disabled={saving}
                     className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 hover:scale-[1.02] disabled:scale-100"
                   >
-                    {saving ? <TrioLoader size="16" color="white" /> : '💾 Save Draft'}
+                    {saving ? <TrioLoader size="16" color="white" /> : <span className="inline-flex items-center gap-2"><FileText className="w-4 h-4" /> Save Draft</span>}
                   </button>
                   <button
                     onClick={handlePublish}
                     disabled={saving || !title.trim()}
                     className="w-full bg-green-500 hover:bg-green-600 disabled:bg-green-300 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 hover:scale-[1.02] disabled:scale-100"
                   >
-                    ✅ Publish Now
+                    <span className="inline-flex items-center gap-2"><CheckCircle2 className="w-4 h-4" /> Publish Now</span>
                   </button>
                   {status === 'scheduled' && (
-                    <button
+                      <button
                       onClick={handleSchedule}
                       disabled={saving || !scheduleAt}
                       className="w-full bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 hover:scale-[1.02] disabled:scale-100"
                     >
-                      📅 Schedule Post
+                        <span className="inline-flex items-center gap-2"><CalendarDays className="w-4 h-4" /> Schedule Post</span>
                     </button>
                   )}
                   <button
                     onClick={clearForm}
                     className="w-full bg-red-100 hover:bg-red-200 text-red-700 font-medium py-3 px-4 rounded-lg transition-all duration-200 hover:scale-[1.02]"
                   >
-                    🗑️ Clear Form
+                    <span className="inline-flex items-center gap-2"><Trash2 className="w-4 h-4" /> Clear Form</span>
                   </button>
                 </div>
               </div>
@@ -822,7 +811,7 @@ export default function ContentEditor() {
                 disabled={listLoading}
                 className="bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-3 rounded-lg transition-all duration-200 hover:scale-105"
               >
-                {listLoading ? <TrioLoader size="16" color="white" /> : '🔄 Refresh'}
+                {listLoading ? <TrioLoader size="16" color="white" /> : <span className="inline-flex items-center gap-2"><RefreshCw className="w-4 h-4" /> Refresh</span>}
               </button>
             </div>
           </div>
@@ -831,7 +820,7 @@ export default function ContentEditor() {
           <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
               <span className="mr-2">
-                {activeTab === 'drafts' ? '📝' : activeTab === 'published' ? '✅' : '📅'}
+                {activeTab === 'drafts' ? <FileText className="w-5 h-5" /> : activeTab === 'published' ? <CheckCircle2 className="w-5 h-5" /> : <CalendarDays className="w-5 h-5" />}
               </span>
               {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} 
               <span className="ml-2 bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm">
@@ -840,14 +829,14 @@ export default function ContentEditor() {
               </span>
             </h2>
 
-            {listLoading ? (
+              {listLoading ? (
               <div className="text-center py-8">
                 <TrioLoader size="32" color="#6366f1" />
                 <p className="text-gray-600 mt-4">Loading content...</p>
               </div>
             ) : listError ? (
               <div className="text-center py-8">
-                <div className="text-4xl mb-4">⚠️</div>
+                <div className="text-4xl mb-4"><AlertTriangle className="inline w-10 h-10 text-yellow-500" /></div>
                 <p className="text-red-600">{listError}</p>
               </div>
             ) : (
@@ -891,7 +880,7 @@ export default function ContentEditor() {
                   activeTab === 'published' ? published : scheduled).length === 0 && (
                   <div className="text-center py-12">
                     <div className="text-6xl mb-4">
-                      {activeTab === 'drafts' ? '📝' : activeTab === 'published' ? '✅' : '📅'}
+                      {activeTab === 'drafts' ? <FileText className="inline w-12 h-12" /> : activeTab === 'published' ? <CheckCircle2 className="inline w-12 h-12" /> : <CalendarDays className="inline w-12 h-12" />}
                     </div>
                     <h3 className="text-lg font-medium text-gray-900 mb-2">
                       No {activeTab} content yet

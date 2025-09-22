@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React, { useEffect, useState, useMemo } from 'react';
+import { Hand, Clock, FileText, CheckCircle2, Image as ImageIcon, File as FileIcon, PenLine, Palette, BookOpen, Upload, Folder, AlertTriangle, FolderOpen, Settings as SettingsIcon, CircleHelp, Building2, User as UserIcon, RotateCw } from 'lucide-react';
 import UserLayout from '../layout.jsx';
 import Button from '../../components/ui/Button.jsx';
 import TrioLoader from '../../components/ui/TrioLoader.jsx';
@@ -194,7 +195,7 @@ export default function UserOverview() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-2">
-              {getGreeting()}, {user?.username || 'Editor'}! 👋
+              {getGreeting()}, {user?.username || 'Editor'}! <Hand className="inline w-6 h-6 ml-1 align-[-2px]" />
             </h1>
             <p className="text-blue-100 text-lg">
               {currentTime.toLocaleDateString('en-US', { 
@@ -210,7 +211,7 @@ export default function UserOverview() {
           </div>
           <div className="hidden md:block">
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-              <div className="text-2xl mb-2">⏰</div>
+              <div className="text-2xl mb-2"><Clock className="w-6 h-6" /></div>
               <div className="text-sm font-medium">
                 {currentTime.toLocaleTimeString('en-US', { 
                   hour: '2-digit', 
@@ -234,7 +235,7 @@ export default function UserOverview() {
               <p className="text-xs text-gray-500 mt-1">Articles & pages</p>
             </div>
             <div className="bg-blue-100 rounded-full p-3">
-              <span className="text-2xl">📝</span>
+              <FileText className="w-6 h-6" />
             </div>
           </div>
         </div>
@@ -249,7 +250,7 @@ export default function UserOverview() {
               <p className="text-xs text-gray-500 mt-1">Live content</p>
             </div>
             <div className="bg-green-100 rounded-full p-3">
-              <span className="text-2xl">✅</span>
+              <CheckCircle2 className="w-6 h-6" />
             </div>
           </div>
         </div>
@@ -264,7 +265,7 @@ export default function UserOverview() {
               <p className="text-xs text-gray-500 mt-1">Work in progress</p>
             </div>
             <div className="bg-yellow-100 rounded-full p-3">
-              <span className="text-2xl">📄</span>
+              <FileIcon className="w-6 h-6" />
             </div>
           </div>
         </div>
@@ -279,7 +280,7 @@ export default function UserOverview() {
               <p className="text-xs text-gray-500 mt-1">Images & files</p>
             </div>
             <div className="bg-purple-100 rounded-full p-3">
-              <span className="text-2xl">🖼️</span>
+              <ImageIcon className="w-6 h-6" />
             </div>
           </div>
         </div>
@@ -291,7 +292,7 @@ export default function UserOverview() {
         <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-gray-900">Content Creation</h2>
-            <span className="text-2xl">✍️</span>
+            <PenLine className="w-6 h-6" />
           </div>
           <div className="space-y-4">
             <Link to="/user/content" className="block">
@@ -302,18 +303,18 @@ export default function UserOverview() {
                     <p className="text-sm text-gray-600">Start writing your next masterpiece</p>
                   </div>
                   <div className="bg-blue-100 rounded-full p-2 group-hover:bg-blue-200 transition-colors">
-                    <span className="text-lg">📝</span>
+                    <FileText className="w-5 h-5" />
                   </div>
                 </div>
               </div>
             </Link>
             <div className="grid grid-cols-2 gap-3">
               <Link to="/user/content" className="bg-gray-50 hover:bg-gray-100 rounded-lg p-3 text-center transition-all duration-200 hover:scale-105 group">
-                <div className="text-lg mb-1">📄</div>
+                <div className="text-lg mb-1"><FileIcon className="w-5 h-5 inline" /></div>
                 <div className="text-sm font-medium text-gray-700 group-hover:text-gray-900">Pages</div>
               </Link>
               <Link to="/user/content" className="bg-gray-50 hover:bg-gray-100 rounded-lg p-3 text-center transition-all duration-200 hover:scale-105 group">
-                <div className="text-lg mb-1">🎨</div>
+                <div className="text-lg mb-1"><Palette className="w-5 h-5 inline" /></div>
                 <div className="text-sm font-medium text-gray-700 group-hover:text-gray-900">Templates</div>
               </Link>
             </div>
@@ -324,7 +325,7 @@ export default function UserOverview() {
         <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-gray-900">Media Library</h2>
-            <span className="text-2xl">📚</span>
+            <BookOpen className="w-6 h-6" />
           </div>
           <div className="space-y-4">
             <Link to="/user/media" className="block">
@@ -335,18 +336,18 @@ export default function UserOverview() {
                     <p className="text-sm text-gray-600">Add images, documents, and files</p>
                   </div>
                   <div className="bg-green-100 rounded-full p-2 group-hover:bg-green-200 transition-colors">
-                    <span className="text-lg">📤</span>
+                    <Upload className="w-5 h-5" />
                   </div>
                 </div>
               </div>
             </Link>
             <div className="grid grid-cols-2 gap-3">
               <Link to="/user/media" className="bg-gray-50 hover:bg-gray-100 rounded-lg p-3 text-center transition-all duration-200 hover:scale-105 group">
-                <div className="text-lg mb-1">🖼️</div>
+                <div className="text-lg mb-1"><ImageIcon className="w-5 h-5 inline" /></div>
                 <div className="text-sm font-medium text-gray-700 group-hover:text-gray-900">Gallery</div>
               </Link>
               <Link to="/user/media" className="bg-gray-50 hover:bg-gray-100 rounded-lg p-3 text-center transition-all duration-200 hover:scale-105 group">
-                <div className="text-lg mb-1">📁</div>
+                <div className="text-lg mb-1"><Folder className="w-5 h-5 inline" /></div>
                 <div className="text-sm font-medium text-gray-700 group-hover:text-gray-900">Files</div>
               </Link>
             </div>
@@ -365,13 +366,13 @@ export default function UserOverview() {
               className="text-gray-500 hover:text-gray-700 transition-colors"
               disabled={statsLoading || recentLoading}
             >
-              {(statsLoading || recentLoading) ? <TrioLoader size="16" color="#6b7280" /> : '🔄'}
+              {(statsLoading || recentLoading) ? <TrioLoader size="16" color="#6b7280" /> : <RotateCw className="w-4 h-4" />}
             </button>
           </div>
           <div className="space-y-3">
             {(statsError || recentError) ? (
               <div className="text-center py-8">
-                <div className="text-4xl mb-2">⚠️</div>
+                <AlertTriangle className="w-10 h-10 mx-auto mb-2 text-yellow-500" />
                 <p className="text-gray-500">{statsError || recentError}</p>
               </div>
             ) : recentActivityData.length > 0 ? (
@@ -391,7 +392,7 @@ export default function UserOverview() {
               ))
             ) : (
               <div className="text-center py-8">
-                <div className="text-4xl mb-2">📂</div>
+                <FolderOpen className="w-10 h-10 mx-auto mb-2 text-gray-400" />
                 <p className="text-gray-500">No recent activity</p>
                 <p className="text-sm text-gray-400">Start creating content to see your activity here</p>
               </div>
@@ -405,7 +406,7 @@ export default function UserOverview() {
           <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-gray-900">Workspace</h3>
-              <span className="text-xl">🏢</span>
+              <span className="text-xl"><Building2 className="w-5 h-5" /></span>
             </div>
             {tenantLoading ? (
               <div className="text-center py-4">
@@ -430,15 +431,13 @@ export default function UserOverview() {
           <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-gray-900">Account</h3>
-              <span className="text-xl">👤</span>
+              <span className="text-xl"><UserIcon className="w-5 h-5" /></span>
             </div>
             <div className="space-y-4">
               <Link to="/user/profile" className="block">
                 <div className="bg-gray-50 hover:bg-gray-100 rounded-lg p-3 transition-all duration-200 hover:scale-[1.02] group">
                   <div className="flex items-center space-x-3">
-                    <div className="bg-indigo-100 rounded-full p-2">
-                      <span className="text-sm">⚙️</span>
-                    </div>
+                    <div className="bg-indigo-100 rounded-full p-2"><SettingsIcon className="w-4 h-4" /></div>
                     <div>
                       <p className="font-medium text-gray-900 group-hover:text-indigo-600 transition-colors">Profile Settings</p>
                       <p className="text-xs text-gray-500">Update your information</p>
@@ -449,9 +448,7 @@ export default function UserOverview() {
               <Link to="/user/help" className="block">
                 <div className="bg-gray-50 hover:bg-gray-100 rounded-lg p-3 transition-all duration-200 hover:scale-[1.02] group">
                   <div className="flex items-center space-x-3">
-                    <div className="bg-green-100 rounded-full p-2">
-                      <span className="text-sm">❓</span>
-                    </div>
+                    <div className="bg-green-100 rounded-full p-2"><CircleHelp className="w-4 h-4" /></div>
                     <div>
                       <p className="font-medium text-gray-900 group-hover:text-green-600 transition-colors">Help & Support</p>
                       <p className="text-xs text-gray-500">Get assistance</p>
