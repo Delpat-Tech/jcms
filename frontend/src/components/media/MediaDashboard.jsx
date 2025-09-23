@@ -144,9 +144,9 @@ const MediaDashboard = () => {
   };
 
   return (
-    <div className="flex h-full bg-gray-50">
+    <div className="flex h-full bg-gray-50 flex-col md:flex-row">
       {/* Left Panel */}
-      <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
+      <div className="w-full md:w-80 bg-white border-b md:border-b-0 md:border-r border-gray-200 flex flex-col">
         <div className="p-6 space-y-6">
           <UploadPanel onUploadSuccess={fetchFiles} currentFilter={filterType} />
           
@@ -216,8 +216,8 @@ const MediaDashboard = () => {
       <div className="flex-1 flex flex-col">
         {/* Top Bar */}
         <div className="bg-white border-b border-gray-200 p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-3 flex-wrap">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
@@ -225,7 +225,7 @@ const MediaDashboard = () => {
                   placeholder="Search files..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
                 />
               </div>
               
@@ -240,7 +240,7 @@ const MediaDashboard = () => {
               </select>
             </div>
             
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => setViewMode('grid')}
                 className={`p-2 rounded ${viewMode === 'grid' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
@@ -258,7 +258,7 @@ const MediaDashboard = () => {
         </div>
 
         {/* File Grid/List */}
-        <div className="flex-1 p-6 overflow-auto">
+        <div className="flex-1 p-4 sm:p-6 overflow-auto">
           {loading ? (
             <div className="flex items-center justify-center h-64">
               <TrioLoader size="48" color="#3b82f6" />
@@ -272,7 +272,7 @@ const MediaDashboard = () => {
               </p>
             </div>
           ) : (
-            <div className={viewMode === 'grid' ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4' : 'space-y-2'}>
+            <div className={viewMode === 'grid' ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4' : 'space-y-2'}>
               {filteredAndSortedFiles.map((file) => (
                 <FileCard
                   key={file._id}

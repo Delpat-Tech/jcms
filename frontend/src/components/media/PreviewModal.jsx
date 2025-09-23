@@ -111,12 +111,12 @@ const PreviewModal = ({ file, onClose, onNext, onPrev, onDelete, onDownload }) =
         </div>
         
         {/* Info Panel */}
-        <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-6">
+        <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-4 sm:p-6">
           <div className="max-w-4xl mx-auto">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
               <div>
                 <h2 className="text-xl font-semibold mb-2">{file.title || file.filename}</h2>
-                <div className="flex items-center space-x-4 text-sm text-gray-300 mb-2">
+                <div className="flex items-center gap-4 text-sm text-gray-300 mb-2 flex-wrap">
                   <span>{file.format?.toUpperCase()}</span>
                   <span>{file.size ? `${Math.round(file.size / 1024)} KB` : ''}</span>
                   <span>{new Date(file.createdAt).toLocaleDateString()}</span>
@@ -129,7 +129,13 @@ const PreviewModal = ({ file, onClose, onNext, onPrev, onDelete, onDownload }) =
                 )}
               </div>
               
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-2 flex-wrap justify-end">
+                <button
+                  onClick={onClose}
+                  className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg"
+                >
+                  <X className="w-5 h-5" />
+                </button>
                 <button 
                   onClick={() => onDownload?.(file)}
                   className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg"

@@ -4,6 +4,7 @@ import Button from '../../components/ui/Button.jsx';
 import { superadminApi } from '../../api';
 import TrioLoader from '../../components/ui/TrioLoader.jsx';
 import { useNavigate } from 'react-router-dom';
+import { RotateCcw, AlertTriangle, Users as UsersIcon, Building2, Image as ImageIcon, BarChart3, LineChart, Settings as SettingsIcon, Shield, Folder } from 'lucide-react';
 
 export default function SuperAdminOverview() {
   const [user, setUser] = useState(null);
@@ -109,7 +110,7 @@ export default function SuperAdminOverview() {
               disabled={refreshing}
               className="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 flex items-center space-x-2 disabled:opacity-50"
             >
-              {refreshing ? <TrioLoader size="16" color="#6b7280" /> : <span>🔄</span>}
+              {refreshing ? <TrioLoader size="16" color="#6b7280" /> : <RotateCcw className="w-4 h-4" />}
               <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
             </button>
             {lastUpdated && (
@@ -117,7 +118,7 @@ export default function SuperAdminOverview() {
                 Last updated: {lastUpdated.toLocaleTimeString()}
               </span>
             )}
-            <Button variant="secondary" onClick={handleLogout}>Logout</Button>
+          
           </div>
         </div>
 
@@ -125,7 +126,7 @@ export default function SuperAdminOverview() {
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
             <div className="flex items-center">
-              <span className="text-red-500 mr-2">⚠️</span>
+              <AlertTriangle className="w-5 h-5 text-red-500 mr-2" />
               <div className="flex-1">
                 <p className="text-red-700">Error loading dashboard: {error}</p>
                 <div className="mt-2 text-xs text-gray-600">
@@ -176,7 +177,7 @@ export default function SuperAdminOverview() {
                     <p className="text-3xl font-bold text-blue-600 mt-2 transition-all duration-500">{dashboardData.overview?.totalUsers || 0}</p>
                     <p className="text-sm text-gray-500 mt-1">{dashboardData.overview?.activeUsersToday || 0} active today</p>
                   </div>
-                  <div className="text-4xl text-blue-500 opacity-20 hover:opacity-40 transition-opacity">👥</div>
+                  <UsersIcon className="w-10 h-10 text-blue-500 opacity-20 hover:opacity-40 transition-opacity" />
                 </div>
               </div>
 
@@ -190,7 +191,7 @@ export default function SuperAdminOverview() {
                     <p className="text-3xl font-bold text-green-600 mt-2 transition-all duration-500">{dashboardData.overview?.totalTenants || 0}</p>
                     <p className="text-sm text-gray-500 mt-1">{dashboardData.analytics?.tenantsByStatus?.active || 0} active</p>
                   </div>
-                  <div className="text-4xl text-green-500 opacity-20 hover:opacity-40 transition-opacity">🏢</div>
+                  <Building2 className="w-10 h-10 text-green-500 opacity-20 hover:opacity-40 transition-opacity" />
                 </div>
               </div>
 
@@ -204,7 +205,7 @@ export default function SuperAdminOverview() {
                     <p className="text-3xl font-bold text-purple-600 mt-2 transition-all duration-500">{dashboardData.overview?.totalImages || 0}</p>
                     <p className="text-sm text-gray-500 mt-1">{dashboardData.analytics?.storage?.total || 0}MB used</p>
                   </div>
-                  <div className="text-4xl text-purple-500 opacity-20 hover:opacity-40 transition-opacity">🖼️</div>
+                  <ImageIcon className="w-10 h-10 text-purple-500 opacity-20 hover:opacity-40 transition-opacity" />
                 </div>
               </div>
 
@@ -218,7 +219,7 @@ export default function SuperAdminOverview() {
                     <p className="text-3xl font-bold text-orange-600 mt-2">📊</p>
                     <p className="text-sm text-gray-500 mt-1">View insights</p>
                   </div>
-                  <div className="text-4xl text-orange-500 opacity-20 hover:opacity-40 transition-opacity">📈</div>
+                  <LineChart className="w-10 h-10 text-orange-500 opacity-20 hover:opacity-40 transition-opacity" />
                 </div>
               </div>
             </div>
@@ -229,7 +230,7 @@ export default function SuperAdminOverview() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md" onClick={() => navigate('/superadmin/users')}>
                   <div className="flex items-center space-x-3">
-                    <span className="text-2xl hover:scale-110 transition-transform">👥</span>
+                    <UsersIcon className="w-6 h-6" />
                     <div>
                       <h3 className="font-medium">Manage Users</h3>
                       <p className="text-sm text-gray-500">Create and manage accounts</p>
@@ -238,7 +239,7 @@ export default function SuperAdminOverview() {
                 </div>
                 <div className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md" onClick={() => navigate('/superadmin/tenants')}>
                   <div className="flex items-center space-x-3">
-                    <span className="text-2xl hover:scale-110 transition-transform">🏢</span>
+                    <Building2 className="w-6 h-6" />
                     <div>
                       <h3 className="font-medium">Tenant Management</h3>
                       <p className="text-sm text-gray-500">Configure tenant settings</p>
@@ -247,7 +248,7 @@ export default function SuperAdminOverview() {
                 </div>
                 <div className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md" onClick={() => navigate('/superadmin/settings')}>
                   <div className="flex items-center space-x-3">
-                    <span className="text-2xl hover:scale-110 transition-transform">⚙️</span>
+                    <SettingsIcon className="w-6 h-6" />
                     <div>
                       <h3 className="font-medium">System Settings</h3>
                       <p className="text-sm text-gray-500">System configuration</p>
@@ -256,7 +257,7 @@ export default function SuperAdminOverview() {
                 </div>
                 <div className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md" onClick={() => navigate('/superadmin/roles')}>
                   <div className="flex items-center space-x-3">
-                    <span className="text-2xl hover:scale-110 transition-transform">🔐</span>
+                    <Shield className="w-6 h-6" />
                     <div>
                       <h3 className="font-medium">Role Management</h3>
                       <p className="text-sm text-gray-500">Define user roles</p>
@@ -265,7 +266,7 @@ export default function SuperAdminOverview() {
                 </div>
                 <div className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md" onClick={() => navigate('/superadmin/media')}>
                   <div className="flex items-center space-x-3">
-                    <span className="text-2xl hover:scale-110 transition-transform">📁</span>
+                    <Folder className="w-6 h-6" />
                     <div>
                       <h3 className="font-medium">Media Library</h3>
                       <p className="text-sm text-gray-500">Browse media files</p>
@@ -274,7 +275,7 @@ export default function SuperAdminOverview() {
                 </div>
                 <div className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md" onClick={() => navigate('/superadmin/analytics')}>
                   <div className="flex items-center space-x-3">
-                    <span className="text-2xl hover:scale-110 transition-transform">📊</span>
+                    <BarChart3 className="w-6 h-6" />
                     <div>
                       <h3 className="font-medium">Analytics</h3>
                       <p className="text-sm text-gray-500">System insights</p>
@@ -332,7 +333,7 @@ export default function SuperAdminOverview() {
         {/* Show message when no data is available */}
         {!dashboardData && !loading && !error && (
           <div className="text-center py-12">
-            <div className="text-4xl mb-4">📊</div>
+            <div className="mb-4 flex justify-center"><BarChart3 className="w-10 h-10 text-gray-400" /></div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">No Data Available</h3>
             <p className="text-gray-500 mb-4">Dashboard data is not available at the moment.</p>
             <button 

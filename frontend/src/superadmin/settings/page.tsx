@@ -5,6 +5,7 @@ import Input from '../../components/ui/Input.jsx';
 import FormField from '../../components/ui/FormField.jsx';
 import { useTheme } from '../../contexts/ThemeContext.jsx';
 import { settingsApi } from '../../api';
+import { Palette, Globe, Clock, Moon, Layers, Save } from 'lucide-react';
 
 export default function SettingsPage() {
   const { refreshSettings, isDarkMode, setDarkMode } = useTheme();
@@ -86,7 +87,10 @@ export default function SettingsPage() {
     <SuperAdminLayout title="System Settings">
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">System Settings</h1>
+          <div>
+            <h1 className="text-2xl font-bold">System Settings</h1>
+            <p className="text-sm text-gray-500">Configure global preferences and platform-wide options</p>
+          </div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-gray-500">Quick theme</span>
             <button
@@ -109,7 +113,11 @@ export default function SettingsPage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* General Settings */}
           <div className="bg-white p-6 rounded-lg shadow" style={{ backgroundColor: 'var(--surface-color)', color: 'var(--text-color)' }}>
-            <h2 className="text-lg font-semibold mb-4">General Settings</h2>
+            <div className="flex items-center gap-2 mb-1">
+              <Palette className="w-5 h-5 text-blue-500" />
+              <h2 className="text-lg font-semibold">General Settings</h2>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">Title, tagline and description that appear across the site</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField label="Site Title" htmlFor="siteTitle">
                 <Input
@@ -142,7 +150,11 @@ export default function SettingsPage() {
 
           {/* Localization Settings */}
           <div className="bg-white p-6 rounded-lg shadow" style={{ backgroundColor: 'var(--surface-color)', color: 'var(--text-color)' }}>
-            <h2 className="text-lg font-semibold mb-4">Localization</h2>
+            <div className="flex items-center gap-2 mb-1">
+              <Globe className="w-5 h-5 text-emerald-600" />
+              <h2 className="text-lg font-semibold">Localization</h2>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">Language, timezone and date/time formats</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField label="Default Language" htmlFor="defaultLanguage">
                 <select
@@ -206,7 +218,11 @@ export default function SettingsPage() {
 
           {/* Branding Settings */}
           <div className="bg-white p-6 rounded-lg shadow" style={{ backgroundColor: 'var(--surface-color)', color: 'var(--text-color)' }}>
-            <h2 className="text-lg font-semibold mb-4">Branding</h2>
+            <div className="flex items-center gap-2 mb-1">
+              <Palette className="w-5 h-5 text-purple-600" />
+              <h2 className="text-lg font-semibold">Branding</h2>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">Logos and color palette for your brand</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField label="Logo URL" htmlFor="logo">
                 <Input
@@ -263,7 +279,11 @@ export default function SettingsPage() {
 
           {/* Dark Mode Settings */}
           <div className="bg-white p-6 rounded-lg shadow" style={{ backgroundColor: 'var(--surface-color)', color: 'var(--text-color)' }}>
-            <h2 className="text-lg font-semibold mb-4">Dark Mode</h2>
+            <div className="flex items-center gap-2 mb-1">
+              <Moon className="w-5 h-5 text-gray-700" />
+              <h2 className="text-lg font-semibold">Dark Mode</h2>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">Enable and customize dark theme variants</p>
             <div className="space-y-4">
               <div className="flex items-center">
                 <input
@@ -318,7 +338,11 @@ export default function SettingsPage() {
 
           {/* Multi-site Settings */}
           <div className="bg-white p-6 rounded-lg shadow" style={{ backgroundColor: 'var(--surface-color)', color: 'var(--text-color)' }}>
-            <h2 className="text-lg font-semibold mb-4">Multi-site Support</h2>
+            <div className="flex items-center gap-2 mb-1">
+              <Layers className="w-5 h-5 text-indigo-600" />
+              <h2 className="text-lg font-semibold">Multi-site Support</h2>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">Control multi-tenant capabilities and subdomain usage</p>
             <div className="space-y-4">
               <div className="flex items-center">
                 <input
@@ -347,10 +371,13 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Save Button */}
-          <div className="flex justify-end">
+          {/* Save Bar */}
+          <div className="sticky bottom-0 left-0 right-0 bg-white/80 backdrop-blur border-t pt-4 pb-2 flex justify-end" style={{ backgroundColor: 'var(--surface-color)' }}>
             <Button type="submit" disabled={saving}>
-              {saving ? 'Saving...' : 'Save Settings'}
+              <span className="inline-flex items-center gap-2">
+                <Save className="w-4 h-4" />
+                {saving ? 'Saving…' : 'Save Settings'}
+              </span>
             </Button>
           </div>
 

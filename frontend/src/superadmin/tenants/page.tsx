@@ -5,6 +5,7 @@ import Input from "../../components/ui/Input.jsx";
 import Table from "../../components/ui/Table.jsx";
 import Modal from "../../components/ui/Modal.jsx";
 import { tenantApi, imageApi, fileApi } from '../../api';
+import { Eye, Trash2, Search, Plus } from 'lucide-react';
 
 function CreateTenantModal({ onClose, onTenantCreated }) {
   const [formData, setFormData] = useState({
@@ -537,14 +538,14 @@ export default function TenantsPage() {
             className="text-blue-600 hover:text-blue-800"
             title="View Details"
           >
-            👁️
+            <Eye className="w-5 h-5" />
           </button>
           <button 
             onClick={() => handleDeleteTenant(tenant._id)}
             className="text-red-600 hover:text-red-800"
             title="Delete Tenant"
           >
-            🗑️
+            <Trash2 className="w-5 h-5" />
           </button>
         </div>
       )
@@ -558,16 +559,17 @@ export default function TenantsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Tenant Management</h1>
           <div className="flex items-center gap-4">
             <div className="relative">
+              <Search className="w-4 h-4 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
               <Input
                 type="text"
-                placeholder="🔍 Search tenants..."
+                placeholder="Search tenants..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-8"
               />
             </div>
             <Button onClick={() => setShowCreateModal(true)}>
-              + Create Tenant
+              <span className="inline-flex items-center gap-1"><Plus className="w-4 h-4" /> Create Tenant</span>
             </Button>
           </div>
         </div>

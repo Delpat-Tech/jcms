@@ -5,6 +5,7 @@ import Input from "../../components/ui/Input.jsx";
 import Table from "../../components/ui/Table.jsx";
 import Modal from "../../components/ui/Modal.jsx";
 import { tenantApi, userApi, imageApi, fileApi } from '../../api';
+import { PauseCircle, PlayCircle, Trash2, Search, ArrowLeft, ArrowRight, Plus } from 'lucide-react';
 
 function AddUserModal({ onClose, onUserAdded }) {
   const [formData, setFormData] = useState({
@@ -96,7 +97,7 @@ function AddUserModal({ onClose, onUserAdded }) {
 
   return (
     <Modal open={true} onClose={onClose}>
-      <div className="p-6 w-96">
+      <div className="p-6 w-96 mx-auto">
         <h2 className="text-lg font-semibold mb-4">Add New User</h2>
 
         
@@ -452,20 +453,20 @@ export default function UsersPage() {
       key: 'actions', 
       label: 'Actions', 
       render: (user) => (
-        <div className="flex gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <button 
             onClick={() => handleToggleUserStatus(user._id, user.isActive)}
-            className={user.isActive ? "text-orange-600 hover:text-orange-800" : "text-green-600 hover:text-green-800"}
+            className={user.isActive ? "text-blue-600 hover:text-blue-800" : "text-green-600 hover:text-green-800"}
             title={user.isActive ? "Deactivate user" : "Reactivate user"}
           >
-            {user.isActive ? '⏸️' : '▶️'}
+            {user.isActive ? <PauseCircle className="w-5 h-5" /> : <PlayCircle className="w-5 h-5" />}
           </button>
           <button 
             onClick={() => handlePermanentDelete(user._id)}
             className="text-red-600 hover:text-red-800"
             title="Permanently delete user"
           >
-            🗑️
+            <Trash2 className="w-5 h-5" />
           </button>
         </div>
       )
@@ -522,16 +523,17 @@ export default function UsersPage() {
               </button>
             </div>
             <div className="relative">
+              <Search className="w-4 h-4 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
               <Input
                 type="text"
-                placeholder="🔍 Search users..."
+                placeholder="Search users..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-8"
               />
             </div>
             <Button onClick={() => setShowAddModal(true)}>
-              + Add User
+              <span className="inline-flex items-center gap-1"><Plus className="w-4 h-4" /> Add User</span>
             </Button>
           </div>
         </div>
@@ -559,7 +561,7 @@ export default function UsersPage() {
                     : 'hover:bg-gray-50'
                 }`}
               >
-                ←
+                <ArrowLeft className="w-4 h-4" />
               </button>
               
               {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
@@ -585,7 +587,7 @@ export default function UsersPage() {
                     : 'hover:bg-gray-50'
                 }`}
               >
-                →
+                <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </div>

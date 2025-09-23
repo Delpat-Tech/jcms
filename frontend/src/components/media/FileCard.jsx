@@ -89,7 +89,7 @@ const FileCard = ({ file, viewMode, selected, onSelect, onPreview, onDelete, onD
           )}
         </div>
         
-        <div className="flex items-center space-x-2">
+        <div className="grid grid-cols-2 gap-2 justify-items-center">
           <button
             onClick={onPreview}
             className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
@@ -202,87 +202,84 @@ const FileCard = ({ file, viewMode, selected, onSelect, onPreview, onDelete, onD
         </div>
         
         {/* Actions */}
-        <div className="flex items-center justify-between">
-          <div className="flex space-x-1">
-            <button
-              onClick={onPreview}
-              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
-              title="Preview"
-            >
-              <Eye className="w-4 h-4" />
-            </button>
-            {file.type === 'image' ? (
-              <div className="relative">
-                <button
-                  className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg"
-                  title="Download Options"
-                  onMouseEnter={() => {
-                    if (dropdownTimeout) clearTimeout(dropdownTimeout);
-                    setShowDropdown(true);
-                  }}
-                  onMouseLeave={() => {
-                    const timeout = setTimeout(() => setShowDropdown(false), 300);
-                    setDropdownTimeout(timeout);
-                  }}
-                >
-                  <Download className="w-4 h-4" />
-                </button>
-                {showDropdown && (
-                  <div 
-                    className="absolute bottom-full left-0 mb-2 bg-white border rounded-lg shadow-lg p-2 z-10 min-w-max"
-                    onMouseEnter={() => {
-                      if (dropdownTimeout) clearTimeout(dropdownTimeout);
-                    }}
-                    onMouseLeave={() => {
-                      const timeout = setTimeout(() => setShowDropdown(false), 200);
-                      setDropdownTimeout(timeout);
-                    }}
-                  >
-                    <button
-                      onClick={() => handleImageDownload(file._id, 'thumbnail')}
-                      className="block w-full text-left px-3 py-1 text-xs hover:bg-gray-100 rounded whitespace-nowrap"
-                    >
-                      Thumbnail (150x150)
-                    </button>
-                    <button
-                      onClick={() => handleImageDownload(file._id, 'medium')}
-                      className="block w-full text-left px-3 py-1 text-xs hover:bg-gray-100 rounded whitespace-nowrap"
-                    >
-                      Medium (800x600)
-                    </button>
-                    <button
-                      onClick={() => handleImageDownload(file._id, 'large')}
-                      className="block w-full text-left px-3 py-1 text-xs hover:bg-gray-100 rounded whitespace-nowrap"
-                    >
-                      Large (1920x1080)
-                    </button>
-                    <button
-                      onClick={() => handleDownload(file)}
-                      className="block w-full text-left px-3 py-1 text-xs hover:bg-gray-100 rounded whitespace-nowrap"
-                    >
-                      Original
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
+        <div className="grid grid-cols-2 gap-2 justify-items-center">
+          <button
+            onClick={onPreview}
+            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
+            title="Preview"
+          >
+            <Eye className="w-4 h-4" />
+          </button>
+          {file.type === 'image' ? (
+            <div className="relative">
               <button
-                onClick={() => handleDownload(file)}
                 className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg"
-                title="Download"
+                title="Download Options"
+                onMouseEnter={() => {
+                  if (dropdownTimeout) clearTimeout(dropdownTimeout);
+                  setShowDropdown(true);
+                }}
+                onMouseLeave={() => {
+                  const timeout = setTimeout(() => setShowDropdown(false), 300);
+                  setDropdownTimeout(timeout);
+                }}
               >
                 <Download className="w-4 h-4" />
               </button>
-            )}
+              {showDropdown && (
+                <div 
+                  className="absolute bottom-full left-0 mb-2 bg-white border rounded-lg shadow-lg p-2 z-10 min-w-max"
+                  onMouseEnter={() => {
+                    if (dropdownTimeout) clearTimeout(dropdownTimeout);
+                  }}
+                  onMouseLeave={() => {
+                    const timeout = setTimeout(() => setShowDropdown(false), 200);
+                    setDropdownTimeout(timeout);
+                  }}
+                >
+                  <button
+                    onClick={() => handleImageDownload(file._id, 'thumbnail')}
+                    className="block w-full text-left px-3 py-1 text-xs hover:bg-gray-100 rounded whitespace-nowrap"
+                  >
+                    Thumbnail (150x150)
+                  </button>
+                  <button
+                    onClick={() => handleImageDownload(file._id, 'medium')}
+                    className="block w-full text-left px-3 py-1 text-xs hover:bg-gray-100 rounded whitespace-nowrap"
+                  >
+                    Medium (800x600)
+                  </button>
+                  <button
+                    onClick={() => handleImageDownload(file._id, 'large')}
+                    className="block w-full text-left px-3 py-1 text-xs hover:bg-gray-100 rounded whitespace-nowrap"
+                  >
+                    Large (1920x1080)
+                  </button>
+                  <button
+                    onClick={() => handleDownload(file)}
+                    className="block w-full text-left px-3 py-1 text-xs hover:bg-gray-100 rounded whitespace-nowrap"
+                  >
+                    Original
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
             <button
-              onClick={() => setIsRenaming(true)}
-              className="p-2 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg"
-              title="Rename"
+              onClick={() => handleDownload(file)}
+              className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg"
+              title="Download"
             >
-              <Edit3 className="w-4 h-4" />
+              <Download className="w-4 h-4" />
             </button>
-          </div>
-          
+          )}
+          <button
+            onClick={() => setIsRenaming(true)}
+            className="p-2 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg"
+            title="Rename"
+          >
+            <Edit3 className="w-4 h-4" />
+          </button>
           <button
             onClick={() => handleDelete(file)}
             className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
