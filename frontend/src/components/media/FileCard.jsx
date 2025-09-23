@@ -8,9 +8,7 @@ const FileCard = ({ file, viewMode, selected, onSelect, onPreview, onDelete, onD
   const [dropdownTimeout, setDropdownTimeout] = useState(null);
 
   const handleDelete = async (file) => {
-    if (window.confirm('Are you sure you want to delete this file?')) {
-      onDelete?.(file);
-    }
+    onDelete?.(file);
   };
 
   const handleDownload = (file) => {

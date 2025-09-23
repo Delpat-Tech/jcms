@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import TrioLoader from '../ui/TrioLoader';
 
 // Notification component
-export function Notification({ type, title, message, showIcon = true, duration, onClose }) {
+export function Notification({ type, title, message, showIcon = true, duration, actions, icon, onClose }) {
   React.useEffect(() => {
     if (duration) {
       const timer = setTimeout(onClose, duration);
@@ -47,11 +47,30 @@ export function Notification({ type, title, message, showIcon = true, duration, 
       transition={{ duration: 0.2 }}
       className={`pointer-events-auto flex items-start gap-3 rounded-md border p-3 shadow ${typeStyles[type] || 'border-gray-200 bg-white'}`}
     >
-      {showIcon && icons[type] && <span className="mt-0.5">{icons[type]}</span>}
+      {showIcon && (icon || icons[type]) && <span className="mt-0.5">{icon || icons[type]}</span>}
       <div className="flex-1">
         <div className="font-medium text-gray-900 text-sm">{title}</div>
         {message && <div className="text-gray-700 text-xs mt-0.5">{message}</div>}
       </div>
+      {Array.isArray(actions) && actions.length > 0 && (
+        <div className="flex items-center gap-2 ml-2">
+          {actions.map((action, idx) => (
+            <button
+              key={idx}
+              onClick={() => { try { action.onClick && action.onClick(); } finally { onClose && onClose(); } }}
+              className={`px-2 py-1 rounded text-xs font-medium border transition-colors ${
+                action.variant === 'destructive'
+                  ? 'border-red-300 text-red-700 hover:bg-red-50'
+                  : action.variant === 'primary'
+                  ? 'border-blue-300 text-blue-700 hover:bg-blue-50'
+                  : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              {action.label || 'OK'}
+            </button>
+          ))}
+        </div>
+      )}
       <button onClick={onClose} className="ml-2 text-gray-400 hover:text-gray-700 transition-colors">
         <svg className="h-4 w-4" fill="none" viewBox="0 0 20 20"><path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M6 6l8 8M6 14L14 6"/></svg>
       </button>
@@ -66,14 +85,16 @@ export function ToastProvider({ children }) {
   const [notifications, setNotifications] = React.useState([]);
   const nextIdRef = React.useRef(1);
 
-  const addNotification = React.useCallback((type, title, message, showIcon = true, duration) => {
+  const addNotification = React.useCallback((type, title, message, showIcon = true, duration, actions, icon) => {
     const newNotification = {
       id: nextIdRef.current++,
       type,
       title,
       message,
       showIcon,
-      duration
+      duration,
+      actions,
+      icon
     };
     setNotifications(prev => [...prev, newNotification]);
   }, []);
@@ -130,6 +151,8 @@ export function ToastProvider({ children }) {
               message={notification.message}
               showIcon={notification.showIcon}
               duration={notification.duration}
+              actions={notification.actions}
+              icon={notification.icon}
               onClose={() => handleClose(notification.id)}
             />
           ))}

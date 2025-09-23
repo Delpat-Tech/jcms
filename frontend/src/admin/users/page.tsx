@@ -5,6 +5,8 @@ import Input from "../../components/ui/Input.jsx";
 import Table from "../../components/ui/Table.jsx";
 import Modal from "../../components/ui/Modal.jsx";
 import { userApi, imageApi, fileApi } from '../../api';
+import { useToasts } from '../../components/util/Toasts.jsx';
+import { TriangleAlert } from 'lucide-react';
 
 function AddUserModal({ onClose, onUserAdded }) {
   const [formData, setFormData] = useState({
@@ -219,6 +221,7 @@ function UserDetailsModal({ user, onClose }) {
 }
 
 export default function AdminUsersPage() {
+  const { addNotification } = useToasts() || { addNotification: () => {} };
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -252,7 +255,7 @@ export default function AdminUsersPage() {
 
   const handleToggleUserStatus = async (userId, isActive) => {
     const action = isActive ? 'deactivate' : 'reactivate';
-    if (!window.confirm(`Are you sure you want to ${action} this user?`)) return;
+    addNotification && addNotification('info', `${isActive ? 'Deactivating' : 'Reactivating'} user`, 'Please wait...', true, 1500);
     
     try {
       const response = isActive 
@@ -260,25 +263,44 @@ export default function AdminUsersPage() {
         : await userApi.reactivate(userId);
       
       if (response.ok) {
+        addNotification && addNotification('success', `User ${isActive ? 'deactivated' : 'reactivated'}`, '', true, 2500);
         fetchUsers();
+      } else {
+        addNotification && addNotification('error', `Failed to ${action} user`, '', true, 3000);
       }
     } catch (error) {
       console.error(`Error ${action}ing user:`, error);
+      addNotification && addNotification('error', `Error trying to ${action} user`, error.message || '', true, 3000);
     }
   };
 
   const handlePermanentDelete = async (userId, username) => {
-    if (!window.confirm(`Are you sure you want to PERMANENTLY DELETE ${username}? This action cannot be undone and will delete all their data.`)) return;
-    
-    try {
-      const response = await userApi.delete(userId, true);
-      
-      if (response.ok) {
-        fetchUsers();
+    const confirm = async () => {
+      try {
+        const response = await userApi.delete(userId, true);
+        if (response.ok) {
+          addNotification && addNotification('success', 'User deleted', `${username} was permanently deleted`, true, 2500);
+          fetchUsers();
+        } else {
+          addNotification && addNotification('error', 'Failed to delete user', '', true, 3000);
+        }
+      } catch (error) {
+        console.error('Error permanently deleting user:', error);
+        addNotification && addNotification('error', 'Error deleting user', error.message || '', true, 3000);
       }
-    } catch (error) {
-      console.error('Error permanently deleting user:', error);
-    }
+    };
+    addNotification && addNotification(
+      'warning',
+      'Confirm permanent delete',
+      `Delete ${username}? This cannot be undone.`,
+      true,
+      undefined,
+      [
+        { label: 'Cancel' },
+        { label: 'Delete', variant: 'destructive', onClick: confirm }
+      ],
+      <TriangleAlert className="w-5 h-5 text-yellow-500" />
+    );
   };
 
   const filteredUsers = users.filter(u => 

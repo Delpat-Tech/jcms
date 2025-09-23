@@ -4,6 +4,7 @@ import Button from '../../components/ui/Button.jsx';
 import { adminApi, userApi, imageApi, fileApi, contentApi, activityApi } from '../../api';
 import TrioLoader from '../../components/ui/TrioLoader.jsx';
 import { useNavigate } from 'react-router-dom';
+import { RefreshCcw, AlertTriangle, Users as UsersIcon, FileText, Image as ImageIcon, BarChart3, LineChart, Settings as SettingsIcon, Folder } from 'lucide-react';
 
 export default function AdminOverview() {
   const [user, setUser] = useState(null);
@@ -93,7 +94,7 @@ export default function AdminOverview() {
               disabled={refreshing}
               className="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 flex items-center space-x-2 disabled:opacity-50"
             >
-              {refreshing ? <TrioLoader size="16" color="#6b7280" /> : <span>🔄</span>}
+              {refreshing ? <TrioLoader size="16" color="#6b7280" /> : <RefreshCcw className="w-4 h-4 text-gray-500" />}
               <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
             </button>
             {lastUpdated && (
@@ -109,7 +110,7 @@ export default function AdminOverview() {
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
             <div className="flex items-center">
-              <span className="text-red-500 mr-2">⚠️</span>
+              <AlertTriangle className="w-5 h-5 text-red-500 mr-2" />
               <div className="flex-1">
                 <p className="text-red-700">Error loading dashboard: {error}</p>
               </div>
@@ -137,7 +138,7 @@ export default function AdminOverview() {
                     <p className="text-3xl font-bold text-blue-600 mt-2">{dashboardData.overview?.totalUsers || 0}</p>
                     <p className="text-sm text-gray-500 mt-1">{dashboardData.overview?.activeUsers || 0} active</p>
                   </div>
-                  <div className="text-4xl text-blue-500 opacity-20 hover:opacity-40 transition-opacity">👥</div>
+                  <UsersIcon className="w-12 h-12 text-blue-500 opacity-20 hover:opacity-40 transition-opacity" />
                 </div>
               </div>
 
@@ -151,7 +152,7 @@ export default function AdminOverview() {
                     <p className="text-3xl font-bold text-green-600 mt-2">{dashboardData.overview?.totalContent || 0}</p>
                     <p className="text-sm text-gray-500 mt-1">{dashboardData.overview?.publishedContent || 0} published</p>
                   </div>
-                  <div className="text-4xl text-green-500 opacity-20 hover:opacity-40 transition-opacity">📝</div>
+                  <FileText className="w-12 h-12 text-green-500 opacity-20 hover:opacity-40 transition-opacity" />
                 </div>
               </div>
 
@@ -166,7 +167,7 @@ export default function AdminOverview() {
                     <p className="text-sm text-gray-500 mt-1">{dashboardData.overview?.totalStorage || 0}MB used</p>
                     <p className="text-xs text-gray-400 mt-1">Images: {dashboardData.overview?.totalImages || 0}, Files: {dashboardData.overview?.totalFiles || 0}</p>
                   </div>
-                  <div className="text-4xl text-purple-500 opacity-20 hover:opacity-40 transition-opacity">🖼️</div>
+                  <ImageIcon className="w-12 h-12 text-purple-500 opacity-20 hover:opacity-40 transition-opacity" />
                 </div>
               </div>
 
@@ -177,10 +178,10 @@ export default function AdminOverview() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Analytics</p>
-                    <p className="text-3xl font-bold text-orange-600 mt-2">📊</p>
+                    <BarChart3 className="w-10 h-10 text-orange-600 mt-2" />
                     <p className="text-sm text-gray-500 mt-1">View insights</p>
                   </div>
-                  <div className="text-4xl text-orange-500 opacity-20 hover:opacity-40 transition-opacity">📈</div>
+                  <LineChart className="w-12 h-12 text-orange-500 opacity-20 hover:opacity-40 transition-opacity" />
                 </div>
               </div>
             </div>
@@ -191,7 +192,7 @@ export default function AdminOverview() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md" onClick={() => navigate('/admin/users')}>
                   <div className="flex items-center space-x-3">
-                    <span className="text-2xl hover:scale-110 transition-transform">👥</span>
+                    <UsersIcon className="w-6 h-6 text-gray-700" />
                     <div>
                       <h3 className="font-medium">Manage Users</h3>
                       <p className="text-sm text-gray-500">Create editors & viewers</p>
@@ -200,7 +201,7 @@ export default function AdminOverview() {
                 </div>
                 <div className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md" onClick={() => navigate('/admin/content')}>
                   <div className="flex items-center space-x-3">
-                    <span className="text-2xl hover:scale-110 transition-transform">📝</span>
+                    <FileText className="w-6 h-6 text-gray-700" />
                     <div>
                       <h3 className="font-medium">Content Management</h3>
                       <p className="text-sm text-gray-500">Create and publish content</p>
@@ -209,7 +210,7 @@ export default function AdminOverview() {
                 </div>
                 <div className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md" onClick={() => navigate('/admin/media')}>
                   <div className="flex items-center space-x-3">
-                    <span className="text-2xl hover:scale-110 transition-transform">📁</span>
+                    <Folder className="w-6 h-6 text-gray-700" />
                     <div>
                       <h3 className="font-medium">Media Library</h3>
                       <p className="text-sm text-gray-500">Upload and manage files</p>
@@ -218,7 +219,7 @@ export default function AdminOverview() {
                 </div>
                 <div className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md" onClick={() => navigate('/admin/analytics')}>
                   <div className="flex items-center space-x-3">
-                    <span className="text-2xl hover:scale-110 transition-transform">📊</span>
+                    <BarChart3 className="w-6 h-6 text-gray-700" />
                     <div>
                       <h3 className="font-medium">Analytics</h3>
                       <p className="text-sm text-gray-500">Tenant insights</p>
@@ -227,7 +228,7 @@ export default function AdminOverview() {
                 </div>
                 <div className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md" onClick={() => navigate('/admin/profile')}>
                   <div className="flex items-center space-x-3">
-                    <span className="text-2xl hover:scale-110 transition-transform">⚙️</span>
+                    <SettingsIcon className="w-6 h-6 text-gray-700" />
                     <div>
                       <h3 className="font-medium">Profile Settings</h3>
                       <p className="text-sm text-gray-500">Update your profile</p>
@@ -278,7 +279,7 @@ export default function AdminOverview() {
 
         {!dashboardData && !loading && !error && (
           <div className="text-center py-12">
-            <div className="text-4xl mb-4">📊</div>
+            <BarChart3 className="w-12 h-12 mx-auto mb-4 text-gray-400" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No Data Available</h3>
             <p className="text-gray-500 mb-4">Dashboard data is not available at the moment.</p>
             <button 

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import AdminLayout from '../layout.tsx';
 import { analyticsApi } from '../../api';
+import { Users as UsersIcon, Folder, Zap, UserPlus, Image as ImageIcon, FileText, AlertTriangle } from 'lucide-react';
 
 export default function AdminAnalyticsPage() {
   const [loading, setLoading] = useState(true);
@@ -81,10 +82,10 @@ export default function AdminAnalyticsPage() {
 
         {/* Summary cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard icon="👥" label="Total Users" value={dashboard?.totalUsers} loading={loading} accent="indigo" />
-          <StatCard icon="📁" label="Total Files" value={dashboard?.totalFiles} loading={loading} accent="blue" />
-          <StatCard icon="⚡" label="Active (30d)" value={userStats?.activeUsersCount} loading={loading} accent="purple" />
-          <StatCard icon="🆕" label="New Users" value={userStats?.newUsersCount} loading={loading} accent="emerald" />
+          <StatCard icon={<UsersIcon className="w-5 h-5" />} label="Total Users" value={dashboard?.totalUsers} loading={loading} accent="indigo" />
+          <StatCard icon={<Folder className="w-5 h-5" />} label="Total Files" value={dashboard?.totalFiles} loading={loading} accent="blue" />
+          <StatCard icon={<Zap className="w-5 h-5" />} label="Active (30d)" value={userStats?.activeUsersCount} loading={loading} accent="purple" />
+          <StatCard icon={<UserPlus className="w-5 h-5" />} label="New Users" value={userStats?.newUsersCount} loading={loading} accent="emerald" />
         </div>
 
         {/* Uploads by day bar chart */}
@@ -133,8 +134,8 @@ export default function AdminAnalyticsPage() {
                   <tr key={upload._id} className="border-t hover:bg-gray-50">
                     <td className="py-2 pr-4">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600">
-                          {upload.type === 'image' ? '🖼️' : '📄'} {upload.type}
+                        <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600 inline-flex items-center gap-1">
+                          {upload.type === 'image' ? <ImageIcon className="w-4 h-4" /> : <FileText className="w-4 h-4" />} {upload.type}
                         </span>
                         {upload.originalName || upload.title || upload._id}
                       </div>

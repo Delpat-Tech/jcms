@@ -18,6 +18,7 @@ export default function SuperAdminProfilePage() {
   const [error, setError] = useState('');
   const [strength, setStrength] = useState(0);
   const [hint, setHint] = useState('');
+  const [activeTab, setActiveTab] = useState<'info' | 'password'>('info');
 
   const handleUpdateProfile = async () => {
     setSaving(true); setMessage(''); setError('');
@@ -68,66 +69,61 @@ export default function SuperAdminProfilePage() {
     }
   };
 
-  const handleChangeUsername = async () => {
-    setSaving(true); setMessage(''); setError('');
-    try {
-      const res = await profileApi.changeUsername({ username });
-      const data = await res.json();
-      if (data && data.success !== false) {
-        setMessage('Username changed');
-        const updated = { ...(profile || {}), username };
-        setProfile(updated);
-        localStorage.setItem('user', JSON.stringify(updated));
-      } else {
-        setError(data?.message || 'Failed to change username');
-      }
-    } catch (e) {
-      setError('Failed to change username');
-    } finally {
-      setSaving(false);
-    }
-  };
-
   return (
     <SuperAdminLayout title="Profile">
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold">Profile Settings</h1>
         </div>
-
+        <div className="flex border-b mb-4">
+          <button
+            className={`px-4 py-2 -mb-px border-b-2 font-medium text-sm focus:outline-none ${activeTab === 'info' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+            onClick={() => { setActiveTab('info'); setMessage(''); setError(''); }}
+          >
+            Personal Info
+          </button>
+          <button
+            className={`px-4 py-2 -mb-px border-b-2 font-medium text-sm focus:outline-none ${activeTab === 'password' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+            onClick={() => { setActiveTab('password'); setMessage(''); setError(''); }}
+          >
+            Change Password
+          </button>
+        </div>
         {message && <div className="text-sm text-green-600">{message}</div>}
         {error && <div className="text-sm text-red-600">{error}</div>}
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white p-4 rounded-lg border space-y-3">
-            <div className="text-sm font-medium text-gray-900">Personal Info</div>
-            <label className="text-xs text-gray-600">Username</label>
-            <input value={username} onChange={(e) => setUsername(e.target.value)} className="border rounded px-3 py-2 text-sm w-full" />
-            <label className="text-xs text-gray-600">Email</label>
-            <input value={email} onChange={(e) => setEmail(e.target.value)} className="border rounded px-3 py-2 text-sm w-full" />
-            <div className="flex justify-end">
-              <Button onClick={handleUpdateProfile} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</Button>
+        <div>
+          {activeTab === 'info' && (
+            <div className="bg-white p-4 rounded-lg border space-y-3 max-w-lg mx-auto">
+              <div className="text-sm font-medium text-gray-900">Personal Info</div>
+              <label className="text-xs text-gray-600">Username</label>
+              <input value={username} onChange={(e) => setUsername(e.target.value)} className="border rounded px-3 py-2 text-sm w-full" />
+              <label className="text-xs text-gray-600">Email</label>
+              <input value={email} onChange={(e) => setEmail(e.target.value)} className="border rounded px-3 py-2 text-sm w-full" />
+              <div className="flex justify-end">
+                <Button onClick={handleUpdateProfile} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</Button>
+              </div>
             </div>
-          </div>
-
-          <div className="bg-white p-4 rounded-lg border space-y-3">
-            <div className="text-sm font-medium text-gray-900">Account</div>
-            <label className="text-xs text-gray-600">Current Password</label>
-            <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="border rounded px-3 py-2 text-sm" />
-            <label className="text-xs text-gray-600">New Password</label>
-            <input type="password" value={newPassword} onChange={(e) => {
-              const v = e.target.value; setNewPassword(v);
-              let s = 0; if (v.length >= 8) s++; if (/[A-Z]/.test(v)) s++; if (/[a-z]/.test(v)) s++; if (/[0-9]/.test(v)) s++; if (/[^A-Za-z0-9]/.test(v)) s++; setStrength(s);
-              const m = []; if (v && v.length < 8) m.push('8+ chars'); if (v && !/[A-Z]/.test(v)) m.push('uppercase'); if (v && !/[a-z]/.test(v)) m.push('lowercase'); if (v && !/[0-9]/.test(v)) m.push('number'); if (v && !/[^A-Za-z0-9]/.test(v)) m.push('special'); setHint(m.length?`Missing: ${m.join(', ')}`:'Looks good');
-            }} className="border rounded px-3 py-2 text-sm" />
-            <div className="h-2 bg-gray-200 rounded mt-1"><div className={`h-2 rounded ${strength<=2?'bg-red-500':strength===3?'bg-yellow-500':strength===4?'bg-blue-500':'bg-green-600'}`} style={{width: `${(strength/5)*100}%`}} /></div>
-            {newPassword && <div className="text-xs text-gray-600">{hint}</div>}
-            <label className="text-xs text-gray-600">Confirm Password</label>
-            <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="border rounded px-3 py-2 text-sm" />
-            <div className="flex justify-end">
-              <Button variant="destructive" onClick={handleChangePassword} disabled={saving}>Change Password</Button>
+          )}
+          {activeTab === 'password' && (
+            <div className="bg-white p-4 rounded-lg border space-y-3 max-w-lg mx-auto">
+              <div className="text-sm font-medium text-gray-900">Change Password</div>
+              <label className="text-xs text-gray-600">Current Password</label>
+              <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="border rounded px-3 py-2 text-sm w-full" />
+              <label className="text-xs text-gray-600">New Password</label>
+              <input type="password" value={newPassword} onChange={(e) => {
+                const v = e.target.value; setNewPassword(v);
+                let s = 0; if (v.length >= 8) s++; if (/[A-Z]/.test(v)) s++; if (/[a-z]/.test(v)) s++; if (/[0-9]/.test(v)) s++; if (/[^A-Za-z0-9]/.test(v)) s++; setStrength(s);
+                const m = []; if (v && v.length < 8) m.push('8+ chars'); if (v && !/[A-Z]/.test(v)) m.push('uppercase'); if (v && !/[a-z]/.test(v)) m.push('lowercase'); if (v && !/[0-9]/.test(v)) m.push('number'); if (v && !/[^A-Za-z0-9]/.test(v)) m.push('special'); setHint(m.length?`Missing: ${m.join(', ')}`:'Looks good');
+              }} className="border rounded px-3 py-2 text-sm w-full" />
+              <div className="h-2 bg-gray-200 rounded mt-1"><div className={`h-2 rounded ${strength<=2?'bg-red-500':strength===3?'bg-yellow-500':strength===4?'bg-blue-500':'bg-green-600'}`} style={{width: `${(strength/5)*100}%`}} /></div>
+              {newPassword && <div className="text-xs text-gray-600">{hint}</div>}
+              <label className="text-xs text-gray-600">Confirm Password</label>
+              <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="border rounded px-3 py-2 text-sm w-full" />
+              <div className="flex justify-end">
+                <Button variant="destructive" onClick={handleChangePassword} disabled={saving}>Change Password</Button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </SuperAdminLayout>

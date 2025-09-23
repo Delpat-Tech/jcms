@@ -5,8 +5,11 @@ import FileCard from './FileCard';
 import PreviewModal from './PreviewModal';
 import TrioLoader from '../ui/TrioLoader.jsx';
 import { imageApi, fileApi } from '../../api';
+import { useToasts } from '../util/Toasts.jsx';
+import { TriangleAlert } from 'lucide-react';
 
 const MediaDashboard = () => {
+  const { addNotification } = useToasts() || { addNotification: () => {} };
   const [files, setFiles] = useState([]);
   const [selectedFiles, setSelectedFiles] = useState(new Set());
   const [viewMode, setViewMode] = useState('grid');
@@ -73,6 +76,7 @@ const MediaDashboard = () => {
       setFiles(allFiles);
     } catch (error) {
       console.error('Error fetching files:', error);
+      addNotification && addNotification('error', 'Failed to load files', error.message || '', true, 3000);
     } finally {
       setLoading(false);
     }
@@ -115,20 +119,34 @@ const MediaDashboard = () => {
   };
 
   const handleDeleteFile = async (file) => {
-    try {
-      const response = file.type === 'image' 
-        ? await imageApi.delete(file._id)
-        : await fileApi.delete(file._id);
-      const result = await response.json();
-      
-      if (result.success) {
-        fetchFiles();
-      } else {
-        alert('Failed to delete file: ' + result.message);
+    const confirm = async () => {
+      try {
+        const response = file.type === 'image' 
+          ? await imageApi.delete(file._id)
+          : await fileApi.delete(file._id);
+        const result = await response.json();
+        if (result.success) {
+          addNotification && addNotification('success', 'File deleted', '', true, 2000);
+          fetchFiles();
+        } else {
+          addNotification && addNotification('error', 'Failed to delete file', result.message || '', true, 3000);
+        }
+      } catch (error) {
+        addNotification && addNotification('error', 'Error deleting file', error.message || '', true, 3000);
       }
-    } catch (error) {
-      alert('Error deleting file: ' + error.message);
-    }
+    };
+    addNotification && addNotification(
+      'warning',
+      'Confirm delete',
+      `Delete "${file.filename || file.title || 'file'}"?`,
+      true,
+      undefined,
+      [
+        { label: 'Cancel' },
+        { label: 'Delete', variant: 'destructive', onClick: confirm }
+      ],
+      <TriangleAlert className="w-5 h-5 text-yellow-500" />
+    );
   };
 
   const handleDownloadFile = (file) => {

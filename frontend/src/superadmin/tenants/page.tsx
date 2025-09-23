@@ -6,6 +6,8 @@ import Table from "../../components/ui/Table.jsx";
 import Modal from "../../components/ui/Modal.jsx";
 import { tenantApi, imageApi, fileApi } from '../../api';
 import { Eye, Trash2, Search, Plus } from 'lucide-react';
+import { useToasts } from '../../components/util/Toasts.jsx';
+import { TriangleAlert } from 'lucide-react';
 
 function CreateTenantModal({ onClose, onTenantCreated }) {
   const [formData, setFormData] = useState({
@@ -83,9 +85,8 @@ function CreateTenantModal({ onClose, onTenantCreated }) {
 
   return (
     <Modal open={true} onClose={onClose}>
-      <div className="p-6 w-96">
+      <div className="p-6 w-full max-w-md">
         <h2 className="text-lg font-semibold mb-4">Create New Tenant</h2>
-        
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -99,7 +100,6 @@ function CreateTenantModal({ onClose, onTenantCreated }) {
               required
             />
           </div>
-          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Subdomain
@@ -112,7 +112,6 @@ function CreateTenantModal({ onClose, onTenantCreated }) {
               required
             />
           </div>
-          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Admin Username
@@ -125,7 +124,6 @@ function CreateTenantModal({ onClose, onTenantCreated }) {
               required
             />
           </div>
-          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Admin Email
@@ -138,7 +136,6 @@ function CreateTenantModal({ onClose, onTenantCreated }) {
               required
             />
           </div>
-          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Admin Password
@@ -151,11 +148,9 @@ function CreateTenantModal({ onClose, onTenantCreated }) {
               required
             />
           </div>
-          
           {error && (
             <div className="text-red-600 text-sm">{error}</div>
           )}
-          
           <div className="flex justify-end gap-2 pt-4">
             <Button 
               type="button" 
@@ -455,6 +450,7 @@ function TenantDetailsModal({ tenant, onClose, onTenantUpdated }) {
 }
 
 export default function TenantsPage() {
+  const { addNotification } = useToasts() || { addNotification: () => {} };
   const [tenants, setTenants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -485,17 +481,32 @@ export default function TenantsPage() {
   };
 
   const handleDeleteTenant = async (tenantId) => {
-    if (!window.confirm('Are you sure you want to delete this tenant? This will delete all associated users and data.')) return;
-    
-    try {
-      const response = await tenantApi.delete(tenantId);
-      
-      if (response.ok) {
-        fetchTenants();
+    const confirm = async () => {
+      try {
+        const response = await tenantApi.delete(tenantId);
+        if (response.ok) {
+          addNotification && addNotification('success', 'Tenant deleted', '', true, 2500);
+          fetchTenants();
+        } else {
+          addNotification && addNotification('error', 'Failed to delete tenant', '', true, 3000);
+        }
+      } catch (error) {
+        console.error('Error deleting tenant:', error);
+        addNotification && addNotification('error', 'Error deleting tenant', error.message || '', true, 3000);
       }
-    } catch (error) {
-      console.error('Error deleting tenant:', error);
-    }
+    };
+    addNotification && addNotification(
+      'warning',
+      'Confirm tenant delete',
+      'This will delete all associated users and data. Proceed?',
+      true,
+      undefined,
+      [
+        { label: 'Cancel' },
+        { label: 'Delete', variant: 'destructive', onClick: confirm }
+      ],
+      <TriangleAlert className="w-5 h-5 text-yellow-500" />
+    );
   };
 
   const filteredTenants = tenants.filter(t => 
