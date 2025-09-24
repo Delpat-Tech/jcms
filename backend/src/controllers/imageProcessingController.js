@@ -175,22 +175,11 @@ const streamSize = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Image not found' });
     }
 
-    // Check access similar to other handlers
-    const User = require('../models/user');
-    const currentUser = await User.findById(req.user.id).populate('role');
-    const userRole = currentUser.role.name;
-    if (userRole !== 'superadmin') {
-      const userTenant = req.user.tenant ? req.user.tenant._id.toString() : null;
-      const imageTenant = image.tenant ? image.tenant.toString() : null;
-      if (userTenant !== imageTenant) {
-        return res.status(403).json({ success: false, message: 'Access denied. You can only access images from your tenant.' });
-      }
-      if (userRole !== 'admin' && image.user.toString() !== req.user.id) {
-        return res.status(403).json({ success: false, message: 'Access denied. You can only access your own images.' });
-      }
+    const inputPath = image.internalPath;
+    if (!fs.existsSync(inputPath)) {
+      return res.status(404).json({ success: false, message: 'Image file not found' });
     }
 
-    const inputPath = image.internalPath;
     const dir = path.dirname(inputPath);
     const baseName = path.parse(inputPath).name;
     const format = image.format || 'webp';
@@ -200,6 +189,7 @@ const streamSize = async (req, res) => {
 
     if (!fs.existsSync(targetPath)) {
       const inputBuffer = fs.readFileSync(inputPath);
+      const { generateMultipleSizes } = require('../services/imageService');
       await generateMultipleSizes(inputBuffer, dir, baseName, format);
     }
 

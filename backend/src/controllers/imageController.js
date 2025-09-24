@@ -12,6 +12,7 @@ sharp.cache(false);
 
 const createImage = async (req, res) => {
   try {
+    console.log('=== IMAGE UPLOAD START ===');
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'Please upload an image.' });
     }
@@ -20,6 +21,7 @@ const createImage = async (req, res) => {
     const userId = req.user.id;
     
     console.log('Image upload req.body:', req.body);
+    console.log('File info:', req.file);
 
     if (req.body.notes) {
       try {
@@ -37,16 +39,21 @@ const createImage = async (req, res) => {
 
     // Tenant-based file organization
     const tenantPath = req.user.tenant ? req.user.tenant._id.toString() : 'system';
-    const uploadDir = `uploads/${tenantPath}/${userId}`;
+    const tenantName = req.user.tenant ? req.user.tenant.name : 'System';
+    const uploadDir = path.join(__dirname, '..', '..', 'uploads', tenantPath, userId.toString());
+    console.log('Creating upload directory:', uploadDir);
     fs.mkdirSync(uploadDir, { recursive: true });
+    console.log('Directory created successfully');
 
     const sanitizedFilename = sanitizeFilename(req.file.originalname);
     const baseName = path.parse(sanitizedFilename).name + '-' + Date.now();
     const imageBuffer = fs.readFileSync(req.file.path);
     await safeDeleteFile(req.file.path);
 
-    const outputPath = sanitizePath(path.join(uploadDir, `${baseName}.${chosenFormat}`));
+    const outputPath = path.join(uploadDir, `${baseName}.${chosenFormat}`);
+    console.log('Output path:', outputPath);
     
+    console.log('Processing image with Sharp...');
     const sharpInstance = sharp(imageBuffer);
     if (chosenFormat === 'webp') await sharpInstance.webp({ quality: 80 }).toFile(outputPath);
     else if (chosenFormat === 'avif') await sharpInstance.avif({ quality: 50 }).toFile(outputPath);
@@ -61,22 +68,30 @@ const createImage = async (req, res) => {
     const fileSize = fileStats.size;
 
     const internalPath = outputPath.replace(/\\/g, '/');
-    const fileUrl = `${req.protocol}://${req.get('host')}/${internalPath}`;
+    const relativePath = path.relative(path.join(__dirname, '..', '..'), outputPath).replace(/\\/g, '/');
+    const fileUrl = `${req.protocol}://${req.get('host')}/${relativePath}`;
 
-    const newImage = await Image.create({
+    console.log('Creating database record...');
+    const imageData = {
       title,
       user: userId,
       tenant: req.user.tenant ? req.user.tenant._id : null,
-      tenantName: req.user.tenant ? req.user.tenant.name : 'system',
+      tenantName,
       internalPath,
       fileUrl,
       format: chosenFormat,
       fileSize,
       notes: req.body.notes || {},
-    });
+    };
+    console.log('Image data to save:', imageData);
+    const newImage = await Image.create(imageData);
+    console.log('Database record created successfully');
 
-    res.status(201).json({ success: true, data: newImage });
+    console.log('=== IMAGE UPLOAD SUCCESS ===');
+    console.log('Sending response:', { success: true, data: newImage });
+    return res.status(201).json({ success: true, data: newImage });
   } catch (error) {
+    console.error('Image upload error:', error);
     res.status(500).json({ success: false, message: 'Error creating image', error: error.message });
   }
 };
@@ -113,7 +128,14 @@ const getImages = async (req, res) => {
       }
     }
     
-    const images = await Image.find(filter).populate('user', 'username email');
+    const isRaw = req.query.raw === 'true';
+    const query = isRaw ? Image.find(filter).lean() : Image.find(filter).populate('user', 'username email');
+    const images = await query;
+    
+    if (isRaw) {
+      return res.json(images);
+    }
+    
     res.status(200).json({ 
       success: true, 
       data: images,
@@ -156,6 +178,11 @@ const getImageById = async (req, res) => {
           return res.status(403).json({ success: false, message: 'Access denied. You can only access your own images.' });
         }
       }
+    }
+    
+    const isRaw = req.query.raw === 'true';
+    if (isRaw) {
+      return res.json(image.toObject());
     }
     
     res.status(200).json({ success: true, data: image });
@@ -374,6 +401,29 @@ const getBulkImages = async (req, res) => {
   }
 };
 
+// Get raw image data
+const getRawImages = async (req, res) => {
+  try {
+    const images = await Image.find({}).lean();
+    res.json(images);
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error retrieving raw images', error: error.message });
+  }
+};
+
+// Get raw image by ID
+const getRawImageById = async (req, res) => {
+  try {
+    const image = await Image.findById(req.params.id).lean();
+    if (!image) {
+      return res.status(404).json({ success: false, message: 'Image not found' });
+    }
+    res.json(image);
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error retrieving raw image', error: error.message });
+  }
+};
+
 module.exports = {
   createImage,
   getImages,
@@ -381,5 +431,7 @@ module.exports = {
   updateImage,
   patchImage,
   deleteImage,
-  getBulkImages
+  getBulkImages,
+  getRawImages,
+  getRawImageById
 };

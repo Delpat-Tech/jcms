@@ -68,7 +68,8 @@ const MediaDashboard = () => {
             filename: file.originalName || file.filename,
             title: file.title,
             size: file.fileSize || file.size || 0,
-            fullUrl: toAbsoluteUrl(file.fileUrl || file.fullUrl)
+            fullUrl: toAbsoluteUrl(file.fileUrl || file.fullUrl),
+            userInfo: file.user
           }))];
         }
       }
@@ -313,6 +314,8 @@ const MediaDashboard = () => {
         <PreviewModal
           file={previewFile}
           onClose={() => setPreviewFile(null)}
+          onDelete={handleDeleteFile}
+          onDownload={handleDownloadFile}
         />
       )}
     </div>

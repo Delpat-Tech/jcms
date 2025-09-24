@@ -13,6 +13,10 @@ const fileSchema = new mongoose.Schema({
     ref: 'Tenant',
     default: null // null for superadmin files
   },
+  tenantName: {
+    type: String,
+    default: 'System'
+  },
   internalPath: { type: String, required: true },
   fileUrl: { type: String, required: true },
   originalName: { type: String, required: true },

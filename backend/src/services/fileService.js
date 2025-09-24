@@ -43,8 +43,8 @@ const processFile = async (file, tenant, section) => {
   const fileType = getFileType(file.mimetype, file.originalname);
   const ext = path.extname(file.originalname).toLowerCase();
   
-  // Create destination directory
-  const destDir = path.join('uploads', tenant, section);
+  // Create destination directory - use tenant ID, not 'default'
+  const destDir = path.join(__dirname, '..', '..', 'uploads', tenant, section);
   fs.mkdirSync(destDir, { recursive: true });
   
   if (fileType === 'image') {
@@ -56,9 +56,10 @@ const processFile = async (file, tenant, section) => {
       .avif({ quality: 80 })
       .toFile(destPath);
     
+    const relativePath = path.relative(path.join(__dirname, '..', '..'), destPath).replace(/\\/g, '/');
     return {
       internalPath: destPath,
-      fileUrl: `/uploads/${tenant}/${section}/${filename}`,
+      fileUrl: `/${relativePath}`,
       format: 'avif',
       fileType
     };
@@ -69,9 +70,10 @@ const processFile = async (file, tenant, section) => {
     
     fs.renameSync(file.path, destPath);
     
+    const relativePath = path.relative(path.join(__dirname, '..', '..'), destPath).replace(/\\/g, '/');
     return {
       internalPath: destPath,
-      fileUrl: `/uploads/${tenant}/${section}/${filename}`,
+      fileUrl: `/${relativePath}`,
       format: ext.substring(1),
       fileType
     };

@@ -14,12 +14,17 @@ const FileCard = ({ file, viewMode, selected, onSelect, onPreview, onDelete, onD
   const handleDownload = (file) => {
     const url = file.fileUrl || file.fullUrl;
     if (url) {
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = file.filename || file.title || 'download';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      fetch(url)
+        .then(response => response.blob())
+        .then(blob => {
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = file.filename || file.title || 'download';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(link.href);
+        });
     }
   };
 
@@ -89,7 +94,7 @@ const FileCard = ({ file, viewMode, selected, onSelect, onPreview, onDelete, onD
         
         <div className="grid grid-cols-2 gap-2 justify-items-center">
           <button
-            onClick={onPreview}
+            onClick={() => onPreview(file)}
             className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
           >
             <Eye className="w-4 h-4" />
@@ -130,13 +135,13 @@ const FileCard = ({ file, viewMode, selected, onSelect, onPreview, onDelete, onD
             src={file.fileUrl || file.fullUrl} 
             alt={file.title || file.filename}
             className="w-full h-full object-cover cursor-pointer"
-            onClick={onPreview}
+            onClick={() => onPreview(file)}
             onError={(e) => { e.currentTarget.style.display = 'none'; }}
           />
         ) : (
           <div 
             className="w-full h-full flex items-center justify-center cursor-pointer"
-            onClick={onPreview}
+            onClick={() => onPreview(file)}
           >
             {getFileIcon(file.type)}
           </div>
@@ -202,7 +207,7 @@ const FileCard = ({ file, viewMode, selected, onSelect, onPreview, onDelete, onD
         {/* Actions */}
         <div className="grid grid-cols-2 gap-2 justify-items-center">
           <button
-            onClick={onPreview}
+            onClick={() => onPreview(file)}
             className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
             title="Preview"
           >

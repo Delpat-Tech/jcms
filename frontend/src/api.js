@@ -101,7 +101,9 @@ export const imageApi = {
   getThumbnail: (id) => api.get(`/api/images/${id}/thumbnail`),
   getMedium: (id) => api.get(`/api/images/${id}/medium`),
   getLarge: (id) => api.get(`/api/images/${id}/large`),
-  getByUser: (userId) => api.get(`/api/users/${userId}/images`)
+  getByUser: (userId) => api.get(`/api/users/${userId}/images`),
+  getRaw: () => api.get('/api/images?raw=true').then(res => res.json()),
+  getRawById: (id) => api.get(`/api/images/${id}?raw=true`).then(res => res.json())
 };
 
 export const fileApi = {
@@ -109,7 +111,9 @@ export const fileApi = {
   upload: (formData) => api.post('/api/files/upload-multiple', formData),
   uploadSingle: (formData) => api.post('/api/files/upload-single', formData),
   delete: (id) => api.delete(`/api/files/${id}`),
-  getByUser: (userId) => api.get(`/api/users/${userId}/files`)
+  getByUser: (userId) => api.get(`/api/users/${userId}/files`),
+  getRaw: () => api.get('/api/files?raw=true').then(res => res.json()),
+  getRawById: (id) => api.get(`/api/files/${id}?raw=true`).then(res => res.json())
 };
 
 export const tenantApi = {
@@ -163,8 +167,8 @@ export const adminApi = {
   deleteUser: (id) => api.delete(`/api/admin/users/${id}`),
   getDashboard: () => api.get('/api/admin/dashboard'),
   getStats: () => api.get('/api/admin/stats')
+  
 };
-
 export const superadminApi = {
   getUsers: () => api.get('/api/superadmin/users'),
   getRoles: () => api.get('/api/superadmin/roles'),

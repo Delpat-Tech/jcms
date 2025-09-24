@@ -25,13 +25,14 @@ const uploadFile = async (req, res) => {
     for (const file of files) {
       if (!file) continue;
 
-      const { title, notes, tenant = 'default', section = 'general' } = req.body;
+      const { title, notes, section = 'general' } = req.body;
       const fileTitle = title || file.originalname;
+      const tenantPath = req.user.tenant ? req.user.tenant._id.toString() : 'system';
       
-      console.log('File upload data:', { title, notes, tenant, section });
+      console.log('File upload data:', { title, notes, tenantPath, section });
       console.log('Creating file with notes:', notes);
 
-      const processedFile = await processFile(file, tenant, section);
+      const processedFile = await processFile(file, tenantPath, section);
     
     const baseUrl = `${req.protocol}://${req.get('host')}`;
     
@@ -39,6 +40,7 @@ const uploadFile = async (req, res) => {
         title: fileTitle,
         user: req.user.id,
         tenant: req.user.tenant?._id || null,
+        tenantName: req.user.tenant ? req.user.tenant.name : 'System',
         originalName: file.originalname,
         fileSize: file.size,
         notes: notes || '',
@@ -140,9 +142,15 @@ const getFiles = async (req, res) => {
       filter.tenant = req.user.tenant?._id || null;
     }
     
-    const files = await File.find(filter).populate('user', 'username email').sort({ createdAt: -1 });
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const isRaw = req.query.raw === 'true';
+    const query = isRaw ? File.find(filter).lean().sort({ createdAt: -1 }) : File.find(filter).populate('user', 'username email').sort({ createdAt: -1 });
+    const files = await query;
     
+    if (isRaw) {
+      return res.json(files);
+    }
+    
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
     const filesWithFullUrl = files.map(file => ({
       ...file.toObject(),
       fullUrl: `${baseUrl}${file.fileUrl}`
@@ -164,6 +172,11 @@ const getFileById = async (req, res) => {
     const file = await File.findOne(filter).populate('user', 'username email');
     if (!file) {
       return res.status(404).json({ success: false, message: 'File not found' });
+    }
+    
+    const isRaw = req.query.raw === 'true';
+    if (isRaw) {
+      return res.json(file.toObject());
     }
     
     const baseUrl = `${req.protocol}://${req.get('host')}`;
@@ -256,4 +269,27 @@ const convertFileFormat = async (req, res) => {
   }
 };
 
-module.exports = { uploadFile, getFiles, getFileById, deleteFile, convertFileFormat, getFilesByType };
+// Get raw file data
+const getRawFiles = async (req, res) => {
+  try {
+    const files = await File.find({}).lean();
+    res.json(files);
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error retrieving raw files', error: error.message });
+  }
+};
+
+// Get raw file by ID
+const getRawFileById = async (req, res) => {
+  try {
+    const file = await File.findById(req.params.id).lean();
+    if (!file) {
+      return res.status(404).json({ success: false, message: 'File not found' });
+    }
+    res.json(file);
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error retrieving raw file', error: error.message });
+  }
+};
+
+module.exports = { uploadFile, getFiles, getFileById, deleteFile, convertFileFormat, getFilesByType, getRawFiles, getRawFileById };

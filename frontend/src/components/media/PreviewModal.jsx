@@ -1,7 +1,59 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { X, ChevronLeft, ChevronRight, Download, Edit3, Trash2 } from 'lucide-react';
 
 const PreviewModal = ({ file, onClose, onNext, onPrev, onDelete, onDownload }) => {
+  const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
+  const [dropdownTimeout, setDropdownTimeout] = useState(null);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [newTitle, setNewTitle] = useState(file.title || file.filename || '');
+
+  const handleImageDownload = (imageId, size) => {
+    const url = `http://localhost:5000/api/images/${imageId}/${size}`;
+    fetch(url)
+      .then(response => response.blob())
+      .then(blob => {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `${file.title || file.filename}_${size}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+      });
+  };
+
+  const handleRegularDownload = (file) => {
+    const url = file.fileUrl || file.fullUrl;
+    if (url) {
+      fetch(url)
+        .then(response => response.blob())
+        .then(blob => {
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = file.filename || file.title || 'download';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(link.href);
+        });
+    }
+  };
+
+  const handleRename = async () => {
+    try {
+      const { imageApi, fileApi } = await import('../../api');
+      const response = file.type === 'image' 
+        ? await imageApi.update(file._id, { title: newTitle })
+        : await fileApi.update?.(file._id, { title: newTitle });
+      
+      if (response) {
+        file.title = newTitle;
+        setIsRenaming(false);
+      }
+    } catch (error) {
+      console.error('Rename failed:', error);
+    }
+  };
   const handleKeyDown = (e) => {
     switch (e.key) {
       case 'Escape':
@@ -66,7 +118,7 @@ const PreviewModal = ({ file, onClose, onNext, onPrev, onDelete, onDownload }) =
         </div>
         <p>Preview not available for this file type</p>
         <button 
-          onClick={() => onDownload?.(file)}
+          onClick={() => handleRegularDownload(file)}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
         >
           Download to view
@@ -115,7 +167,24 @@ const PreviewModal = ({ file, onClose, onNext, onPrev, onDelete, onDownload }) =
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <div>
-                <h2 className="text-xl font-semibold mb-2">{file.title || file.filename}</h2>
+                {isRenaming ? (
+                  <input
+                    type="text"
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    onBlur={handleRename}
+                    onKeyPress={(e) => e.key === 'Enter' && handleRename()}
+                    className="text-xl font-semibold mb-2 bg-white bg-opacity-20 text-white border border-white border-opacity-30 rounded px-2 py-1 w-full"
+                    autoFocus
+                  />
+                ) : (
+                  <h2 
+                    className="text-xl font-semibold mb-2 cursor-pointer"
+                    onDoubleClick={() => setIsRenaming(true)}
+                  >
+                    {file.title || file.filename}
+                  </h2>
+                )}
                 <div className="flex items-center gap-4 text-sm text-gray-300 mb-2 flex-wrap">
                   <span>{file.format?.toUpperCase()}</span>
                   <span>{file.size ? `${Math.round(file.size / 1024)} KB` : ''}</span>
@@ -136,13 +205,71 @@ const PreviewModal = ({ file, onClose, onNext, onPrev, onDelete, onDownload }) =
                 >
                   <X className="w-5 h-5" />
                 </button>
+                {file.type === 'image' ? (
+                  <div className="relative">
+                    <button
+                      className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg"
+                      onMouseEnter={() => {
+                        if (dropdownTimeout) clearTimeout(dropdownTimeout);
+                        setShowDownloadDropdown(true);
+                      }}
+                      onMouseLeave={() => {
+                        const timeout = setTimeout(() => setShowDownloadDropdown(false), 300);
+                        setDropdownTimeout(timeout);
+                      }}
+                    >
+                      <Download className="w-5 h-5" />
+                    </button>
+                    {showDownloadDropdown && (
+                      <div 
+                        className="absolute bottom-full left-0 mb-2 bg-white border rounded-lg shadow-lg p-2 z-10 min-w-max"
+                        onMouseEnter={() => {
+                          if (dropdownTimeout) clearTimeout(dropdownTimeout);
+                        }}
+                        onMouseLeave={() => {
+                          const timeout = setTimeout(() => setShowDownloadDropdown(false), 200);
+                          setDropdownTimeout(timeout);
+                        }}
+                      >
+                        <button
+                          onClick={() => handleImageDownload(file._id, 'thumbnail')}
+                          className="block w-full text-left px-3 py-1 text-xs hover:bg-gray-100 rounded whitespace-nowrap text-black"
+                        >
+                          Thumbnail (150x150)
+                        </button>
+                        <button
+                          onClick={() => handleImageDownload(file._id, 'medium')}
+                          className="block w-full text-left px-3 py-1 text-xs hover:bg-gray-100 rounded whitespace-nowrap text-black"
+                        >
+                          Medium (800x600)
+                        </button>
+                        <button
+                          onClick={() => handleImageDownload(file._id, 'large')}
+                          className="block w-full text-left px-3 py-1 text-xs hover:bg-gray-100 rounded whitespace-nowrap text-black"
+                        >
+                          Large (1920x1080)
+                        </button>
+                        <button
+                          onClick={() => handleRegularDownload(file)}
+                          className="block w-full text-left px-3 py-1 text-xs hover:bg-gray-100 rounded whitespace-nowrap text-black"
+                        >
+                          Original
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <button 
+                    onClick={() => handleRegularDownload(file)}
+                    className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg"
+                  >
+                    <Download className="w-5 h-5" />
+                  </button>
+                )}
                 <button 
-                  onClick={() => onDownload?.(file)}
+                  onClick={() => setIsRenaming(true)}
                   className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg"
                 >
-                  <Download className="w-5 h-5" />
-                </button>
-                <button className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg">
                   <Edit3 className="w-5 h-5" />
                 </button>
                 <button 
