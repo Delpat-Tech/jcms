@@ -30,7 +30,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
   
   return (
     <div className="border-2 border-gray-200 rounded-lg focus-within:border-indigo-500 transition-colors">
-      <div className="border-b border-gray-200 p-2 flex space-x-2">
+      <div className="border-b border-gray-200 p-2 flex flex-wrap gap-2">
         <button 
           type="button"
           className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded transition-colors"
@@ -518,15 +518,15 @@ export default function ContentEditor() {
   return (
     <UserLayout>
       {/* Header with gradient background */}
-      <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white p-8 rounded-xl shadow-lg mb-8">
-        <div className="flex items-center justify-between">
+      <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white p-4 sm:p-6 lg:p-8 rounded-xl shadow-lg mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold mb-2 flex items-center gap-3"><Sparkles className="w-7 h-7" /><span>Content Editor</span></h1>
-            <p className="text-purple-100">Create amazing content with our powerful editor</p>
+            <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2 flex items-center gap-3"><Sparkles className="w-6 h-6 sm:w-7 sm:h-7" /><span>Content Editor</span></h1>
+            <p className="text-purple-100 text-sm sm:text-base">Create amazing content with our powerful editor</p>
           </div>
-          <div className="text-right">
-            <div className="text-sm text-purple-100">Word Count</div>
-            <div className="text-2xl font-bold">{wordCount}</div>
+          <div className="text-left sm:text-right">
+            <div className="text-xs sm:text-sm text-purple-100">Word Count</div>
+            <div className="text-xl sm:text-2xl font-bold">{wordCount}</div>
           </div>
         </div>
       </div>
@@ -539,7 +539,7 @@ export default function ContentEditor() {
       )}
 
       {/* Tabs */}
-      <div className="flex space-x-1 mb-8 bg-gray-100 p-1 rounded-lg">
+      <div className="flex flex-wrap gap-2 mb-6 sm:mb-8 bg-gray-100 p-1 rounded-lg">
         {[
           { id: 'editor', label: (<span className="inline-flex items-center gap-2"><Pencil className="w-4 h-4" /> Editor</span>), count: null },
           { id: 'drafts', label: (<span className="inline-flex items-center gap-2"><FileText className="w-4 h-4" /> Drafts</span>), count: drafts.length },
@@ -549,7 +549,7 @@ export default function ContentEditor() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-200 ${
+            className={`flex-1 basis-full sm:basis-auto py-2.5 sm:py-3 px-3 sm:px-4 rounded-lg font-medium transition-all duration-200 ${
               activeTab === tab.id
                 ? 'bg-white text-indigo-600 shadow-md scale-[1.02]'
                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
@@ -567,13 +567,13 @@ export default function ContentEditor() {
 
       {/* Editor Tab */}
       {activeTab === 'editor' && (
-        <div className="space-y-8">
+        <div className="space-y-6 sm:space-y-8">
           {/* Main Editor Content */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
             {/* Editor Column */}
             <div className="lg:col-span-2 space-y-6">
               {/* Title Input */}
-              <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+              <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4 sm:p-6">
                 <label className="block text-sm font-medium text-gray-700 mb-3">Title</label>
                 <input
                   value={title}
@@ -584,12 +584,12 @@ export default function ContentEditor() {
               </div>
 
               {/* Content Editor */}
-              <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+              <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4 sm:p-6">
                 <div className="flex items-center justify-between mb-4">
                   <label className="text-sm font-medium text-gray-700">Content</label>
-                  <div className="flex items-center space-x-4">
+                  <div className="flex items-center gap-3 flex-wrap">
                     <span className="text-sm text-gray-500">{wordCount} words</span>
-                    <label className="flex items-center space-x-2">
+                    <label className="flex items-center gap-2">
                       <input
                         type="checkbox"
                         checked={autoSave}
@@ -608,7 +608,7 @@ export default function ContentEditor() {
               </div>
 
               {/* Excerpt */}
-              <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+              <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4 sm:p-6">
                 <label className="block text-sm font-medium text-gray-700 mb-3">Excerpt (Optional)</label>
                 <textarea
                   value={excerpt}
@@ -623,7 +623,7 @@ export default function ContentEditor() {
             {/* Settings Column */}
             <div className="lg:col-span-1 space-y-6">
               {/* Publishing Settings */}
-              <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+              <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4 sm:p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center"><SettingsIcon className="w-4 h-4 mr-2" />Settings</h3>
                 
                 <div className="space-y-4">
@@ -672,7 +672,7 @@ export default function ContentEditor() {
               </div>
 
               {/* Cover Image */}
-              <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+              <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4 sm:p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center"><ImageIcon className="w-4 h-4 mr-2" />Cover Image</h3>
                 
                 <div className="space-y-4">
@@ -707,11 +707,11 @@ export default function ContentEditor() {
               </div>
 
               {/* Tags */}
-              <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+              <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4 sm:p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center"><Tags className="w-4 h-4 mr-2" />Tags</h3>
                 
                 <div className="space-y-3">
-                  <div className="flex space-x-2">
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-2">
                     <input
                       value={newTag}
                       onChange={(e) => setNewTag(e.target.value)}
@@ -746,7 +746,7 @@ export default function ContentEditor() {
               </div>
 
               {/* Action Buttons */}
-              <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+              <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4 sm:p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center"><Rocket className="w-4 h-4 mr-2" />Actions</h3>
                 
                 <div className="space-y-3">
@@ -796,7 +796,7 @@ export default function ContentEditor() {
       {activeTab !== 'editor' && (
         <div className="space-y-6">
           {/* Search Bar */}
-          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4 sm:p-6">
             <div className="flex items-center space-x-4">
               <div className="flex-1">
                 <input
@@ -817,7 +817,7 @@ export default function ContentEditor() {
           </div>
 
           {/* Content List */}
-          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4 sm:p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
               <span className="mr-2">
                 {activeTab === 'drafts' ? <FileText className="w-5 h-5" /> : activeTab === 'published' ? <CheckCircle2 className="w-5 h-5" /> : <CalendarDays className="w-5 h-5" />}

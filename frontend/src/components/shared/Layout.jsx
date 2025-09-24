@@ -1,18 +1,26 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 import Footer from "./Footer";
 
 function Layout({ children, title, user }) {
-	const [sidebarOpen, setSidebarOpen] = useState(false);
-	const handleOpenMenu = () => setSidebarOpen(true);
-	const handleCloseMenu = () => setSidebarOpen(false);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [isMobileView, setIsMobileView] = useState(false);
+    const handleOpenMenu = () => setSidebarOpen((prev) => !prev);
+    const handleCloseMenu = () => setSidebarOpen(false);
+
+    useEffect(() => {
+        const check = () => setIsMobileView(window.innerWidth < 1024);
+        check();
+        window.addEventListener('resize', check);
+        return () => window.removeEventListener('resize', check);
+    }, []);
 
 	const role = user?.role?.toLowerCase();
 	let menuItems = [];
 	if (role === "superadmin") {
 		menuItems = [
-			{ href: "/superadmin/overview", label: "Overview" },
+			{ href: "/superadmin/overview", label: "Dashboard" },
 			{ href: "/superadmin/users", label: "Users" },
 			{ href: "/superadmin/media", label: "Media" },
 			{ href: "/superadmin/roles", label: "Roles" },
@@ -23,7 +31,7 @@ function Layout({ children, title, user }) {
 		];
 	} else if (role === "admin") {
 		menuItems = [
-			{ href: "/admin/overview", label: "Overview" },
+			{ href: "/admin/overview", label: "Dashboard" },
 			{ href: "/admin/content", label: "Content" },
 			{ href: "/admin/media", label: "Media" },
 			{ href: "/admin/users", label: "Users" },
@@ -43,12 +51,14 @@ function Layout({ children, title, user }) {
 			{ href: "/dashboard", label: "Dashboard" },
 		];
 	}
-	return (
-		<div className="min-h-screen" style={{ backgroundColor: 'var(--bg-color, #F9FAFB)', color: 'var(--text-color, #111827)' }}>
+    const contentMarginLeft = isMobileView ? 0 : 'var(--sidebar-width, 200px)';
+
+    return (
+        <div className="min-h-screen overflow-x-hidden" style={{ backgroundColor: 'var(--bg-color, #F9FAFB)', color: 'var(--text-color, #111827)' }}>
 			<Header title={title} user={user} onMenuClick={handleOpenMenu} />
-			<div className="flex">
+            <div className="flex w-full overflow-x-hidden lg:pt-14">
 				<Sidebar title={title} menuItems={menuItems} user={user} isOpen={sidebarOpen} onClose={handleCloseMenu} onLinkClick={handleCloseMenu} />
-				<main className="flex-1 min-h-[calc(100vh-56px-56px)] px-4 py-6" style={{ marginLeft: 'var(--sidebar-width, 200px)' }}>{children}</main>
+                <main className="flex-1 min-h-[calc(100vh-56px-56px)] px-4 py-6 w-full" style={{ marginLeft: contentMarginLeft }}>{children}</main>
 			</div>
 			<Footer />
 		</div>

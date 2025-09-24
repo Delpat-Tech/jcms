@@ -6,7 +6,7 @@ import Table from "../../components/ui/Table.jsx";
 import Modal from "../../components/ui/Modal.jsx";
 import { userApi, imageApi, fileApi } from '../../api';
 import { useToasts } from '../../components/util/Toasts.jsx';
-import { TriangleAlert } from 'lucide-react';
+import { TriangleAlert, Search } from 'lucide-react';
 
 function AddUserModal({ onClose, onUserAdded }) {
   const [formData, setFormData] = useState({
@@ -359,25 +359,26 @@ export default function AdminUsersPage() {
   return (
     <AdminLayout title="User Management">
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
-          <div className="flex items-center gap-4">
-            <div className="relative">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">User Management</h1>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+            <div className="relative w-full sm:w-64">
+              <Search className="w-4 h-4 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
               <Input
                 type="text"
-                placeholder="🔍 Search users..."
+                placeholder="Search users..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8"
+                className="pl-8 w-full"
               />
             </div>
-            <Button onClick={() => setShowAddModal(true)}>
+            <Button onClick={() => setShowAddModal(true)} className="w-full sm:w-auto">
               + Add User
             </Button>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-white rounded-lg shadow overflow-x-auto">
           {loading ? (
             <div className="p-8 text-center">Loading users...</div>
           ) : (

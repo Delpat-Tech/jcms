@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useLocation, Link } from "react-router-dom";
-import { Home, FileText, Image as ImageIcon, Users as UsersIcon, Settings, Shield, BarChart2, User as UserIcon, HelpCircle } from "react-feather";
+import { Home, FileText, Image as ImageIcon, Users as UsersIcon, Settings, Shield, BarChart2, User as UserIcon, HelpCircle, Layers } from "react-feather";
 
 // Chevron icon (kept here for potential future use)
 
@@ -8,9 +8,14 @@ import { Home, FileText, Image as ImageIcon, Users as UsersIcon, Settings, Shiel
 const FeatherIcon = ({ name, active }) => {
   const cls = `h-5 w-5 ${active ? "text-indigo-700" : "text-gray-400 group-hover:text-indigo-700"}`;
   switch ((name || "").toLowerCase()) {
+    case "overview":
+      return <Home className={cls} />;
     case "dashboard":
     case "/dashboard":
       return <Home className={cls} />;
+    case "tenants":
+    case "/superadmin/tenants":
+      return <Layers className={cls} />;
     case "content":
     case "/dashboard/content":
       return <FileText className={cls} />;
@@ -161,10 +166,10 @@ const Sidebar = ({
 
   // Collapse toggle handled inline for simplicity on fixed sidebar
 
-  const sidebarBaseClasses = "z-50 bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out";
+  const sidebarBaseClasses = "z-50 bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out overflow-x-hidden";
   let sidebarDynamicClasses = "";
   if (isMobileView) {
-    sidebarDynamicClasses = `fixed h-full top-0 left-0 ${isOpen ? "w-[200px] translate-x-0" : "w-0 -translate-x-full border-transparent overflow-hidden"}`;
+    sidebarDynamicClasses = `fixed top-14 left-0 h-[calc(100vh-56px)] ${isOpen ? "w-[200px] translate-x-0" : "w-0 -translate-x-full border-transparent overflow-hidden"}`;
   } else {
     // Fixed sidebar on desktop below the header
     sidebarDynamicClasses = `fixed top-14 left-0 h-[calc(100vh-56px)] ${isDesktopCollapsed ? "w-[72px]" : "w-[200px]"}`;
@@ -178,7 +183,7 @@ const Sidebar = ({
   return (
     <>
       {isMobileView && isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" onClick={onClose} aria-hidden="true" />
+        <div className="fixed inset-x-0 top-14 bottom-0 bg-black bg-opacity-50 z-40 lg:hidden" onClick={onClose} aria-hidden="true" />
       )}
       <aside className={`${sidebarBaseClasses} ${sidebarDynamicClasses}`}>
         {/* Desktop Toggle Button */}

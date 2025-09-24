@@ -499,10 +499,10 @@ export default function UsersPage() {
   return (
     <SuperAdminLayout title="Users Management" user={user}>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">Users Management</h1>
-          <div className="flex items-center gap-4">
-            <div className="inline-flex items-center rounded-md border border-gray-300 bg-white shadow-sm overflow-hidden" role="tablist" aria-label="Status filter">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Users Management</h1>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+            <div className="inline-flex items-center rounded-md border border-gray-300 bg-white shadow-sm overflow-hidden w-full sm:w-auto" role="tablist" aria-label="Status filter">
               <button
                 type="button"
                 onClick={() => setStatusFilter('all')}
@@ -545,23 +545,23 @@ export default function UsersPage() {
                 Inactive
               </button>
             </div>
-            <div className="relative">
+            <div className="relative w-full sm:w-64">
               <Search className="w-4 h-4 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
               <Input
                 type="text"
                 placeholder="Search users..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8"
+                className="pl-8 w-full"
               />
             </div>
-            <Button onClick={() => setShowAddModal(true)}>
+            <Button onClick={() => setShowAddModal(true)} className="w-full sm:w-auto">
               <span className="inline-flex items-center gap-1"><Plus className="w-4 h-4" /> Add User</span>
             </Button>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-white rounded-lg shadow overflow-x-auto">
           {loading ? (
             <div className="p-8 text-center">Loading users...</div>
           ) : (
@@ -573,7 +573,7 @@ export default function UsersPage() {
         </div>
 
         {totalPages > 1 && (
-          <div className="flex justify-center">
+          <div className="flex justify-center px-2">
             <div className="flex items-center gap-2">
               <button 
                 onClick={handlePrevious}
