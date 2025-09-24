@@ -216,7 +216,7 @@ export default function SuperAdminOverview() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Analytics</p>
-                    <p className="text-3xl font-bold text-orange-600 mt-2">📊</p>
+                    <BarChart3 className="w-10 h-10 text-orange-600 mt-2" />
                     <p className="text-sm text-gray-500 mt-1">View insights</p>
                   </div>
                   <LineChart className="w-10 h-10 text-orange-500 opacity-20 hover:opacity-40 transition-opacity" />

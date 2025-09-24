@@ -53,7 +53,7 @@ function Header({ title = "JCMS", user, onMenuClick }) {
     const unreadCount = notifications?.filter?.(n => !n.read && n.status !== 'read')?.length || 0;
 
     return (
-        <header className="sticky lg:fixed top-0 z-[70] w-full border-b bg-white/70 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+        <header className="sticky lg:fixed top-0 z-[70] w-full border-b border-gray-200/70 bg-white/85 backdrop-blur supports-[backdrop-filter]:bg-white/75 shadow-sm">
             <div className="flex h-14 w-full items-center justify-between px-2 sm:px-3">
                 <div className="flex items-center gap-3 min-w-0">
                     <button
@@ -98,7 +98,7 @@ function Header({ title = "JCMS", user, onMenuClick }) {
                             )}
                         </button>
                         {showNotifDropdown && (
-                            <div className="absolute right-0 top-full mt-1 w-80 max-w-[92vw] sm:max-w-[80vw] bg-white border rounded-md shadow-lg z-50">
+                            <div className="absolute right-0 top-full mt-1 w-80 max-w-[92vw] sm:max-w-[80vw] bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 border rounded-md shadow-lg z-50">
                                 <div className="px-3 py-2 border-b flex items-center justify-between">
                                     <span className="text-sm font-medium text-gray-700">Notifications</span>
                                     <span className="text-xs text-gray-500">{unreadCount} unread</span>

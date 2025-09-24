@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useLocation, Link } from "react-router-dom";
-import { Home, FileText, Image as ImageIcon, Users as UsersIcon, Settings, Shield, BarChart2, User as UserIcon, HelpCircle, Layers } from "react-feather";
+import { Home, FileText, Image as ImageIcon, Users as UsersIcon, Settings, BarChart2, HelpCircle, Layers, Key, UserCheck } from "react-feather";
 
 // Chevron icon (kept here for potential future use)
 
@@ -27,7 +27,7 @@ const FeatherIcon = ({ name, active }) => {
       return <UsersIcon className={cls} />;
     case "roles":
     case "/dashboard/roles":
-      return <Shield className={cls} />;
+      return <Key className={cls} />;
     case "system settings":
     case "settings":
     case "/dashboard/settings":
@@ -37,7 +37,7 @@ const FeatherIcon = ({ name, active }) => {
       return <BarChart2 className={cls} />;
     case "profile":
     case "/user/profile":
-      return <UserIcon className={cls} />;
+      return <UserCheck className={cls} />;
     case "help":
     case "/user/help":
       return <HelpCircle className={cls} />;
@@ -79,14 +79,17 @@ const NavItem = ({ href, label, icon, isActiveCheck, isTextHidden, onLinkClick }
       <Link
         to={href}
         onClick={onLinkClick}
-        className={`flex items-center px-3 py-2.5 text-sm rounded-md transition-colors duration-150 ease-in-out group w-full h-[40px] ${
+        className={`relative flex items-center px-3 py-2.5 text-sm rounded-lg transition-all duration-150 ease-in-out group w-full h-[40px] ${
           isActive
-            ? "bg-indigo-50 text-indigo-700 font-medium shadow-inner"
-            : "text-gray-700 hover:text-indigo-700 hover:bg-indigo-50"
-        } ${isTextHidden ? "justify-center" : ""}`}
+            ? "bg-indigo-50 text-indigo-700 shadow-inner"
+            : "text-gray-700 hover:text-indigo-700 hover:bg-indigo-50/70"
+        } ${isTextHidden ? "justify-center" : "pl-4"}`}
         aria-current={isActive ? "page" : undefined}
         title={isTextHidden ? label : undefined}
       >
+        {isActive && !isTextHidden && (
+          <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 rounded-r bg-indigo-600" />
+        )}
         <span className={`h-5 w-5 flex-shrink-0 ${!isTextHidden ? "mr-3" : "mr-0"}`}>{renderedIcon}</span>
         {!isTextHidden && <span className="truncate">{label}</span>}
       </Link>
@@ -166,7 +169,7 @@ const Sidebar = ({
 
   // Collapse toggle handled inline for simplicity on fixed sidebar
 
-  const sidebarBaseClasses = "z-50 bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out overflow-x-hidden";
+  const sidebarBaseClasses = "z-50 bg-white/85 backdrop-blur supports-[backdrop-filter]:bg-white/75 border-r border-gray-200/70 flex flex-col transition-all duration-300 ease-in-out shadow-xl lg:rounded-r-2xl";
   let sidebarDynamicClasses = "";
   if (isMobileView) {
     sidebarDynamicClasses = `fixed top-14 left-0 h-[calc(100vh-56px)] ${isOpen ? "w-[200px] translate-x-0" : "w-0 -translate-x-full border-transparent overflow-hidden"}`;
@@ -185,13 +188,13 @@ const Sidebar = ({
       {isMobileView && isOpen && (
         <div className="fixed inset-x-0 top-14 bottom-0 bg-black bg-opacity-50 z-40 lg:hidden" onClick={onClose} aria-hidden="true" />
       )}
-      <aside className={`${sidebarBaseClasses} ${sidebarDynamicClasses}`}>
+      <aside className={`${sidebarBaseClasses} ${sidebarDynamicClasses} ${isMobileView ? 'overflow-hidden' : 'overflow-visible'}`}>
         {/* Desktop Toggle Button */}
         {/* Desktop Toggle Button */}
         {!isMobileView && (
           <button
             onClick={() => setIsDesktopCollapsed((prev) => !prev)}
-            className={`absolute top-1/2 -translate-y-1/2 -right-[14px] z-[71] bg-white hover:bg-indigo-50 text-gray-400 hover:text-indigo-700 border border-gray-200 w-7 h-7 flex items-center justify-center rounded-full shadow-lg transition-colors duration-200 ease-in-out transform ${isDesktopCollapsed ? "rotate-180" : "rotate-0"}`}
+            className={`absolute top-1/2 -translate-y-1/2 -right-3 z-[71] bg-white hover:bg-indigo-50 text-gray-400 hover:text-indigo-700 border border-gray-200 w-7 h-7 flex items-center justify-center rounded-full shadow-lg transition-colors duration-200 ease-in-out transform ${isDesktopCollapsed ? "rotate-180" : "rotate-0"}`}
             aria-label={isDesktopCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             <svg className="h-4 w-4" width="20" height="20" fill="none" viewBox="0 0 20 20"><path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12.5 15l-5-5 5-5"/></svg>
