@@ -23,7 +23,7 @@ export default function AdminProfilePage() {
   const handleUpdateProfile = async () => {
     setSaving(true); setMessage(''); setError('');
     try {
-      const res = await profileApi.update({ username, email });
+      const res = await profileApi.update({ username });
       const data = await res.json();
       if (data && data.success !== false) {
         setMessage('Profile updated');
@@ -121,7 +121,7 @@ export default function AdminProfilePage() {
               <label className="text-xs text-gray-600">Username</label>
               <input value={username} onChange={(e) => setUsername(e.target.value)} className="border rounded px-3 py-2 text-sm w-full" />
               <label className="text-xs text-gray-600">Email</label>
-              <input value={email} onChange={(e) => setEmail(e.target.value)} className="border rounded px-3 py-2 text-sm w-full" />
+              <input value={email} readOnly className="border rounded px-3 py-2 text-sm w-full bg-gray-100 cursor-not-allowed" />
               <div className="flex justify-end">
                 <Button onClick={handleUpdateProfile} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</Button>
               </div>
