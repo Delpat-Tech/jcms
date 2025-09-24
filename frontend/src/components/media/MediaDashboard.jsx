@@ -24,7 +24,7 @@ const MediaDashboard = () => {
   const toAbsoluteUrl = (maybeRelative) => {
     if (!maybeRelative) return '';
     if (/^https?:\/\//i.test(maybeRelative)) return maybeRelative;
-    return `http://localhost:5000${maybeRelative}`;
+    return `http://localhost:5000${maybeRelative.startsWith('/') ? maybeRelative : '/' + maybeRelative}`;
   };
 
   const getFileType = (filename) => {
@@ -52,7 +52,7 @@ const MediaDashboard = () => {
             type: 'image',
             filename: file.title,
             size: file.fileSize || file.size || 0,
-            fullUrl: toAbsoluteUrl(file.fileUrl),
+            fullUrl: file.publicUrl || file.fileUrl || toAbsoluteUrl(file.fileUrl),
             userInfo: file.user
           }))];
         }
@@ -68,7 +68,7 @@ const MediaDashboard = () => {
             filename: file.originalName || file.filename,
             title: file.title,
             size: file.fileSize || file.size || 0,
-            fullUrl: toAbsoluteUrl(file.fileUrl || file.fullUrl),
+            fullUrl: file.publicUrl || file.fileUrl || file.fullUrl || toAbsoluteUrl(file.fileUrl || file.fullUrl || file.fileUrl),
             userInfo: file.user
           }))];
         }

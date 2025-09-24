@@ -23,7 +23,7 @@ const PreviewModal = ({ file, onClose, onNext, onPrev, onDelete, onDownload }) =
   };
 
   const handleRegularDownload = (file) => {
-    const url = file.fileUrl || file.fullUrl;
+    const url = file.publicUrl || file.fileUrl || file.fullUrl;
     if (url) {
       fetch(url)
         .then(response => response.blob())
@@ -74,10 +74,10 @@ const PreviewModal = ({ file, onClose, onNext, onPrev, onDelete, onDownload }) =
   }, []);
 
   const renderPreview = () => {
-    if ((file.fileUrl || file.fullUrl) && file.type === 'image') {
+    if ((file.publicUrl || file.fileUrl || file.fullUrl) && file.type === 'image') {
       return (
         <img 
-          src={file.fileUrl || file.fullUrl} 
+          src={file.publicUrl || file.fileUrl || file.fullUrl} 
           alt={file.title || file.filename}
           className="max-w-full max-h-full object-contain"
           onError={(e) => { e.currentTarget.replaceWith(document.createTextNode('Preview not available')); }}
@@ -90,7 +90,7 @@ const PreviewModal = ({ file, onClose, onNext, onPrev, onDelete, onDownload }) =
         <video 
           controls 
           className="max-w-full max-h-full"
-          src={file.fileUrl || file.fullUrl}
+          src={file.publicUrl || file.fileUrl || file.fullUrl}
         >
           Your browser does not support video playback.
         </video>
@@ -104,7 +104,7 @@ const PreviewModal = ({ file, onClose, onNext, onPrev, onDelete, onDownload }) =
             <span className="text-4xl">🎵</span>
           </div>
           <audio controls className="w-full max-w-md">
-            <source src={file.fileUrl || file.fullUrl} />
+            <source src={file.publicUrl || file.fileUrl || file.fullUrl} />
             Your browser does not support audio playback.
           </audio>
         </div>
@@ -190,6 +190,23 @@ const PreviewModal = ({ file, onClose, onNext, onPrev, onDelete, onDownload }) =
                   <span>{file.size ? `${Math.round(file.size / 1024)} KB` : ''}</span>
                   <span>{new Date(file.createdAt).toLocaleDateString()}</span>
                   <span>{file.tenantName || 'System'}</span>
+                </div>
+                <div className="text-xs text-gray-400 mb-2">
+                  <span className="font-medium">Public URL:</span> 
+                  <a 
+                    href={(() => {
+                      const url = file.publicUrl || file.fileUrl || file.fullUrl;
+                      return url && url.startsWith('/') ? `http://localhost:5000${url}` : url;
+                    })()} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="break-all text-blue-300 hover:text-blue-200 underline ml-1"
+                  >
+                    {(() => {
+                      const url = file.publicUrl || file.fileUrl || file.fullUrl;
+                      return url && url.startsWith('/') ? `http://localhost:5000${url}` : url;
+                    })()}
+                  </a>
                 </div>
                 {(file.notes?.description || file.notes) && (
                   <p className="text-sm text-gray-300 italic">

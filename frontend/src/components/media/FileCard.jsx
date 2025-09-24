@@ -12,14 +12,14 @@ const FileCard = ({ file, viewMode, selected, onSelect, onPreview, onDelete, onD
   };
 
   const handleDownload = (file) => {
-    const url = file.fileUrl || file.fullUrl;
+    const url = file.publicUrl || file.fileUrl || file.fullUrl;
     if (url) {
       fetch(url)
         .then(response => response.blob())
         .then(blob => {
           const link = document.createElement('a');
           link.href = URL.createObjectURL(blob);
-          link.download = file.filename || file.title || 'download';
+          link.download = file.originalName || file.filename || file.title || 'download';
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
@@ -73,8 +73,8 @@ const FileCard = ({ file, viewMode, selected, onSelect, onPreview, onDelete, onD
         />
         
         <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mr-4">
-          {(file.fileUrl || file.fullUrl) && file.type === 'image' ? (
-            <img src={file.fileUrl || file.fullUrl} alt={file.title || file.filename} className="w-full h-full object-cover rounded-lg" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+          {(file.publicUrl || file.fileUrl || file.fullUrl) && file.type === 'image' ? (
+            <img src={file.publicUrl || file.fileUrl || file.fullUrl} alt={file.title || file.filename} className="w-full h-full object-cover rounded-lg" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
           ) : (
             getFileIcon(file.type)
           )}
@@ -130,9 +130,9 @@ const FileCard = ({ file, viewMode, selected, onSelect, onPreview, onDelete, onD
           className="absolute top-3 left-3 w-4 h-4 text-blue-600 z-10"
         />
         
-        {(file.fileUrl || file.fullUrl) && file.type === 'image' ? (
+        {(file.publicUrl || file.fileUrl || file.fullUrl) && file.type === 'image' ? (
           <img 
-            src={file.fileUrl || file.fullUrl} 
+            src={file.publicUrl || file.fileUrl || file.fullUrl} 
             alt={file.title || file.filename}
             className="w-full h-full object-cover cursor-pointer"
             onClick={() => onPreview(file)}

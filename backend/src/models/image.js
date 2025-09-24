@@ -19,6 +19,8 @@ const imageSchema = new mongoose.Schema({
   },
   internalPath: { type: String, required: true },
   fileUrl: { type: String, required: true },
+  publicUrl: { type: String },
+  publicUrl: { type: String },
   format: {
     type: String,
     required: true,

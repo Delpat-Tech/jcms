@@ -19,6 +19,7 @@ const fileSchema = new mongoose.Schema({
   },
   internalPath: { type: String, required: true },
   fileUrl: { type: String, required: true },
+  publicUrl: { type: String },
   originalName: { type: String, required: true },
   fileType: {
     type: String,

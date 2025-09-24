@@ -34,7 +34,8 @@ const uploadFile = async (req, res) => {
 
       const processedFile = await processFile(file, tenantPath, section);
     
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      const fullFileUrl = `${baseUrl}${processedFile.fileUrl}`;
     
       const newFile = new File({
         title: fileTitle,
@@ -44,7 +45,11 @@ const uploadFile = async (req, res) => {
         originalName: file.originalname,
         fileSize: file.size,
         notes: notes || '',
-        ...processedFile
+        fileUrl: fullFileUrl,
+        publicUrl: fullFileUrl,
+        internalPath: processedFile.internalPath,
+        fileType: processedFile.fileType,
+        format: processedFile.format
       });
 
       await newFile.save();

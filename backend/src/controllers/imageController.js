@@ -79,6 +79,7 @@ const createImage = async (req, res) => {
       tenantName,
       internalPath,
       fileUrl,
+      publicUrl: fileUrl,
       format: chosenFormat,
       fileSize,
       notes: req.body.notes || {},
