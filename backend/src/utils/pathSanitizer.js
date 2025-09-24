@@ -1,9 +1,14 @@
 // utils/pathSanitizer.js
 const path = require('path');
 
-const sanitizePath = (inputPath, baseDir = 'uploads') => {
+const sanitizePath = (inputPath, baseDir = null) => {
   if (!inputPath || typeof inputPath !== 'string') {
     throw new Error('Invalid path input');
+  }
+  
+  // If no baseDir provided, just normalize and return (for absolute paths)
+  if (!baseDir) {
+    return path.normalize(inputPath);
   }
   
   // Normalize and resolve the path
