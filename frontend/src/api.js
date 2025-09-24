@@ -176,7 +176,12 @@ export const superadminApi = {
   updateRole: (id, roleData) => api.put(`/api/superadmin/roles/${id}`, roleData),
   deleteRole: (id) => api.delete(`/api/superadmin/roles/${id}`),
   getDashboard: () => api.get('/api/superadmin/dashboard'),
-  getStats: () => api.get('/api/superadmin/stats')
+  getStats: () => api.get('/api/superadmin/stats'),
+  // Subscription management
+  getUserSubscription: (userId) => api.get(`/api/superadmin/users/${userId}/subscription`),
+  setUserSubscription: (userId, plan) => api.put(`/api/superadmin/users/${userId}/subscription`, { plan }),
+  cancelUserSubscription: (userId) => api.delete(`/api/superadmin/users/${userId}/subscription`),
+  getPlans: () => api.get('/api/superadmin/subscription-plans')
 };
 
 export const tenantAnalyticsApi = {
@@ -240,6 +245,13 @@ export const helpApi = {
   sendContact: (data) => api.post('/api/help/contact', data),
   getArticles: (query = '') => api.get(`/api/help/articles${query ? `?search=${query}` : ''}`),
   getFAQ: () => api.get('/api/help/faq')
+};
+
+export const subscriptionApi = {
+  getPlans: () => api.get('/api/subscriptions/plans'),
+  getStatus: () => api.get('/api/subscriptions/status'),
+  create: (plan) => api.post('/api/subscriptions', { plan }),
+  verify: (paymentReference) => api.post('/api/subscriptions/verify', { paymentReference })
 };
 
 export { ApiError };

@@ -32,6 +32,9 @@ import EditorContent from "./editor/content/page.jsx";
 import EditorMedia from "./editor/media/page.jsx";
 import EditorProfile from "./editor/profile/page.jsx";
 import EditorHelp from "./editor/help/page.jsx";
+import PlansPage from "./pages/PlansPage.jsx";
+import SubscribePage from "./pages/SubscribePage.jsx";
+import SubscriptionDashboard from "./pages/SubscriptionDashboard.jsx";
 
 function App() {
   const storedUser = localStorage.getItem("user") || sessionStorage.getItem("user") || 'null';
@@ -55,6 +58,9 @@ function App() {
             <Route path="/dashboard" element={<DashboardComponent />} />
             <Route path="/dashboard/media" element={<MediaPage />} />
             <Route path="/register" element={<RegisterTenant />} />
+            <Route path="/plans" element={<PlansPage />} />
+            <Route path="/subscribe" element={<AuthGuard><SubscribePage /></AuthGuard>} />
+            <Route path="/my/subscription" element={<AuthGuard><SubscriptionDashboard /></AuthGuard>} />
             
             {/* SuperAdmin Routes */}
             <Route path="/superadmin/overview" element={<AuthGuard requiredRole="superadmin"><SuperAdminOverview /></AuthGuard>} />

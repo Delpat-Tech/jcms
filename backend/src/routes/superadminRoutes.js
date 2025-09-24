@@ -9,6 +9,8 @@ const Image = require('../models/image');
 const File = require('../models/file');
 const Tenant = require('../models/tenant');
 const ActivityLog = require('../models/activityLog');
+const Subscription = require('../models/subscription');
+const SubscriptionPlan = require('../models/subscriptionPlan');
 const router = express.Router();
 
 // All routes require authentication and superadmin role
@@ -232,6 +234,149 @@ router.put('/settings', async (req, res) => {
     res.json({ success: true, settings });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
+  }
+});
+
+// Subscription management
+router.get('/subscriptions', async (req, res) => {
+  try {
+    const subscriptions = await Subscription.find();
+    res.json({ success: true, subscriptions });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+router.get('/subscriptions/:id', async (req, res) => {
+  try {
+    const subscription = await Subscription.findById(req.params.id);
+    if (!subscription) return res.status(404).json({ success: false, message: 'Subscription not found' });
+    res.json({ success: true, subscription });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+router.put('/subscriptions/:id', async (req, res) => {
+  try {
+    const subscription = await Subscription.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!subscription) return res.status(404).json({ success: false, message: 'Subscription not found' });
+    res.json({ success: true, subscription });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+});
+
+router.delete('/subscriptions/:id', async (req, res) => {
+  try {
+    const subscription = await Subscription.findByIdAndDelete(req.params.id);
+    if (!subscription) return res.status(404).json({ success: false, message: 'Subscription not found' });
+    res.json({ success: true, message: 'Subscription deleted' });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+});
+
+router.get('/subscription-plans', async (req, res) => {
+  try {
+    const plans = await SubscriptionPlan.find();
+    res.json({ success: true, plans });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+router.post('/subscription-plans', async (req, res) => {
+  try {
+    const plan = new SubscriptionPlan(req.body);
+    await plan.save();
+    res.json({ success: true, plan });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+});
+
+router.put('/subscription-plans/:id', async (req, res) => {
+  try {
+    const plan = await SubscriptionPlan.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!plan) return res.status(404).json({ success: false, message: 'Plan not found' });
+    res.json({ success: true, plan });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+});
+
+router.delete('/subscription-plans/:id', async (req, res) => {
+  try {
+    const plan = await SubscriptionPlan.findByIdAndDelete(req.params.id);
+    if (!plan) return res.status(404).json({ success: false, message: 'Plan not found' });
+    res.json({ success: true, message: 'Plan deleted' });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+});
+
+// View a specific user's current subscription
+router.get('/users/:userId/subscription', async (req, res) => {
+  try {
+    const sub = await Subscription.findOne({ user: req.params.userId }).sort({ createdAt: -1 });
+    if (!sub) return res.json({ success: true, subscription: null });
+    return res.json({ success: true, subscription: sub });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Change a user's plan (sets active and paid, recalculates expiry)
+router.put('/users/:userId/subscription', async (req, res) => {
+  try {
+    const { plan } = req.body;
+    if (!plan) return res.status(400).json({ success: false, message: 'plan is required' });
+
+    const planDoc = await SubscriptionPlan.findOne({ name: plan.toLowerCase(), isActive: true });
+    if (!planDoc) return res.status(404).json({ success: false, message: 'Plan not found' });
+
+    const now = new Date();
+    const expiryDate = planDoc.durationDays && planDoc.durationDays > 0
+      ? new Date(now.getTime() + planDoc.durationDays * 24 * 60 * 60 * 1000)
+      : new Date(now.getTime() + 3650 * 24 * 60 * 60 * 1000); // free: ~10y
+
+    let sub = await Subscription.findOne({ user: req.params.userId }).sort({ createdAt: -1 });
+    if (!sub) {
+      sub = await Subscription.create({
+        user: req.params.userId,
+        plan: planDoc.name,
+        startDate: now,
+        expiryDate,
+        paymentStatus: 'paid',
+        status: 'active'
+      });
+    } else {
+      sub.plan = planDoc.name;
+      sub.startDate = now;
+      sub.expiryDate = expiryDate;
+      sub.paymentStatus = 'paid';
+      sub.status = 'active';
+      await sub.save();
+    }
+
+    return res.json({ success: true, subscription: sub });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Cancel a user's subscription (immediately)
+router.delete('/users/:userId/subscription', async (req, res) => {
+  try {
+    const sub = await Subscription.findOne({ user: req.params.userId }).sort({ createdAt: -1 });
+    if (!sub) return res.status(404).json({ success: false, message: 'Subscription not found' });
+    sub.status = 'canceled';
+    sub.expiryDate = new Date();
+    await sub.save();
+    return res.json({ success: true, message: 'Subscription canceled', subscription: sub });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
   }
 });
 

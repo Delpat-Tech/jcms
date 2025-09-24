@@ -4,12 +4,12 @@ import Button from "../../components/ui/Button.jsx";
 import Input from "../../components/ui/Input.jsx";
 import Table from "../../components/ui/Table.jsx";
 import Modal from "../../components/ui/Modal.jsx";
-import { tenantApi, userApi, imageApi, fileApi } from '../../api';
+import { tenantApi, userApi, imageApi, fileApi, superadminApi, subscriptionApi } from '../../api';
 import { PauseCircle, PlayCircle, Trash2, Search, ArrowLeft, ArrowRight, Plus, TriangleAlert } from 'lucide-react';
 import { useToasts } from '../../components/util/Toasts.jsx';
 
 function AddUserModal({ onClose, onUserAdded }) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<any>({
     username: '',
     email: '',
     password: '',
@@ -21,7 +21,7 @@ function AddUserModal({ onClose, onUserAdded }) {
   const [error, setError] = useState('');
   const [passwordHint, setPasswordHint] = useState('');
   const [strength, setStrength] = useState(0);
-  const [tenants, setTenants] = useState([]);
+  const [tenants, setTenants] = useState<any[]>([]);
 
   useEffect(() => {
     const loadTenants = async () => {
@@ -97,7 +97,7 @@ function AddUserModal({ onClose, onUserAdded }) {
   };
 
   return (
-    <Modal open={true} onClose={onClose}>
+    <Modal open={true} onClose={onClose} title={"Add New User"} footer={null}>
       <div className="p-6 w-96 mx-auto">
         <h2 className="text-lg font-semibold mb-4">Add New User</h2>
 
@@ -219,11 +219,17 @@ function AddUserModal({ onClose, onUserAdded }) {
 }
 
 function UserDetailsModal({ user, onClose }) {
-  const [userDetails, setUserDetails] = useState(null);
+  const [userDetails, setUserDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [subLoading, setSubLoading] = useState(false);
+  const [subscription, setSubscription] = useState<any | null>(null);
+  const [plans, setPlans] = useState<any[]>([]);
+  const [newPlan, setNewPlan] = useState('');
 
   useEffect(() => {
     fetchUserDetails();
+    fetchSubscription();
+    fetchPlans();
   }, [user._id]);
 
   const fetchUserDetails = async () => {
@@ -252,6 +258,44 @@ function UserDetailsModal({ user, onClose }) {
       console.error('Error fetching user details:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSubscription = async () => {
+    try {
+      const res = await superadminApi.getUserSubscription(user._id);
+      const data = await res.json();
+      if (data.success) {
+        setSubscription(data.subscription);
+      }
+    } catch (e) {
+      // ignore
+    }
+  };
+
+  const fetchPlans = async () => {
+    try {
+      const res = await superadminApi.getPlans();
+      const data = await res.json();
+      if (data.success && Array.isArray(data.plans)) {
+        setPlans(data.plans);
+      }
+    } catch (e) { /* ignore */ }
+  };
+
+  const handleChangePlan = async () => {
+    if (!newPlan) return;
+    setSubLoading(true);
+    try {
+      const res = await superadminApi.setUserSubscription(user._id, newPlan);
+      const data = await res.json();
+      if (data.success) {
+        setSubscription(data.subscription);
+      }
+    } catch (e) {
+      // ignore
+    } finally {
+      setSubLoading(false);
     }
   };
 
@@ -307,6 +351,39 @@ function UserDetailsModal({ user, onClose }) {
               <label className="block text-sm font-medium text-gray-700">Created</label>
               <p className="text-sm text-gray-900">{new Date(userDetails.createdAt).toLocaleString()}</p>
             </div>
+
+            <div className="pt-2 border-t">
+              <h3 className="text-md font-semibold mb-2">Subscription</h3>
+              {subscription ? (
+                <div className="text-sm text-gray-800 space-y-1">
+                  <div>Plan: <span className="font-medium">{subscription.plan}</span></div>
+                  <div>Status: {subscription.status}</div>
+                  <div>Payment: {subscription.paymentStatus}</div>
+                  <div>Expires: {subscription.expiryDate ? new Date(subscription.expiryDate).toLocaleString() : 'N/A'}</div>
+                </div>
+              ) : (
+                <div className="text-sm text-gray-500">No subscription found</div>
+              )}
+
+              <div className="mt-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Change Plan</label>
+                <div className="flex gap-2 items-center">
+                  <select
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={newPlan}
+                    onChange={(e) => setNewPlan(e.target.value)}
+                  >
+                    <option value="">Select plan</option>
+                    {plans.map((p) => (
+                      <option key={p._id || p.name} value={p.name}>{p.displayName || p.name}</option>
+                    ))}
+                  </select>
+                  <Button onClick={handleChangePlan} disabled={subLoading || !newPlan}>
+                    {subLoading ? 'Updating...' : 'Update'}
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
         ) : (
           <div className="text-center py-4 text-gray-500">Failed to load user details</div>
@@ -331,6 +408,9 @@ export default function UsersPage() {
   const [user, setUser] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage] = useState(10);
+  const [mySub, setMySub] = useState<any | null>(null);
+  const [mySubLoading, setMySubLoading] = useState<boolean>(true);
+  const [userSubs, setUserSubs] = useState<Record<string, any>>({});
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -340,6 +420,22 @@ export default function UsersPage() {
       console.log('Current user role:', parsedUser.role);
       console.log('Current user tenant:', parsedUser.tenant);
     }
+  }, []);
+
+  useEffect(() => {
+    const loadMySub = async () => {
+      setMySubLoading(true);
+      try {
+        const res = await subscriptionApi.getStatus();
+        const data = await res.json();
+        setMySub(data);
+      } catch (e) {
+        setMySub(null);
+      } finally {
+        setMySubLoading(false);
+      }
+    };
+    loadMySub();
   }, []);
 
   useEffect(() => {
@@ -359,8 +455,26 @@ export default function UsersPage() {
       const data = await response.json();
       if (data.success && data.data) {
         setUsers(data.data || []);
+        // Load subscriptions for each user
+        try {
+          const subsEntries: [string, any][] = await Promise.all(
+            (data.data || []).map(async (u: any) => {
+              try {
+                const res = await superadminApi.getUserSubscription(u._id);
+                const s = await res.json();
+                return [u._id, s?.subscription || null];
+              } catch {
+                return [u._id, null];
+              }
+            })
+          );
+          const map: Record<string, any> = {};
+          subsEntries.forEach(([id, sub]) => { map[id] = sub; });
+          setUserSubs(map);
+        } catch {}
       } else {
         setUsers([]);
+        setUserSubs({});
       }
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -471,6 +585,11 @@ export default function UsersPage() {
     { key: 'email', label: 'Email' },
     { key: 'role', label: 'Role', render: (user) => user.role?.name || user.role },
     { key: 'tenant', label: 'Tenant', render: (user) => user.tenant?.name || 'No Tenant' },
+    { key: 'subscription', label: 'Subscription', render: (user) => {
+        const sub = userSubs[user._id];
+        return sub?.plan ? sub.plan : '-';
+      }
+    },
     { key: 'isActive', label: 'Status', render: (user) => user.isActive ? 'Active' : 'Inactive' },
     { 
       key: 'actions', 
@@ -497,7 +616,7 @@ export default function UsersPage() {
   ];
 
   return (
-    <SuperAdminLayout title="Users Management" user={user}>
+    <SuperAdminLayout title="Users Management">
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Users Management</h1>

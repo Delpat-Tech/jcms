@@ -1,6 +1,8 @@
 // routes/contentRoutes.js
 const express = require('express');
 const { authenticate, requireEditorOrAbove } = require('../middlewares/auth');
+const { checkSubscription } = require('../middlewares/subscription');
+
 const { logActivity } = require('../middlewares/activityLogger');
 const {
   createContent,
@@ -20,9 +22,9 @@ router.use(authenticate, requireEditorOrAbove);
 
 // Content CRUD
 router.post('/', logActivity('CREATE', 'content'), createContent);
-router.get('/', getContent);
-router.get('/status/:status', getContentByStatus);
-router.get('/:id', getContentById);
+router.get('/', checkSubscription('standard'), getContent);
+router.get('/status/:status', checkSubscription('standard'), getContentByStatus);
+router.get('/:id', checkSubscription('standard'), getContentById);
 router.put('/:id', logActivity('UPDATE', 'content'), updateContent);
 router.delete('/:id', logActivity('DELETE', 'content'), deleteContent);
 

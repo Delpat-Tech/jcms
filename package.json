@@ -14,7 +14,15 @@
     "setup": "cd backend && npm run setup",
     "seed": "cd backend && npm run seed"
   },
-  "keywords": ["cms", "content-management", "nodejs", "react"],
+  "keywords": [
+    "cms",
+    "content-management",
+    "nodejs",
+    "react"
+  ],
   "author": "JCMS Team",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^17.2.2"
+  }
 }

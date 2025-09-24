@@ -36,6 +36,8 @@ function Layout({ children, title, user }) {
 			{ href: "/admin/media", label: "Media" },
 			{ href: "/admin/users", label: "Users" },
 			{ href: "/admin/analytics", label: "Analytics" },
+			{ href: "/plans", label: "Plans" },
+			{ href: "/my/subscription", label: "My Plan" },
 			{ href: "/admin/profile", label: "Profile" },
 		];
 	} else if (role === "editor") {
@@ -43,12 +45,16 @@ function Layout({ children, title, user }) {
 			{ href: "/user/overview", label: "Dashboard" },
 			{ href: "/user/content", label: "Content" },
 			{ href: "/user/media", label: "Media" },
+			{ href: "/plans", label: "Plans" },
+			{ href: "/my/subscription", label: "My Plan" },
 			{ href: "/user/profile", label: "Profile" },
 			{ href: "/user/help", label: "Help" },
 		];
 	} else {
 		menuItems = [
 			{ href: "/dashboard", label: "Dashboard" },
+			{ href: "/plans", label: "Plans" },
+			{ href: "/my/subscription", label: "My Plan" },
 		];
 	}
     const contentMarginLeft = isMobileView ? 0 : 'var(--sidebar-width, 200px)';

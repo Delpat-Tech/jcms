@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import SuperAdminLayout from '../layout.tsx';
 import Button from '../../components/ui/Button.jsx';
-import { profileApi } from '../../api';
+import { profileApi, subscriptionApi } from '../../api';
 
 export default function SuperAdminProfilePage() {
   const [profile, setProfile] = useState(() => {
@@ -19,6 +19,25 @@ export default function SuperAdminProfilePage() {
   const [strength, setStrength] = useState(0);
   const [hint, setHint] = useState('');
   const [activeTab, setActiveTab] = useState<'info' | 'password'>('info');
+  const [subStatus, setSubStatus] = useState<any | null>(null);
+  const [subLoading, setSubLoading] = useState(true);
+  const [subError, setSubError] = useState('');
+
+  useEffect(() => {
+    const loadStatus = async () => {
+      setSubLoading(true); setSubError('');
+      try {
+        const res = await subscriptionApi.getStatus();
+        const data = await res.json();
+        setSubStatus(data);
+      } catch (e: any) {
+        setSubError(e?.message || 'Failed to load subscription status');
+      } finally {
+        setSubLoading(false);
+      }
+    };
+    loadStatus();
+  }, []);
 
   const handleUpdateProfile = async () => {
     setSaving(true); setMessage(''); setError('');
@@ -93,14 +112,35 @@ export default function SuperAdminProfilePage() {
         {error && <div className="text-sm text-red-600">{error}</div>}
         <div>
           {activeTab === 'info' && (
-            <div className="bg-white p-4 rounded-lg border space-y-3 max-w-lg mx-auto">
-              <div className="text-sm font-medium text-gray-900">Personal Info</div>
-              <label className="text-xs text-gray-600">Username</label>
-              <input value={username} onChange={(e) => setUsername(e.target.value)} className="border rounded px-3 py-2 text-sm w-full" />
-              <label className="text-xs text-gray-600">Email</label>
-              <input value={email} readOnly className="border rounded px-3 py-2 text-sm w-full bg-gray-100 cursor-not-allowed" />
-              <div className="flex justify-end">
-                <Button onClick={handleUpdateProfile} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</Button>
+            <div className="space-y-4 max-w-2xl mx-auto">
+              <div className="bg-white p-4 rounded-lg border space-y-3">
+                <div className="text-sm font-medium text-gray-900">Personal Info</div>
+                <label className="text-xs text-gray-600">Username</label>
+                <input value={username} onChange={(e) => setUsername(e.target.value)} className="border rounded px-3 py-2 text-sm w-full" />
+                <label className="text-xs text-gray-600">Email</label>
+                <input value={email} readOnly className="border rounded px-3 py-2 text-sm w-full bg-gray-100 cursor-not-allowed" />
+                <div className="flex justify-end">
+                  <Button onClick={handleUpdateProfile} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</Button>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-lg border">
+                <div className="text-sm font-medium text-gray-900 mb-2">Subscription (visibility)</div>
+                {subLoading && <div className="text-sm text-gray-600">Loading subscription...</div>}
+                {subError && <div className="text-sm text-red-600">{subError}</div>}
+                {!subLoading && !subError && (
+                  <div className="text-sm text-gray-800 space-y-1">
+                    <div>Plan: <span className="font-medium">{subStatus?.plan || 'none'}</span></div>
+                    <div>Active: {String(subStatus?.active ?? false)}</div>
+                    {subStatus?.paymentStatus && (
+                      <div>Payment: {subStatus.paymentStatus}</div>
+                    )}
+                    {subStatus?.expiresAt && (
+                      <div>Expires: {new Date(subStatus.expiresAt).toLocaleString()}</div>
+                    )}
+                    <div className="mt-2 text-xs text-gray-500">SuperAdmin bypasses subscription checks but status is shown here for transparency.</div>
+                  </div>
+                )}
               </div>
             </div>
           )}

@@ -80,6 +80,7 @@ app.use('/api/activity', require('./routes/activityRoutes'));
 app.use('/api/tenant-switching', require('./routes/tenantSwitchingRoutes'));
 app.use('/api/editor', require('./routes/editorRoutes'));
 app.use('/api/help', require('./routes/helpRoutes'));
+app.use('/api/subscriptions', require('./routes/subscriptionRoutes'));
 
 // Public settings endpoint
 app.get('/api/settings', async (req, res) => {
