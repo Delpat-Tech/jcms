@@ -192,6 +192,10 @@ const PreviewModal = ({ file, onClose, onNext, onPrev, onDelete, onDownload }) =
                   <span>{file.tenantName || 'System'}</span>
                 </div>
                 <div className="text-xs text-gray-400 mb-2">
+                  <span className="font-medium">ID:</span> 
+                  <span className="font-mono text-blue-300 ml-1">{file._id}</span>
+                </div>
+                <div className="text-xs text-gray-400 mb-2">
                   <span className="font-medium">Public URL:</span> 
                   <a 
                     href={(() => {

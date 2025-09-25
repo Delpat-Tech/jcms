@@ -20,6 +20,7 @@ const MediaDashboard = () => {
   const [previewFile, setPreviewFile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
+  const [idFilter, setIdFilter] = useState('');
 
   const toAbsoluteUrl = (maybeRelative) => {
     if (!maybeRelative) return '';
@@ -95,7 +96,21 @@ const MediaDashboard = () => {
     const searchText = file.title || file.filename || '';
     const matchesSearch = searchText.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesType = filterType === 'all' || file.type === filterType;
-    return matchesSearch && matchesType;
+    
+    // ID filter logic
+    let matchesId = true;
+    if (idFilter.trim()) {
+      try {
+        const idArray = JSON.parse(idFilter.trim());
+        if (Array.isArray(idArray) && idArray.length > 0) {
+          matchesId = idArray.includes(file._id);
+        }
+      } catch (e) {
+        matchesId = true; // Invalid JSON, show all files
+      }
+    }
+    
+    return matchesSearch && matchesType && matchesId;
   }).sort((a, b) => {
     switch (sortBy) {
       case 'name':
@@ -218,6 +233,32 @@ const MediaDashboard = () => {
                   </span>
                 </label>
               ))}
+            </div>
+            
+            <div className="mt-4">
+              <label className="block text-xs font-medium text-gray-700 mb-2">
+                Filter by IDs (JSON array)
+              </label>
+              <textarea
+                value={idFilter}
+                onChange={(e) => setIdFilter(e.target.value)}
+                placeholder='["id1", "id2", "id3"]'
+                className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                rows={3}
+              />
+              {files.length > 0 && (
+                <div className="mt-2">
+                  <button
+                    onClick={() => {
+                      const ids = files.slice(0, 3).map(f => f._id);
+                      setIdFilter(JSON.stringify(ids, null, 2));
+                    }}
+                    className="text-xs text-blue-600 hover:text-blue-800"
+                  >
+                    Use first 3 file IDs
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
