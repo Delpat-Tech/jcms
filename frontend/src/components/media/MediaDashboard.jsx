@@ -4,9 +4,11 @@ import UploadPanel from './UploadPanel';
 import FileCard from './FileCard';
 import PreviewModal from './PreviewModal';
 import TrioLoader from '../ui/TrioLoader.jsx';
-import { imageApi, fileApi } from '../../api';
+import { imageApi, fileApi, contentApi } from '../../api';
+import BulkActions from './BulkActions.jsx';
 import { useToasts } from '../util/Toasts.jsx';
 import { TriangleAlert } from 'lucide-react';
+import CollectionSelectorModal from '../CollectionSelectorModal.jsx';
 
 const MediaDashboard = () => {
   const { addNotification } = useToasts() || { addNotification: () => {} };
@@ -21,6 +23,7 @@ const MediaDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
   const [idFilter, setIdFilter] = useState('');
+  const [showCollectionSelector, setShowCollectionSelector] = useState(false);
 
   const toAbsoluteUrl = (maybeRelative) => {
     if (!maybeRelative) return '';
@@ -177,6 +180,58 @@ const MediaDashboard = () => {
     }
   };
 
+  // Bulk actions
+  const handleBulkClear = () => setSelectedFiles(new Set());
+
+  const handleBulkDownload = () => {
+    filteredAndSortedFiles
+      .filter(f => selectedFiles.has(f._id))
+      .forEach(f => handleDownloadFile(f));
+  };
+
+  const handleBulkDelete = async () => {
+    for (const f of filteredAndSortedFiles.filter(x => selectedFiles.has(x._id))) {
+      await handleDeleteFile(f);
+    }
+    setSelectedFiles(new Set());
+  };
+
+  const handleGroupToContent = async () => {
+    try {
+      const selected = filteredAndSortedFiles.filter(f => selectedFiles.has(f._id));
+      if (selected.length === 0) return;
+      const images = selected.filter(f => f.type === 'image');
+      if (images.length === 0) {
+        addNotification && addNotification('warning', 'No images selected', 'Select images to group into Content', true, 2500);
+        return;
+      }
+      const title = `Gallery – ${new Date().toLocaleString()}`;
+      const bodyHtml = images
+        .map(img => `<figure><img src="${img.fullUrl || img.fileUrl || img.publicUrl}" alt="${(img.title||img.filename||'image').replace(/"/g,'&quot;')}" style="max-width:100%"/><figcaption>${img.title||img.filename||''}</figcaption></figure>`)
+        .join('\n');
+      const coverImageUrl = images[0]?.fullUrl || images[0]?.fileUrl || images[0]?.publicUrl || '';
+      const payload = {
+        title,
+        content: bodyHtml,
+        excerpt: `Grouped ${images.length} images from Media`,
+        type: 'article',
+        status: 'draft',
+        tags: ['media', 'gallery'],
+        coverImageUrl
+      };
+      const res = await contentApi.create(payload);
+      const data = await res.json();
+      if (data?.success) {
+        addNotification && addNotification('success', 'Content created', 'Images grouped into a draft (see Content tab)', true, 2500);
+        setSelectedFiles(new Set());
+      } else {
+        addNotification && addNotification('error', 'Failed to create content', data?.message || '', true, 3000);
+      }
+    } catch (e) {
+      addNotification && addNotification('error', 'Error creating content', e.message || '', true, 3000);
+    }
+  };
+
   return (
     <div className="flex h-full bg-gray-50 flex-col md:flex-row">
       {/* Left Panel */}
@@ -274,6 +329,18 @@ const MediaDashboard = () => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
+        {/* Bulk actions when selection exists */}
+        {selectedFiles.size > 0 && (
+          <BulkActions
+            selectedCount={selectedFiles.size}
+            onDownload={handleBulkDownload}
+            onDelete={handleBulkDelete}
+            onMove={() => {}}
+            onClear={handleBulkClear}
+            onGroup={handleGroupToContent}
+          />
+        )}
+
         {/* Top Bar */}
         <div className="bg-white border-b border-gray-200 p-4">
           <div className="flex items-center justify-between gap-3 flex-wrap">

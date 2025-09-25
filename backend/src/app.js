@@ -27,21 +27,17 @@ const corsOptions = {
   allowedHeaders: ['Content-Type','Authorization'],
   optionsSuccessStatus: 204
 };
-
 app.use(cors(corsOptions));
 app.use(express.json());
-app.use('/uploads', (req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET');
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
-  next();
-}, express.static(path.join(__dirname, '..', 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// Serve public files for Cloudflare Tunnel
+app.use('/public', express.static(path.join(__dirname, '../public')));
 app.use(express.urlencoded({ extended: true }));
 
 // Health check routes
 app.get("/api/health", (req, res) => {
   res.status(200).json({ 
-    status: "ok", 
     message: "Server is running", 
     port: process.env.PORT || 5000, 
     timestamp: new Date() 
@@ -64,15 +60,17 @@ app.get('/api/debug-notes', async (req, res) => {
 
 // API Routes
 app.use('/api/images', require('./routes/imagesRoutes'));
+app.use('/api/image-management', require('./routes/imageManagementRoutes'));
 app.use('/api/files', require('./routes/fileRoutes'));
 app.use('/api/content', require('./routes/contentRoutes'));
+// Public content routes (no auth)
+app.use('/public', require('./routes/publicContentRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', require('./routes/usersRoutes'));
 app.use('/api/profile', require('./routes/profileRoutes'));
 app.use('/api/superadmin', require('./routes/superadminRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
-app.use('/api/analytics', require('./routes/analyticsRoutes'));
 app.use('/api/tenants', require('./routes/tenantRoutes'));
 app.use('/api/tenant-analytics', require('./routes/tenantAnalyticsRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));

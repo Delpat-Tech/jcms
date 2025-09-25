@@ -1,0 +1,3 @@
+# Public directory for Cloudflare Tunnel
+# This directory contains images that are made public via tunnel
+# Structure: /public/{collection-name}/{image-files}

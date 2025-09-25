@@ -10,24 +10,26 @@ const app = require('./app');
 const PORT = parseInt(process.env.PORT) || 5000;
 
 // Connect to MongoDB
-try {
-  connectDB();
-} catch (error) {
+connectDB().then(() => {
+  logger.info('Database connected successfully');
+}).catch((error) => {
   logger.error('Database connection failed', { error: error.message });
   process.exit(1);
-}
+});
 
-// Optional seeding on startup
+// Optional seeding on startup (non-blocking)
 if (process.env.AUTO_SEED === 'true') {
   setTimeout(async () => {
     try {
       const seedType = process.env.SEED_TYPE || 'core';
       logger.info('Auto-seeding started', { seedType });
       await runSeeds(seedType);
+      logger.info('Auto-seeding completed', { seedType });
     } catch (error) {
       logger.error('Auto-seeding failed', { error: error.message, seedType });
+      // Don't exit on seed failure, just log it
     }
-  }, 2000);
+  }, 3000); // Increased delay to ensure server starts first
 }
 
 // Start server

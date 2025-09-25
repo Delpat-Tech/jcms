@@ -447,11 +447,8 @@ export default function UsersPage() {
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem('token');
-      const query =
-        statusFilter === 'all'
-          ? 'includeInactive=true'
-          : `status=${encodeURIComponent(statusFilter)}`;
-      const response = await userApi.getAll(query.includes('includeInactive'));
+      const query = statusFilter === 'all' ? 'includeInactive=true' : `status=${encodeURIComponent(statusFilter)}`;
+      const response = await userApi.getAll(query);
       const data = await response.json();
       if (data.success && data.data) {
         setUsers(data.data || []);

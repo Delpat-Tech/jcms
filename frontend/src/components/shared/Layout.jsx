@@ -22,6 +22,7 @@ function Layout({ children, title, user }) {
 		menuItems = [
 			{ href: "/superadmin/overview", label: "Dashboard" },
 			{ href: "/superadmin/users", label: "Users" },
+			{ href: "/content", label: "Content" },
 			{ href: "/superadmin/media", label: "Media" },
 			{ href: "/superadmin/roles", label: "Roles" },
 			{ href: "/superadmin/settings", label: "System Settings" },
@@ -32,8 +33,9 @@ function Layout({ children, title, user }) {
 	} else if (role === "admin") {
 		menuItems = [
 			{ href: "/admin/overview", label: "Dashboard" },
-			{ href: "/admin/content", label: "Content" },
+			{ href: "/content", label: "Content" },
 			{ href: "/admin/media", label: "Media" },
+			{ href: "/admin/galleries", label: "Galleries" },
 			{ href: "/admin/users", label: "Users" },
 			{ href: "/admin/analytics", label: "Analytics" },
 			{ href: "/subscription", label: "Subscription" },
@@ -42,8 +44,9 @@ function Layout({ children, title, user }) {
 	} else if (role === "editor") {
 		menuItems = [
 			{ href: "/user/overview", label: "Dashboard" },
-			{ href: "/user/content", label: "Content" },
+			{ href: "/content", label: "Content" },
 			{ href: "/user/media", label: "Media" },
+			{ href: "/user/galleries", label: "Galleries" },
 			{ href: "/subscription", label: "Subscription" },
 			{ href: "/user/profile", label: "Profile" },
 			{ href: "/user/help", label: "Help" },

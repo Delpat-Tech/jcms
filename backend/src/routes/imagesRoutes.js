@@ -11,10 +11,11 @@ const {
 const { authenticate, requireAdminOrAbove } = require('../middlewares/auth');
 const upload = require('../middlewares/upload');
 const { logActivity } = require('../middlewares/activityLogger');
+const { addMissingImageFields } = require('../utils/fixImageModel');
 const router = express.Router();
 
 // Unified Image Management Routes for All Roles (permissions handled in controller)
-router.post('/', authenticate, logActivity('image_upload', 'image'), upload.single('image'), createImage);
+router.post('/', authenticate, logActivity('image_upload', 'image'), upload.single('image'), addMissingImageFields, createImage);
 router.get('/', authenticate, getImages); // Supports ?own=true to see only user's images
 router.get('/:id', authenticate, getImageById);
 router.put('/:id', authenticate, logActivity('image_update', 'image'), upload.single('image'), updateImage);

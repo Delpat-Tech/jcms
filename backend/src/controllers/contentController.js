@@ -1,10 +1,22 @@
 // controllers/contentController.js
 const Content = require('../models/content');
 
+// simple slugify helper
+const slugify = (text = '') => {
+  return (text || '')
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
+};
+
 // Create content
 const createContent = async (req, res) => {
   try {
-    const { title, content, excerpt, type, status, tags, coverImageUrl, scheduledAt } = req.body;
+    const { title, content, excerpt, type, status, tags, coverImageUrl, scheduledAt, slug } = req.body;
     
     const newContent = new Content({
       title,
@@ -20,6 +32,12 @@ const createContent = async (req, res) => {
       createdAt: new Date(),
       updatedAt: new Date()
     });
+
+    // assign slug if not provided
+    if (!newContent.slug) {
+      const base = slug ? slugify(slug) : slugify(title || 'content');
+      newContent.slug = `${base}-${Date.now().toString(36).slice(-5)}`;
+    }
 
     if (status === 'published') {
       newContent.publishedAt = new Date();
@@ -41,11 +59,9 @@ const createContent = async (req, res) => {
   }
 };
 
-// Get all content for user
+// Get all content (with filtering)
 const getContent = async (req, res) => {
   try {
-    const { status, search, page = 1, limit = 20 } = req.query;
-    
     const filter = {
       tenant: req.user.tenant,
       deleted: { $ne: true }
@@ -55,36 +71,20 @@ const getContent = async (req, res) => {
     if (req.user.role && req.user.role.name && !['admin', 'superadmin'].includes(req.user.role.name)) {
       filter.author = req.user.id;
     }
-    
-    if (status) {
-      filter.status = status;
-    }
-    
-    if (search) {
-      filter.$or = [
-        { title: { $regex: search, $options: 'i' } },
-        { content: { $regex: search, $options: 'i' } },
-        { excerpt: { $regex: search, $options: 'i' } }
-      ];
+
+    // Apply status filter if provided
+    if (req.query.status) {
+      filter.status = req.query.status;
     }
 
     const content = await Content.find(filter)
-      .sort({ updatedAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(parseInt(limit))
-      .populate('author', 'username email');
-
-    const total = await Content.countDocuments(filter);
+      .populate('author', 'username email')
+      .sort({ createdAt: -1 })
+      .limit(parseInt(req.query.limit) || 50);
 
     res.json({
       success: true,
-      data: content,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total,
-        pages: Math.ceil(total / limit)
-      }
+      data: content
     });
   } catch (error) {
     console.error('Get content error:', error);
@@ -96,51 +96,7 @@ const getContent = async (req, res) => {
   }
 };
 
-// Get content by status
-const getContentByStatus = async (req, res) => {
-  try {
-    const { status } = req.params;
-    const { search, page = 1, limit = 20 } = req.query;
-    
-    const filter = {
-      tenant: req.user.tenant,
-      status,
-      deleted: { $ne: true }
-    };
-    
-    // If user is not admin or superadmin, only show their own content
-    if (req.user.role && req.user.role.name && !['admin', 'superadmin'].includes(req.user.role.name)) {
-      filter.author = req.user.id;
-    }
-    
-    if (search) {
-      filter.$or = [
-        { title: { $regex: search, $options: 'i' } },
-        { content: { $regex: search, $options: 'i' } }
-      ];
-    }
-
-    const content = await Content.find(filter)
-      .sort({ updatedAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(parseInt(limit))
-      .populate('author', 'username email');
-
-    res.json({
-      success: true,
-      data: content
-    });
-  } catch (error) {
-    console.error('Get content by status error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to fetch content',
-      error: error.message 
-    });
-  }
-};
-
-// Get single content by ID
+// Get content by ID
 const getContentById = async (req, res) => {
   try {
     const filter = {
@@ -149,7 +105,7 @@ const getContentById = async (req, res) => {
       deleted: { $ne: true }
     };
     
-    // If user is not admin or superadmin, only show their own content
+    // If user is not admin or superadmin, only allow viewing their own content
     if (req.user.role && req.user.role.name && !['admin', 'superadmin'].includes(req.user.role.name)) {
       filter.author = req.user.id;
     }
@@ -177,10 +133,190 @@ const getContentById = async (req, res) => {
   }
 };
 
+// Delete content
+const deleteContent = async (req, res) => {
+  try {
+    const filter = {
+      _id: req.params.id,
+      tenant: req.user.tenant,
+      deleted: { $ne: true }
+    };
+    
+    // If user is not admin or superadmin, only allow deleting their own content
+    if (req.user.role && req.user.role.name && !['admin', 'superadmin'].includes(req.user.role.name)) {
+      filter.author = req.user.id;
+    }
+    
+    const content = await Content.findOneAndUpdate(
+      filter,
+      { 
+        deleted: true, 
+        deletedAt: new Date() 
+      },
+      { new: true }
+    );
+
+    if (!content) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Content not found' 
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Content deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete content error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to delete content',
+      error: error.message 
+    });
+  }
+};
+
+// Publish content
+const publishContent = async (req, res) => {
+  try {
+    const filter = {
+      _id: req.params.id,
+      tenant: req.user.tenant,
+      deleted: { $ne: true }
+    };
+    
+    // If user is not admin or superadmin, only allow publishing their own content
+    if (req.user.role && req.user.role.name && !['admin', 'superadmin'].includes(req.user.role.name)) {
+      filter.author = req.user.id;
+    }
+    
+    const content = await Content.findOneAndUpdate(
+      filter,
+      { 
+        status: 'published',
+        publishedAt: new Date(),
+        updatedAt: new Date()
+      },
+      { new: true }
+    ).populate('author', 'username email');
+
+    if (!content) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Content not found' 
+      });
+    }
+
+    res.json({
+      success: true,
+      data: content,
+      message: 'Content published successfully'
+    });
+  } catch (error) {
+    console.error('Publish content error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to publish content',
+      error: error.message 
+    });
+  }
+};
+
+// Schedule content
+const scheduleContent = async (req, res) => {
+  try {
+    const { scheduledAt } = req.body;
+    
+    if (!scheduledAt) {
+      return res.status(400).json({
+        success: false,
+        message: 'scheduledAt date is required'
+      });
+    }
+
+    const filter = {
+      _id: req.params.id,
+      tenant: req.user.tenant,
+      deleted: { $ne: true }
+    };
+    
+    // If user is not admin or superadmin, only allow scheduling their own content
+    if (req.user.role && req.user.role.name && !['admin', 'superadmin'].includes(req.user.role.name)) {
+      filter.author = req.user.id;
+    }
+    
+    const content = await Content.findOneAndUpdate(
+      filter,
+      { 
+        status: 'scheduled',
+        scheduledAt: new Date(scheduledAt),
+        updatedAt: new Date()
+      },
+      { new: true }
+    ).populate('author', 'username email');
+
+    if (!content) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Content not found' 
+      });
+    }
+
+    res.json({
+      success: true,
+      data: content,
+      message: 'Content scheduled successfully'
+    });
+  } catch (error) {
+    console.error('Schedule content error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to schedule content',
+      error: error.message 
+    });
+  }
+};
+
+// Get content by status
+const getContentByStatus = async (req, res) => {
+  try {
+    const { status } = req.params;
+    
+    const filter = {
+      status,
+      tenant: req.user.tenant,
+      deleted: { $ne: true }
+    };
+    
+    // If user is not admin or superadmin, only show their own content
+    if (req.user.role && req.user.role.name && !['admin', 'superadmin'].includes(req.user.role.name)) {
+      filter.author = req.user.id;
+    }
+
+    const content = await Content.find(filter)
+      .populate('author', 'username email')
+      .sort({ createdAt: -1 })
+      .limit(parseInt(req.query.limit) || 50);
+
+    res.json({
+      success: true,
+      data: content
+    });
+  } catch (error) {
+    console.error('Get content by status error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch content by status',
+      error: error.message 
+    });
+  }
+};
+
 // Update content
 const updateContent = async (req, res) => {
   try {
-    const { title, content, excerpt, type, status, tags, coverImageUrl, scheduledAt } = req.body;
+    const { title, content, excerpt, type, status, tags, coverImageUrl, scheduledAt, slug } = req.body;
     
     const updateData = {
       title,
@@ -193,6 +329,13 @@ const updateContent = async (req, res) => {
       scheduledAt,
       updatedAt: new Date()
     };
+
+    // If slug is explicitly provided, use it, else if missing and title exists, regenerate a slug
+    if (typeof slug === 'string' && slug.trim()) {
+      updateData.slug = slugify(slug);
+    } else if (title) {
+      updateData.slug = `${slugify(title)}-${Date.now().toString(36).slice(-5)}`;
+    }
 
     // Set publishedAt when publishing
     if (status === 'published' && req.body.status !== 'published') {
@@ -238,149 +381,37 @@ const updateContent = async (req, res) => {
   }
 };
 
-// Delete content (soft delete)
-const deleteContent = async (req, res) => {
+// Public: fetch published content by slug or id (no auth)
+const getPublicContentBySlugOrId = async (req, res) => {
   try {
-    const filter = {
-      _id: req.params.id,
-      tenant: req.user.tenant,
-      deleted: { $ne: true }
-    };
-    
-    // If user is not admin or superadmin, only allow deleting their own content
-    if (req.user.role && req.user.role.name && !['admin', 'superadmin'].includes(req.user.role.name)) {
-      filter.author = req.user.id;
-    }
-    
-    const deletedContent = await Content.findOneAndUpdate(
-      filter,
-      {
-        deleted: true,
-        deletedAt: new Date(),
-        updatedAt: new Date()
-      },
-      { new: true }
-    );
-
-    if (!deletedContent) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Content not found' 
-      });
-    }
-
-    res.json({
-      success: true,
-      message: 'Content deleted successfully'
-    });
-  } catch (error) {
-    console.error('Delete content error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to delete content',
-      error: error.message 
-    });
-  }
-};
-
-// Publish content
-const publishContent = async (req, res) => {
-  try {
-    const filter = {
-      _id: req.params.id,
-      tenant: req.user.tenant,
-      deleted: { $ne: true }
-    };
-    
-    // If user is not admin or superadmin, only allow publishing their own content
-    if (req.user.role && req.user.role.name && !['admin', 'superadmin'].includes(req.user.role.name)) {
-      filter.author = req.user.id;
-    }
-    
-    const publishedContent = await Content.findOneAndUpdate(
-      filter,
-      {
-        status: 'published',
-        publishedAt: new Date(),
-        updatedAt: new Date()
-      },
-      { new: true, runValidators: true }
-    ).populate('author', 'username email');
-
-    if (!publishedContent) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Content not found' 
-      });
-    }
-
-    res.json({
-      success: true,
-      data: publishedContent,
-      message: 'Content published successfully'
-    });
-  } catch (error) {
-    console.error('Publish content error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to publish content',
-      error: error.message 
-    });
-  }
-};
-
-// Schedule content
-const scheduleContent = async (req, res) => {
-  try {
-    const { scheduledAt } = req.body;
-    
-    if (!scheduledAt) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Scheduled date is required' 
-      });
-    }
+    const { idOrSlug } = req.params;
+    const tenant = req.query.tenant; // optional multi-tenant filter via query
 
     const filter = {
-      _id: req.params.id,
-      tenant: req.user.tenant,
+      status: 'published',
       deleted: { $ne: true }
     };
-    
-    // If user is not admin or superadmin, only allow scheduling their own content
-    if (req.user.role && req.user.role.name && !['admin', 'superadmin'].includes(req.user.role.name)) {
-      filter.author = req.user.id;
-    }
-    
-    const scheduledContent = await Content.findOneAndUpdate(
-      filter,
-      {
-        status: 'scheduled',
-        scheduledAt: new Date(scheduledAt),
-        updatedAt: new Date()
-      },
-      { new: true, runValidators: true }
-    ).populate('author', 'username email');
+    if (tenant) filter.tenant = tenant;
 
-    if (!scheduledContent) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Content not found' 
-      });
+    let content;
+    if (idOrSlug.match(/^[0-9a-fA-F]{24}$/)) {
+      content = await Content.findOne({ ...filter, _id: idOrSlug });
+    } else {
+      content = await Content.findOne({ ...filter, slug: idOrSlug.toLowerCase() });
     }
 
-    res.json({
-      success: true,
-      data: scheduledContent,
-      message: 'Content scheduled successfully'
-    });
+    if (!content) {
+      return res.status(404).json({ success: false, message: 'Content not found' });
+    }
+
+    // increment views
+    content.views = (content.views || 0) + 1;
+    await content.save();
+
+    res.json({ success: true, data: content });
   } catch (error) {
-    console.error('Schedule content error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to schedule content',
-      error: error.message 
-    });
+    console.error('Get public content error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch public content', error: error.message });
   }
 };
 
@@ -392,5 +423,6 @@ module.exports = {
   deleteContent,
   publishContent,
   scheduleContent,
-  getContentByStatus
+  getContentByStatus,
+  getPublicContentBySlugOrId
 };

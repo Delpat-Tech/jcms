@@ -84,7 +84,20 @@ export const authApi = {
 };
 
 export const userApi = {
-  getAll: (includeInactive = false) => api.get(`/api/users${includeInactive ? '?includeInactive=true' : ''}`),
+  getAll: (param = false) => {
+    // Legacy boolean param: include inactive users when true
+    if (typeof param === 'boolean') {
+      const includeInactive = param;
+      return api.get(`/api/users${includeInactive ? '?includeInactive=true' : ''}`);
+    }
+    // If a string is provided, treat it as a raw query string (e.g., 'status=inactive')
+    if (typeof param === 'string' && param.trim().length > 0) {
+      const qs = param.startsWith('?') ? param.slice(1) : param;
+      return api.get(`/api/users?${qs}`);
+    }
+    // Default: no query
+    return api.get('/api/users');
+  },
   getById: (id) => api.get(`/api/users/${id}`),
   create: (userData) => api.post('/api/users', userData),
   update: (id, userData) => api.put(`/api/users/${id}`, userData),
@@ -96,7 +109,6 @@ export const imageApi = {
   getAll: (ownOnly = false) => api.get(`/api/images${ownOnly ? '?own=true' : ''}`),
   getById: (id) => api.get(`/api/images/${id}`),
   upload: (formData) => api.post('/api/images', formData),
-  update: (id, data) => api.put(`/api/images/${id}`, data),
   delete: (id) => api.delete(`/api/images/${id}`),
   getThumbnail: (id) => api.get(`/api/images/${id}/thumbnail`),
   getMedium: (id) => api.get(`/api/images/${id}/medium`),
@@ -252,6 +264,69 @@ export const subscriptionApi = {
   getStatus: () => api.get('/api/subscriptions/status'),
   create: (plan) => api.post('/api/subscriptions', { plan }),
   verify: (paymentReference) => api.post('/api/subscriptions/verify', { paymentReference })
+};
+
+export const imageManagementApi = {
+  // Upload images
+  uploadImages: (formData) => apiRequest('/api/image-management/upload', {
+    method: 'POST',
+    body: formData
+  }),
+  
+  // Get images for content page
+  getContentPageImages: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return api.get(`/api/image-management/content-page${queryString ? `?${queryString}` : ''}`);
+  },
+  
+  // Get image analytics
+  getAnalytics: () => api.get('/api/image-management/analytics'),
+  
+  // Get individual image
+  getImageById: (id) => api.get(`/api/image-management/${id}`),
+  
+  // Update image metadata
+  updateImageMetadata: (id, data) => api.patch(`/api/image-management/${id}/metadata`, data),
+  
+  // Visibility management
+  makeImagesPublic: (imageIds) => api.post('/api/image-management/make-public', { imageIds }),
+  makeImagesPrivate: (imageIds) => api.post('/api/image-management/make-private', { imageIds }),
+  
+  // Bulk operations
+  deleteImages: (imageIds) => apiRequest('/api/image-management/bulk-delete', {
+    method: 'DELETE',
+    body: JSON.stringify({ imageIds }),
+    headers: { 'Content-Type': 'application/json' }
+  }),
+  
+  // System status
+  getR2Status: () => api.get('/api/image-management/system/r2-status'),
+  
+  // Collection management
+  createCollection: (data) => api.post('/api/image-management/collections', data),
+  getCollections: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return api.get(`/api/image-management/collections${queryString ? `?${queryString}` : ''}`);
+  },
+  getCollectionById: (id, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return api.get(`/api/image-management/collections/${id}${queryString ? `?${queryString}` : ''}`);
+  },
+  updateCollection: (id, data) => api.put(`/api/image-management/collections/${id}`, data),
+  deleteCollection: (id) => api.delete(`/api/image-management/collections/${id}`),
+  makeCollectionPublic: (id) => api.post(`/api/image-management/collections/${id}/make-public`),
+  makeCollectionPrivate: (id) => api.post(`/api/image-management/collections/${id}/make-private`),
+  addImagesToCollection: (id, imageIds) => api.post(`/api/image-management/collections/${id}/add-images`, { imageIds }),
+  
+  // Cloudflare Tunnel endpoints
+  startTunnel: () => api.post('/api/image-management/tunnel/start'),
+  stopTunnel: () => api.post('/api/image-management/tunnel/stop'),
+  getTunnelStatus: () => api.get('/api/image-management/tunnel/status'),
+  makeCollectionPublicViaTunnel: (id) => api.post(`/api/image-management/tunnel/collections/${id}/make-public`),
+  makeCollectionPrivateViaTunnel: (id) => api.post(`/api/image-management/tunnel/collections/${id}/make-private`),
+  downloadCollectionZip: (id) => fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/image-management/tunnel/collections/${id}/download-zip`, {
+    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+  })
 };
 
 export { ApiError };

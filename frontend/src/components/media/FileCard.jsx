@@ -68,7 +68,7 @@ const FileCard = ({ file, viewMode, selected, onSelect, onPreview, onDelete, onD
         <input
           type="checkbox"
           checked={selected}
-          onChange={(e) => onSelect(e.target.checked)}
+          onChange={(e) => onSelect(file._id, e.target.checked)}
           className="w-4 h-4 text-blue-600 mr-4"
         />
         
@@ -117,8 +117,8 @@ const FileCard = ({ file, viewMode, selected, onSelect, onPreview, onDelete, onD
   }
 
   return (
-    <div className={`
-      bg-white rounded-xl shadow-sm border hover:shadow-md transition-shadow
+    <div className={
+      `bg-white rounded-xl shadow-sm border hover:shadow-md transition-shadow
       ${selected ? 'ring-2 ring-blue-500' : ''}
     `}>
       {/* Thumbnail */}
@@ -126,7 +126,7 @@ const FileCard = ({ file, viewMode, selected, onSelect, onPreview, onDelete, onD
         <input
           type="checkbox"
           checked={selected}
-          onChange={(e) => onSelect(e.target.checked)}
+          onChange={(e) => onSelect(file._id, e.target.checked)}
           className="absolute top-3 left-3 w-4 h-4 text-blue-600 z-10"
         />
         

@@ -1,8 +1,8 @@
 import React from 'react';
-import MediaDashboard from '../components/media/MediaDashboard';
+import EnhancedMediaDashboard from '../components/media/EnhancedMediaDashboard';
 
 function MediaPage() {
-  return <MediaDashboard />;
+  return <EnhancedMediaDashboard />;
 }
 
 export default MediaPage;

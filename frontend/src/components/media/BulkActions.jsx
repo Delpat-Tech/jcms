@@ -1,7 +1,7 @@
 import React from 'react';
-import { Download, Trash2, Move, X } from 'lucide-react';
+import { Download, Trash2, Move, X, FolderPlus } from 'lucide-react';
 
-const BulkActions = ({ selectedCount, onDownload, onDelete, onMove, onClear }) => {
+const BulkActions = ({ selectedCount, onDownload, onDelete, onMove, onClear, onGroup }) => {
   return (
     <div className="bg-blue-50 border-b border-blue-200 px-6 py-3">
       <div className="flex items-center justify-between">
@@ -18,6 +18,16 @@ const BulkActions = ({ selectedCount, onDownload, onDelete, onMove, onClear }) =
               <Download className="w-4 h-4" />
               <span>Download</span>
             </button>
+            
+            {onGroup && (
+              <button
+                onClick={onGroup}
+                className="flex items-center space-x-1 px-3 py-1.5 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700"
+              >
+                <FolderPlus className="w-4 h-4" />
+                <span>Group to Content</span>
+              </button>
+            )}
             
             <button
               onClick={onMove}
