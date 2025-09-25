@@ -47,10 +47,14 @@ const getContent = async (req, res) => {
     const { status, search, page = 1, limit = 20 } = req.query;
     
     const filter = {
-      author: req.user.id,
       tenant: req.user.tenant,
       deleted: { $ne: true }
     };
+    
+    // If user is not admin or superadmin, only show their own content
+    if (req.user.role && req.user.role.name && !['admin', 'superadmin'].includes(req.user.role.name)) {
+      filter.author = req.user.id;
+    }
     
     if (status) {
       filter.status = status;
@@ -99,11 +103,15 @@ const getContentByStatus = async (req, res) => {
     const { search, page = 1, limit = 20 } = req.query;
     
     const filter = {
-      author: req.user.id,
       tenant: req.user.tenant,
       status,
       deleted: { $ne: true }
     };
+    
+    // If user is not admin or superadmin, only show their own content
+    if (req.user.role && req.user.role.name && !['admin', 'superadmin'].includes(req.user.role.name)) {
+      filter.author = req.user.id;
+    }
     
     if (search) {
       filter.$or = [
@@ -135,12 +143,18 @@ const getContentByStatus = async (req, res) => {
 // Get single content by ID
 const getContentById = async (req, res) => {
   try {
-    const content = await Content.findOne({
+    const filter = {
       _id: req.params.id,
-      author: req.user.id,
       tenant: req.user.tenant,
       deleted: { $ne: true }
-    }).populate('author', 'username email');
+    };
+    
+    // If user is not admin or superadmin, only show their own content
+    if (req.user.role && req.user.role.name && !['admin', 'superadmin'].includes(req.user.role.name)) {
+      filter.author = req.user.id;
+    }
+    
+    const content = await Content.findOne(filter).populate('author', 'username email');
 
     if (!content) {
       return res.status(404).json({ 
@@ -185,13 +199,19 @@ const updateContent = async (req, res) => {
       updateData.publishedAt = new Date();
     }
 
+    const filter = {
+      _id: req.params.id,
+      tenant: req.user.tenant,
+      deleted: { $ne: true }
+    };
+    
+    // If user is not admin or superadmin, only allow updating their own content
+    if (req.user.role && req.user.role.name && !['admin', 'superadmin'].includes(req.user.role.name)) {
+      filter.author = req.user.id;
+    }
+    
     const updatedContent = await Content.findOneAndUpdate(
-      {
-        _id: req.params.id,
-        author: req.user.id,
-        tenant: req.user.tenant,
-        deleted: { $ne: true }
-      },
+      filter,
       updateData,
       { new: true, runValidators: true }
     ).populate('author', 'username email');
@@ -221,13 +241,19 @@ const updateContent = async (req, res) => {
 // Delete content (soft delete)
 const deleteContent = async (req, res) => {
   try {
+    const filter = {
+      _id: req.params.id,
+      tenant: req.user.tenant,
+      deleted: { $ne: true }
+    };
+    
+    // If user is not admin or superadmin, only allow deleting their own content
+    if (req.user.role && req.user.role.name && !['admin', 'superadmin'].includes(req.user.role.name)) {
+      filter.author = req.user.id;
+    }
+    
     const deletedContent = await Content.findOneAndUpdate(
-      {
-        _id: req.params.id,
-        author: req.user.id,
-        tenant: req.user.tenant,
-        deleted: { $ne: true }
-      },
+      filter,
       {
         deleted: true,
         deletedAt: new Date(),
@@ -260,13 +286,19 @@ const deleteContent = async (req, res) => {
 // Publish content
 const publishContent = async (req, res) => {
   try {
+    const filter = {
+      _id: req.params.id,
+      tenant: req.user.tenant,
+      deleted: { $ne: true }
+    };
+    
+    // If user is not admin or superadmin, only allow publishing their own content
+    if (req.user.role && req.user.role.name && !['admin', 'superadmin'].includes(req.user.role.name)) {
+      filter.author = req.user.id;
+    }
+    
     const publishedContent = await Content.findOneAndUpdate(
-      {
-        _id: req.params.id,
-        author: req.user.id,
-        tenant: req.user.tenant,
-        deleted: { $ne: true }
-      },
+      filter,
       {
         status: 'published',
         publishedAt: new Date(),
@@ -309,13 +341,19 @@ const scheduleContent = async (req, res) => {
       });
     }
 
+    const filter = {
+      _id: req.params.id,
+      tenant: req.user.tenant,
+      deleted: { $ne: true }
+    };
+    
+    // If user is not admin or superadmin, only allow scheduling their own content
+    if (req.user.role && req.user.role.name && !['admin', 'superadmin'].includes(req.user.role.name)) {
+      filter.author = req.user.id;
+    }
+    
     const scheduledContent = await Content.findOneAndUpdate(
-      {
-        _id: req.params.id,
-        author: req.user.id,
-        tenant: req.user.tenant,
-        deleted: { $ne: true }
-      },
+      filter,
       {
         status: 'scheduled',
         scheduledAt: new Date(scheduledAt),

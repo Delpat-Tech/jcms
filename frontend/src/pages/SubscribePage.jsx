@@ -8,6 +8,15 @@ function useQuery() {
 }
 
 export default function SubscribePage() {
+  // Auth check: if not logged in, redirect to login and set postLoginRedirect
+  useEffect(() => {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token) {
+      sessionStorage.setItem('postLoginRedirect', window.location.pathname + window.location.search);
+      window.location.href = '/';
+    }
+  }, []);
+
   const query = useQuery();
   const initialPlan = query.get('plan') || 'standard';
 

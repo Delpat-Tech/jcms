@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useLocation, Link } from "react-router-dom";
-import { Home, FileText, Image as ImageIcon, Users as UsersIcon, Settings, BarChart2, HelpCircle, Layers, Key, UserCheck } from "react-feather";
+import { Home, FileText, Image as ImageIcon, Users as UsersIcon, Settings, BarChart2, HelpCircle, Layers, Key, UserCheck, CreditCard } from "react-feather";
 
 // Chevron icon (kept here for potential future use)
 
@@ -41,6 +41,8 @@ const FeatherIcon = ({ name, active }) => {
     case "help":
     case "/user/help":
       return <HelpCircle className={cls} />;
+    case "subscription":
+      return <CreditCard className={cls} />;
     default:
       return <Home className={cls} />;
   }

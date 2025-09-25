@@ -9,6 +9,7 @@ function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState(null); // 'success' | 'error'
   const { addNotification } = useToasts() || { addNotification: () => {} };
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -46,8 +47,24 @@ function Login() {
     </svg>
   );
 
+  const SuccessIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600">
+      <path d="M9 12l2 2 4-4" />
+      <circle cx="12" cy="12" r="10" />
+    </svg>
+  );
+
+  const ErrorIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-600">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="15" y1="9" x2="9" y2="15"></line>
+      <line x1="9" y1="9" x2="15" y2="15"></line>
+    </svg>
+  );
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setMessageType(null);
     setMessage("Logging in...");
 
     try {
@@ -58,7 +75,8 @@ function Login() {
         throw new Error(data.message || "Login failed");
       }
 
-      setMessage("✅ Login successful!");
+      setMessageType('success');
+      setMessage("Login successful!");
       addNotification('success', 'Logged in', `Welcome ${data.user.username}`);
       console.log("User data:", data);
 
@@ -73,7 +91,8 @@ function Login() {
 
       window.location.href = "/dashboard";
     } catch (err) {
-      setMessage("❌ " + err.message);
+      setMessageType('error');
+      setMessage(err.message);
       addNotification('error', 'Login failed', err.message);
     }
   };
@@ -84,9 +103,7 @@ function Login() {
         <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-8">
           {/* Logo/Brand */}
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
-              <span className="text-2xl font-bold text-white">J</span>
-            </div>
+            <img src="/logo.png" alt="JCMS" className="h-16 mx-auto mb-4 object-contain" />
             <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome back</h2>
             <p className="text-gray-600">Sign in to your JCMS account</p>
           </div>
@@ -156,12 +173,15 @@ function Login() {
             </Button>
 
             {message && (
-              <div className={`p-3 rounded-lg text-sm ${
-                message.includes('✅') 
-                  ? 'bg-green-50 text-green-700 border border-green-200' 
-                  : 'bg-red-50 text-red-700 border border-red-200'
+              <div className={`p-3 rounded-lg text-sm flex items-start gap-2 ${
+                messageType === 'success'
+                  ? 'bg-green-50 text-green-700 border border-green-200'
+                  : messageType === 'error'
+                  ? 'bg-red-50 text-red-700 border border-red-200'
+                  : 'bg-gray-50 text-gray-700 border border-gray-200'
               }`}>
-                {message}
+                <span className="mt-0.5">{messageType === 'success' ? <SuccessIcon /> : messageType === 'error' ? <ErrorIcon /> : null}</span>
+                <span>{message}</span>
               </div>
             )}
           </form>
