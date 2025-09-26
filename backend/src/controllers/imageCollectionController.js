@@ -338,6 +338,59 @@ const deleteCollection = async (req, res) => {
   }
 };
 
+/**
+ * Get collection in unified JSON format
+ */
+const getCollectionJson = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await imageCollectionService.getCollectionById(id, req.user, {});
+    const { collection, images } = result;
+
+    // Transform to unified JSON format with only essential fields
+    const unifiedJson = {
+      collectionId: String(collection._id),
+      name: collection.name || '',
+      description: collection.description || '',
+      tenant: String(collection.tenant || ''),
+      settings: {
+        allowPublicAccess: collection.visibility === 'public',
+        downloadEnabled: true,
+        watermarkEnabled: false
+      },
+      items: images.map((image, index) => {
+        // Extract only essential image fields
+        const cleanImage = {
+          index: index + 1,
+          title: image.title || '',
+          fileUrl: image.fileUrl || image.publicUrl || '',
+          format: image.format || '',
+          isPublic: image.visibility === 'public'
+        };
+        return cleanImage;
+      })
+    };
+
+    res.json(unifiedJson);
+
+  } catch (error) {
+    logger.error('Failed to get collection JSON', {
+      collectionId: req.params.id,
+      error: error.message,
+      userId: req.user?.id
+    });
+
+    const statusCode = error.message.includes('not found') || error.message.includes('access denied') ? 404 : 500;
+    
+    res.status(statusCode).json({
+      success: false,
+      message: error.message,
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   createCollection,
   getCollections,
@@ -346,5 +399,6 @@ module.exports = {
   makeCollectionPrivate,
   addImagesToCollection,
   updateCollection,
-  deleteCollection
+  deleteCollection,
+  getCollectionJson
 };

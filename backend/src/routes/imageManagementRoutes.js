@@ -80,6 +80,10 @@ router.get('/collections/:id',
   imageCollectionController.getCollectionById
 );
 
+router.get('/collections/:id/json',
+  imageCollectionController.getCollectionJson
+);
+
 router.put('/collections/:id',
   imageCollectionController.updateCollection
 );

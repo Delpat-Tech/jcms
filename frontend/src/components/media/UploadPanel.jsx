@@ -55,24 +55,37 @@ const UploadPanel = ({ onUploadSuccess, currentFilter }) => {
     let filesToUpload = selectedFiles;
     if ((currentFilter === 'json') && jsonText.trim()) {
       try {
-        // Validate JSON
-        JSON.parse(jsonText);
+        // Validate and auto-index JSON
+        const parsedJson = JSON.parse(jsonText);
+        let processedJson = parsedJson;
+        
+        // Auto-add index to all array items
+        if (Array.isArray(parsedJson)) {
+          processedJson = parsedJson.map((item, idx) => {
+            if (typeof item === 'object' && item !== null) {
+              return { index: idx + 1, ...item };
+            }
+            return item;
+          });
+        }
+        
+        const finalJsonText = JSON.stringify(processedJson, null, 2);
+        const blob = new Blob([finalJsonText], { type: 'application/json' });
+        const filename = `${title.trim().replace(/\s+/g, '_')}.json`;
+        const virtualFile = new File([blob], filename, { type: 'application/json' });
+        const vf = {
+          id: Date.now() + Math.random(),
+          file: virtualFile,
+          name: virtualFile.name,
+          size: virtualFile.size,
+          type: virtualFile.type
+        };
+        filesToUpload = [...selectedFiles, vf];
+        setSelectedFiles(filesToUpload);
       } catch (e) {
         alert('Invalid JSON. Please fix the syntax.');
         return;
       }
-      const blob = new Blob([jsonText], { type: 'application/json' });
-      const filename = `${title.trim().replace(/\s+/g, '_')}.json`;
-      const virtualFile = new File([blob], filename, { type: 'application/json' });
-      const vf = {
-        id: Date.now() + Math.random(),
-        file: virtualFile,
-        name: virtualFile.name,
-        size: virtualFile.size,
-        type: virtualFile.type
-      };
-      filesToUpload = [...selectedFiles, vf];
-      setSelectedFiles(filesToUpload);
     }
 
     if (filesToUpload.length === 0) {
