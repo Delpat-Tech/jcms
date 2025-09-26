@@ -234,17 +234,53 @@ const UploadPanel = ({ onUploadSuccess, currentFilter }) => {
 
         {currentFilter === 'json' && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              JSON Content
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                JSON Content
+              </label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const template = [
+                      { name: "Akash", bio: "Hello", pic: "url" },
+                      { name: "Akash", bio: "Hello", pic: "url" },
+                      { name: "Akash", bio: "Hello", pic: "url" },
+                      { name: "Akash", bio: "Hello", pic: "url" },
+                      { name: "Akash", bio: "Hello", pic: "url" },
+                      { name: "Akash", bio: "Hello", pic: "url" },
+                      { name: "Akash", bio: "Hello", pic: "url" }
+                    ];
+                    setJsonText(JSON.stringify(template, null, 2));
+                  }}
+                  className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                >
+                  Use Template
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setJsonText('')}
+                  className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
             <textarea
               value={jsonText}
               onChange={(e) => setJsonText(e.target.value)}
-              placeholder={'{\n  "key": "value"\n}'}
-              rows={8}
+              placeholder={`[\n  { "name": "Akash", "bio": "Hello", "pic": "url" },\n  { "name": "John", "bio": "World", "pic": "url2" }\n]`}
+              rows={12}
               className="w-full font-mono text-sm px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
-            <p className="text-xs text-gray-500 mt-1">If provided, this will be uploaded as a .json file named after the title.</p>
+            <div className="flex items-center justify-between mt-2">
+              <p className="text-xs text-gray-500">If provided, this will be uploaded as a .json file named after the title.</p>
+              <div className="text-xs text-gray-400">
+                {jsonText.trim() && (
+                  <span>Characters: {jsonText.length}</span>
+                )}
+              </div>
+            </div>
           </div>
         )}
 

@@ -1,10 +1,12 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Input from "../components/ui/Input.jsx";
 import Button from "../components/ui/Button.jsx";
 import FormField from "../components/ui/FormField.jsx";
-import { tenantApi } from "../api";
+import { tenantApi, authApi } from "../api";
 
 export default function RegisterTenant() {
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     registrationCode: "",
     name: "",
@@ -36,7 +38,18 @@ export default function RegisterTenant() {
       const res = await tenantApi.register(form);
       const data = await res.json();
       if (!data.success) throw new Error(data.message || "Registration failed");
-      setMessage("✅ Registered. You can now log in as the admin.");
+      
+      // Auto-login after successful registration
+      const loginRes = await authApi.login({ username: form.username, password: form.password });
+      const loginData = await loginRes.json();
+      
+      if (loginData.success) {
+        localStorage.setItem('token', loginData.token);
+        localStorage.setItem('user', JSON.stringify(loginData.user));
+        navigate('/dashboard');
+      } else {
+        setMessage("✅ Registered successfully. Please log in.");
+      }
     } catch (e) {
       setMessage("❌ " + e.message);
     } finally {

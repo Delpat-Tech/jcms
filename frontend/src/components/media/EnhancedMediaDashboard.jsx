@@ -65,8 +65,8 @@ const EnhancedMediaDashboard = () => {
       if (filterType === 'all' || filterType !== 'image') {
         const fileResponse = await fileApi.getAll(ownerFilter === 'mine');
         const fileResult = await fileResponse.json();
-        if (fileResult?.success && Array.isArray(fileResult.data)) {
-          const otherFiles = fileResult.data.map(file => ({
+        if (fileResult?.success && Array.isArray(fileResult.files)) {
+          const otherFiles = fileResult.files.map(file => ({
             ...file,
             type: getFileType(file.filename),
             fullUrl: toAbsoluteUrl(file.fileUrl || file.publicUrl)
@@ -271,7 +271,7 @@ const EnhancedMediaDashboard = () => {
         </div>
         
         {/* Upload Panel */}
-        <UploadPanel onUploadComplete={fetchFiles} />
+        <UploadPanel onUploadComplete={fetchFiles} currentFilter={filterType} />
       </div>
 
       {/* Main Content */}
