@@ -544,8 +544,8 @@ const CollectionDetailView = ({
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
-            {images.map(image => (
-              <div key={image._id} className="border rounded-lg overflow-hidden">
+            {images.map((image, index) => (
+              <div key={image.index || index} className="border rounded-lg overflow-hidden">
                 <div className="relative">
                   <img
                     src={image.accessUrl || image.fileUrl}

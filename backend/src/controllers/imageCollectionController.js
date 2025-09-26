@@ -94,10 +94,25 @@ const getCollectionById = async (req, res) => {
     };
 
     const result = await imageCollectionService.getCollectionById(id, req.user, imageFilters);
+    
+    // Clean up the images data
+    const cleanImages = result.images.map((image, index) => ({
+      index: index + 1,
+      title: image.title || '',
+      fileUrl: image.fileUrl || image.publicUrl || '',
+      notes: image.notes || ''
+    }));
 
     res.json({
       success: true,
-      data: result
+      data: {
+        collection: {
+          _id: result.collection._id,
+          name: result.collection.name,
+          description: result.collection.description
+        },
+        images: cleanImages
+      }
     });
 
   } catch (error) {
@@ -359,17 +374,12 @@ const getCollectionJson = async (req, res) => {
         downloadEnabled: true,
         watermarkEnabled: false
       },
-      items: images.map((image, index) => {
-        // Extract only essential image fields
-        const cleanImage = {
-          index: index + 1,
-          title: image.title || '',
-          fileUrl: image.fileUrl || image.publicUrl || '',
-          format: image.format || '',
-          isPublic: image.visibility === 'public'
-        };
-        return cleanImage;
-      })
+      items: images.map((image, index) => ({
+        index: index + 1,
+        title: image.title || '',
+        fileUrl: image.fileUrl || image.publicUrl || '',
+        notes: image.notes || ''
+      }))
     };
 
     res.json(unifiedJson);
