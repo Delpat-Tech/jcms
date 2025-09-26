@@ -35,6 +35,168 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use('/public', express.static(path.join(__dirname, '../public')));
 app.use(express.urlencoded({ extended: true }));
 
+// Serve the main HTML file at root route
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
+// Public collection gallery route (no auth required)
+app.get('/gallery', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
+// Public collection gallery with specific collections
+app.get('/gallery/:collectionIds', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
+// Add endpoint to get image collections
+app.get('/api/collections', async (req, res) => {
+  try {
+    const ImageCollection = require('./models/imageCollection');
+    const Image = require('./models/image');
+    
+    // Get all collections with image counts
+    const collections = await ImageCollection.find({})
+      .populate('user', 'username email')
+      .populate('coverImage')
+      .sort({ createdAt: -1 });
+    
+    // Add image counts and sample images for each collection
+    const collectionsWithImages = await Promise.all(
+      collections.map(async (collection) => {
+        const images = await Image.find({ collection: collection._id }).limit(5);
+        return {
+          ...collection.toJSON(),
+          imageCount: images.length,
+          sampleImages: images
+        };
+      })
+    );
+    
+    res.json({ success: true, data: collectionsWithImages });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Public endpoint to get public collections (no auth required)
+app.get('/api/public/collections', async (req, res) => {
+  try {
+    const ImageCollection = require('./models/imageCollection');
+    const Image = require('./models/image');
+    
+    // Get only public collections
+    const collections = await ImageCollection.find({ visibility: 'public' })
+      .populate('user', 'username email')
+      .populate('coverImage')
+      .sort({ createdAt: -1 });
+    
+    // Add image counts and sample images for each collection
+    const collectionsWithImages = await Promise.all(
+      collections.map(async (collection) => {
+        const images = await Image.find({ 
+          collection: collection._id,
+          visibility: 'public' 
+        }).limit(5);
+        return {
+          ...collection.toJSON(),
+          imageCount: images.length,
+          sampleImages: images
+        };
+      })
+    );
+    
+    res.json({ success: true, data: collectionsWithImages });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Add endpoint to get images from specific collections
+app.get('/api/collections/:ids/images', async (req, res) => {
+  try {
+    const Image = require('./models/image');
+    const collectionIds = req.params.ids.split(',');
+    
+    const images = await Image.find({ 
+      collection: { $in: collectionIds } 
+    })
+    .populate('user', 'username email')
+    .populate('collection', 'name slug')
+    .sort({ createdAt: -1 });
+    
+    res.json({ success: true, data: images, images: images });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Public endpoint to get images from public collections (no auth required)
+app.get('/api/public/collections/:ids/images', async (req, res) => {
+  try {
+    const Image = require('./models/image');
+    const collectionIds = req.params.ids.split(',');
+    
+    const images = await Image.find({ 
+      collection: { $in: collectionIds },
+      visibility: 'public'
+    })
+    .populate('user', 'username email')
+    .populate('collection', 'name slug')
+    .sort({ createdAt: -1 });
+    
+    res.json({ success: true, data: images, images: images });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Add a simple endpoint to get sample images from public folder
+app.get('/api/sample-images', (req, res) => {
+  try {
+    const sampleImages = [
+      {
+        _id: 'sample-kitty',
+        title: 'Kitty',
+        description: 'A cute kitten image from the public collection',
+        filename: 'download.jpeg',
+        fileUrl: '/public/kitty/download.jpeg',
+        internalPath: 'public/kitty/download.jpeg',
+        createdAt: new Date(),
+        uploadedBy: { name: 'System' }
+      }
+    ];
+    
+    res.json({ success: true, data: sampleImages, images: sampleImages });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Debug endpoint to check what images exist
+app.get('/api/debug/images', async (req, res) => {
+  try {
+    const Image = require('./models/image');
+    const ImageCollection = require('./models/imageCollection');
+    
+    const allImages = await Image.find({}).populate('collection', 'name slug').limit(10);
+    const allCollections = await ImageCollection.find({}).limit(10);
+    
+    res.json({ 
+      success: true, 
+      data: {
+        images: allImages,
+        collections: allCollections,
+        imageCount: await Image.countDocuments(),
+        collectionCount: await ImageCollection.countDocuments()
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // Health check routes
 app.get("/api/health", (req, res) => {
   res.status(200).json({ 

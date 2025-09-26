@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JCMS - Image Gallery</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .auth-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .auth-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .auth-form input {
+            padding: 10px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 5px;
+            font-size: 14px;
+            min-width: 200px;
+        }
+
+        .auth-form button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .auth-form button:hover {
+            background: #5a6fd8;
+        }
+
+        .auth-status {
+            text-align: center;
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .auth-status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .auth-status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .image-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .image-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
+
+        .image-container {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            overflow: hidden;
+        }
+
+        .image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+
+        .image-card:hover .image-container img {
+            transform: scale(1.05);
+        }
+
+        .image-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .image-card:hover .image-overlay {
+            opacity: 1;
+        }
+
+        .overlay-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .overlay-btn {
+            padding: 8px 16px;
+            background: white;
+            color: #333;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .overlay-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .overlay-btn.view {
+            background: #667eea;
+            color: white;
+        }
+
+        .overlay-btn.download {
+            background: #28a745;
+            color: white;
+        }
+
+        .card-content {
+            padding: 20px;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .card-description {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            margin-bottom: 15px;
+        }
+
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .card-collection {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin-top: 8px;
+            display: inline-block;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .view-btn {
+            background: #667eea;
+            color: white;
+        }
+
+        .view-btn:hover {
+            background: #5a6fd8;
+        }
+
+        .download-btn {
+            background: #28a745;
+            color: white;
+        }
+
+        .download-btn:hover {
+            background: #218838;
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.2rem;
+            margin: 40px 0;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .no-images {
+            text-align: center;
+            color: white;
+            font-size: 1.1rem;
+            margin: 40px 0;
+            opacity: 0.8;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+        }
+
+        .modal-content {
+            position: relative;
+            margin: auto;
+            padding: 0;
+            width: 90%;
+            max-width: 1200px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .modal-image {
+            width: 100%;
+            height: auto;
+            max-height: 80vh;
+            object-fit: contain;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .modal-close:hover {
+            color: #bbb;
+        }
+
+        /* Gallery Info Styles */
+        .gallery-info {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .section-header h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .section-header p {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .collection-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .control-btn.select-all {
+            background: #28a745;
+            color: white;
+        }
+
+        .control-btn.clear-all {
+            background: #dc3545;
+            color: white;
+        }
+
+        .control-btn.view-images {
+            background: #667eea;
+            color: white;
+        }
+
+        .control-btn.back-btn {
+            background: #6c757d;
+            color: white;
+        }
+
+        .control-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .control-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .collections-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .collection-card {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .collection-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        }
+
+        .collection-card.selected {
+            border-color: #667eea;
+            background: #f0f2ff;
+        }
+
+        .collection-card .collection-checkbox {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 20px;
+            height: 20px;
+            accent-color: #667eea;
+        }
+
+        .collection-card .collection-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            padding-right: 30px;
+        }
+
+        .collection-card .collection-description {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+
+        .collection-card .collection-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .collection-card .collection-preview {
+            display: flex;
+            gap: 5px;
+            margin-top: 15px;
+            height: 60px;
+            overflow: hidden;
+            border-radius: 8px;
+        }
+
+        .collection-card .preview-image {
+            flex: 1;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .selected-collections-list {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .selected-collections-list .collection-tag {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            margin: 5px;
+            font-size: 0.85rem;
+        }
+
+        .gallery-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        @media (max-width: 768px) {
+            .gallery {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                gap: 15px;
+            }
+            
+            .collections-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .auth-form {
+                flex-direction: column;
+            }
+            
+            .auth-form input {
+                min-width: 100%;
+            }
+            
+            .collection-controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .control-btn {
+                min-width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🖼️ JCMS Image Gallery</h1>
+            <p>Browse and download your images</p>
+        </div>
+
+        <div class="auth-section">
+            <div class="auth-form">
+                <input type="email" id="email" placeholder="Enter your email" />
+                <input type="password" id="password" placeholder="Enter your password" />
+                <button onclick="login()">Login</button>
+                <button onclick="logout()" style="background: #dc3545;">Logout</button>
+            </div>
+            <div id="authStatus" class="auth-status" style="display: none;"></div>
+        </div>
+
+        <!-- Public Gallery Info -->
+        <div id="galleryInfo" class="gallery-info" style="display: none;">
+            <div class="section-header">
+                <h2>🌐 Public Image Gallery</h2>
+                <p>Viewing images from authorized collections</p>
+            </div>
+        </div>
+
+        <!-- Loading and Error States -->
+        <div id="loading" class="loading">Loading collections...</div>
+        <div id="error" class="error" style="display: none;"></div>
+        
+        <!-- Image Gallery Section -->
+        <div id="gallerySection" class="gallery-section" style="display: none;">
+            <div class="section-header">
+                <h2>🖼️ Images from Selected Collections</h2>
+                <button onclick="goBackToCollections()" class="control-btn back-btn">← Back to Collections</button>
+            </div>
+            <div id="selectedCollectionsList" class="selected-collections-list"></div>
+            <div id="gallery" class="gallery"></div>
+        </div>
+        
+        <div id="noCollections" class="no-images" style="display: none;">
+            No collections found. Please create some collections first.
+        </div>
+    </div>
+
+    <!-- Modal for image viewing -->
+    <div id="imageModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <img id="modalImage" class="modal-image" />
+        </div>
+    </div>
+
+    <script>
+        let authToken = localStorage.getItem('authToken');
+        let currentUser = null;
+
+        let isPublicMode = false;
+
+        // Check if this is a public gallery access
+        const currentPath = window.location.pathname;
+        if (currentPath.startsWith('/gallery')) {
+            isPublicMode = true;
+            // Hide auth section for public access
+            document.querySelector('.auth-section').style.display = 'none';
+            
+            // Show gallery info
+            document.getElementById('galleryInfo').style.display = 'block';
+            
+            // Load all public images directly
+            loadAllPublicImages();
+        } else {
+            // Check if user is already logged in for private access
+            if (authToken) {
+                checkAuthStatus();
+            } else {
+                document.getElementById('loading').style.display = 'none';
+                showAuthStatus('Please login to view collections', 'error');
+            }
+        }
+
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if (!email || !password) {
+                showAuthStatus('Please enter both email and password', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    authToken = data.token;
+                    currentUser = data.user;
+                    localStorage.setItem('authToken', authToken);
+                    showAuthStatus(`Welcome back, ${data.user.username || data.user.name}!`, 'success');
+                    loadCollections();
+                } else {
+                    showAuthStatus(data.message || 'Login failed', 'error');
+                }
+            } catch (error) {
+                showAuthStatus('Login error: ' + error.message, 'error');
+            }
+        }
+
+        async function logout() {
+            authToken = null;
+            currentUser = null;
+            selectedCollections.clear();
+            allCollections = [];
+            localStorage.removeItem('authToken');
+            showAuthStatus('Logged out successfully', 'success');
+            
+            // Hide all sections
+            document.getElementById('collectionSelection').style.display = 'none';
+            document.getElementById('gallerySection').style.display = 'none';
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('noCollections').style.display = 'none';
+        }
+
+        async function checkAuthStatus() {
+            try {
+                const response = await fetch('/api/auth/me', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    currentUser = data.user;
+                    showAuthStatus(`Logged in as ${data.user.username || data.user.name}`, 'success');
+                    loadCollections();
+                } else {
+                    authToken = null;
+                    localStorage.removeItem('authToken');
+                    showAuthStatus('Please login to view collections', 'error');
+                    document.getElementById('loading').style.display = 'none';
+                }
+            } catch (error) {
+                showAuthStatus('Authentication check failed', 'error');
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function showAuthStatus(message, type) {
+            const statusDiv = document.getElementById('authStatus');
+            statusDiv.textContent = message;
+            statusDiv.className = `auth-status ${type}`;
+            statusDiv.style.display = 'block';
+        }
+
+        async function loadAllPublicImages() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('loading').textContent = 'Loading public images...';
+            document.getElementById('error').style.display = 'none';
+
+            try {
+                // Get all public collections first
+                const collectionsResponse = await fetch('/api/public/collections');
+                
+                if (!collectionsResponse.ok) {
+                    throw new Error(`HTTP error! status: ${collectionsResponse.status}`);
+                }
+
+                const collectionsData = await collectionsResponse.json();
+                
+                if (!collectionsData.success || !collectionsData.data || collectionsData.data.length === 0) {
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('error').style.display = 'block';
+                    document.getElementById('error').textContent = 'No public collections available.';
+                    return;
+                }
+
+                // Get all collection IDs
+                const collectionIds = collectionsData.data.map(c => c._id).join(',');
+                
+                // Fetch images from all public collections
+                const imagesResponse = await fetch(`/api/public/collections/${collectionIds}/images`);
+
+                if (!imagesResponse.ok) {
+                    throw new Error(`HTTP error! status: ${imagesResponse.status}`);
+                }
+
+                const imagesData = await imagesResponse.json();
+                document.getElementById('loading').style.display = 'none';
+
+                console.log('Images API response:', imagesData);
+
+                if (imagesData.success && imagesData.data && imagesData.data.length > 0) {
+                    // Show gallery directly
+                    document.getElementById('gallerySection').style.display = 'block';
+                    
+                    // Show collection info
+                    const listDiv = document.getElementById('selectedCollectionsList');
+                    const collectionNames = collectionsData.data.map(c => c.name).join(', ');
+                    listDiv.innerHTML = `
+                        <strong>Public Collections:</strong><br>
+                        <span class="collection-tag">${collectionNames}</span>
+                    `;
+                    
+                    console.log('About to display images:', imagesData.data);
+                    displayImages(imagesData.data);
+                } else {
+                    console.log('No public images found, trying sample images...');
+                    await loadSampleImagesAsFallback();
+                }
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').textContent = 'Failed to load public images: ' + error.message;
+            }
+        }
+
+        async function loadSampleImagesAsFallback() {
+            try {
+                console.log('Loading sample images as fallback...');
+                const response = await fetch('/api/sample-images');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Sample images response:', data);
+                    
+                    if (data.success && data.data && data.data.length > 0) {
+                        document.getElementById('gallerySection').style.display = 'block';
+                        
+                        const listDiv = document.getElementById('selectedCollectionsList');
+                        listDiv.innerHTML = `
+                            <strong>Sample Images:</strong><br>
+                            <span class="collection-tag">Demo Gallery</span>
+                        `;
+                        
+                        displayImages(data.data);
+                        return;
+                    }
+                }
+                
+                // If even sample images fail, show error
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').textContent = 'No images available to display.';
+                
+            } catch (error) {
+                console.error('Failed to load sample images:', error);
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').textContent = 'No images available to display.';
+            }
+        }
+
+        async function loadCollections() {
+            if (!authToken) {
+                showAuthStatus('Please login first', 'error');
+                return;
+            }
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('loading').textContent = 'Loading collections...';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('noCollections').style.display = 'none';
+
+            try {
+                const response = await fetch('/api/collections', {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                document.getElementById('loading').style.display = 'none';
+
+                if (data.success && data.data && data.data.length > 0) {
+                    displayImages(data.data.flatMap(c => c.sampleImages || []));
+                    document.getElementById('gallerySection').style.display = 'block';
+                } else {
+                    document.getElementById('noCollections').style.display = 'block';
+                    document.getElementById('noCollections').textContent = 'No collections found. Please create some collections first.';
+                }
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').textContent = 'Failed to load collections: ' + error.message;
+            }
+        }
+
+
+
+        function displayImages(images) {
+            const gallery = document.getElementById('gallery');
+            gallery.innerHTML = '';
+            let validImages = 0;
+
+            images.forEach(image => {
+                try {
+                    const card = createImageCard(image);
+                    gallery.appendChild(card);
+                    validImages++;
+                } catch (error) {
+                    console.warn('Skipping broken image:', image._id, error.message);
+                }
+            });
+
+            if (validImages === 0) {
+                document.getElementById('noImages').style.display = 'block';
+            }
+        }
+
+        function generateFilename(image) {
+            const title = (image.title || 'image').replace(/[^a-zA-Z0-9]/g, '_');
+            const extension = image.format || 'jpg';
+            const timestamp = new Date().getTime();
+            return `${title}_${timestamp}.${extension}`;
+        }
+
+        function createImageCard(image) {
+            const card = document.createElement('div');
+            card.className = 'image-card';
+
+            console.log('Creating card for image:', image);
+
+            let imageUrl = '';
+            
+            // Priority 1: Use publicUrl if available
+            if (image.publicUrl) {
+                imageUrl = image.publicUrl.startsWith('http') ? image.publicUrl : `http://localhost:5000${image.publicUrl}`;
+            }
+            // Priority 2: Use fileUrl if available
+            else if (image.fileUrl) {
+                imageUrl = image.fileUrl.startsWith('http') ? image.fileUrl : `http://localhost:5000${image.fileUrl}`;
+            }
+            // Priority 3: Use public API endpoint for images with _id
+            else if (image._id && image._id !== 'sample-kitty') {
+                imageUrl = `http://localhost:5000/api/images/${image._id}/public/medium`;
+            }
+            // Priority 4: Use internalPath
+            else if (image.internalPath) {
+                imageUrl = `http://localhost:5000/${image.internalPath}`;
+            }
+            // Priority 5: Fallback to sample image
+            else {
+                imageUrl = 'http://localhost:5000/public/kitty/download.jpeg';
+            }
+
+            console.log('Generated image URL:', imageUrl);
+
+            // Fallback for thumbnail
+            const thumbnailUrl = image._id ? `/api/images/${image._id}/thumbnail` : imageUrl;
+
+            card.innerHTML = `
+                <div class="image-container">
+                    <img src="${imageUrl}" alt="${image.title || 'Image'}" loading="lazy" 
+                         onerror="handleImageError(this, '${image._id || 'unknown'}')" />
+                    <div class="image-overlay">
+                        <div class="overlay-buttons">
+                            <button class="overlay-btn view" onclick="viewImage('${image._id || ''}', '${imageUrl}')">
+                                👁️ View
+                            </button>
+                            <button class="overlay-btn download" onclick="downloadImageDirect('${imageUrl}', '${generateFilename(image)}')">
+                                ⬇️ Download
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <div class="card-title">${image.title || 'Untitled'}</div>
+                    <div class="card-description">${image.description || image.notes || 'No description available'}</div>
+                    <div class="card-meta">
+                        <span>📅 ${image.createdAt ? new Date(image.createdAt).toLocaleDateString() : 'Unknown date'}</span>
+                        <span>👤 ${image.user?.username || image.user?.name || 'Unknown'}</span>
+                    </div>
+                    ${image.collection ? `<div class="card-collection">📁 ${image.collection.name}</div>` : ''}
+                    <div class="card-actions">
+                        <button class="action-btn view-btn" onclick="viewImage('${image._id || ''}', '${imageUrl}')">
+                            View Full Size
+                        </button>
+                        <button class="action-btn download-btn" onclick="downloadImageDirect('${imageUrl}', '${generateFilename(image)}')">
+                            Download Image
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            return card;
+        }
+
+        function viewImage(imageId, imageUrl) {
+            const modal = document.getElementById('imageModal');
+            const modalImage = document.getElementById('modalImage');
+            
+            modalImage.src = imageUrl;
+            modal.style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('imageModal').style.display = 'none';
+        }
+
+        function showDownloadOptions(imageId) {
+            const options = [
+                { label: 'Original Size', size: 'original' },
+                { label: 'Large (1920x1080)', size: 'large' },
+                { label: 'Medium (800x600)', size: 'medium' },
+                { label: 'Thumbnail (150x150)', size: 'thumbnail' }
+            ];
+
+            const choice = prompt(
+                'Choose download size:\n' + 
+                options.map((opt, idx) => `${idx + 1}. ${opt.label}`).join('\n') + 
+                '\n\nEnter number (1-4):'
+            );
+
+            const choiceNum = parseInt(choice);
+            if (choiceNum >= 1 && choiceNum <= 4) {
+                downloadImage(imageId, options[choiceNum - 1].size);
+            }
+        }
+
+        function handleImageError(imgElement, imageId) {
+            console.warn('Image failed to load:', imageId, 'Current src:', imgElement.src);
+            
+            const currentSrc = imgElement.src;
+            let currentIndex = parseInt(imgElement.dataset.urlIndex || '0');
+            
+            // List of alternative URLs to try
+            const alternativeUrls = [
+                'http://localhost:5000/public/kitty/download.jpeg', // Known working image
+                `http://localhost:5000/api/images/${imageId}/public/thumbnail`,
+                `http://localhost:5000/api/images/${imageId}/public/medium`,
+                currentSrc.replace('/public/medium', '/public/thumbnail'),
+                currentSrc.replace('/api/images/', '/uploads/'),
+                currentSrc.replace('/medium', ''),
+                currentSrc.replace('/thumbnail', ''),
+                'http://localhost:5000/uploads/system/default.jpg'
+            ].filter((url, index, arr) => arr.indexOf(url) === index && url !== currentSrc);
+            
+            if (currentIndex < alternativeUrls.length) {
+                const nextUrl = alternativeUrls[currentIndex];
+                console.log(`Trying alternative URL ${currentIndex + 1}:`, nextUrl);
+                imgElement.dataset.urlIndex = (currentIndex + 1).toString();
+                imgElement.src = nextUrl;
+            } else {
+                console.warn('All image URLs failed for:', imageId);
+                imgElement.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDMwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMjUgNzVIMTc1VjEyNUgxMjVWNzVaIiBmaWxsPSIjOUI5QkEwIi8+CjxwYXRoIGQ9Ik0xMzUgOTVIMTY1VjEwNUgxMzVWOTVaIiBmaWxsPSIjRkZGRkZGIi8+Cjx0ZXh0IHg9IjE1MCIgeT0iMTUwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOUI5QkEwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTIiPkltYWdlIG5vdCBmb3VuZDwvdGV4dD4KPC9zdmc+';
+                imgElement.alt = 'Image not found';
+                
+                const card = imgElement.closest('.image-card');
+                if (card) {
+                    card.style.opacity = '0.7';
+                }
+            }
+        }
+
+        async function downloadImageDirect(imageUrl, filename) {
+            try {
+                // For public images, we need to fetch and create blob
+                const response = await fetch(imageUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch image: ${response.status}`);
+                }
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename || 'image';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // Clean up the blob URL
+                window.URL.revokeObjectURL(url);
+                
+                console.log('Download completed:', filename);
+            } catch (error) {
+                console.error('Download failed:', error);
+                // Fallback to direct link
+                try {
+                    const link = document.createElement('a');
+                    link.href = imageUrl;
+                    link.download = filename || 'image';
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } catch (fallbackError) {
+                    alert('Download failed: ' + error.message);
+                }
+            }
+        }
+
+        async function downloadImage(imageId, size) {
+            if (!authToken) {
+                alert('Please login first');
+                return;
+            }
+
+            try {
+                let downloadUrl;
+                if (size === 'original') {
+                    // Get original image info first
+                    const response = await fetch(`/api/images/${imageId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`
+                        }
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        downloadUrl = `/uploads/${data.data.filename}`;
+                    }
+                } else {
+                    downloadUrl = `/api/images/${imageId}/${size}`;
+                }
+
+                if (downloadUrl) {
+                    downloadImageDirect(downloadUrl, `image_${size}`);
+                }
+            } catch (error) {
+                alert('Download failed: ' + error.message);
+            }
+        }
+
+        // Close modal when clicking outside the image
+        window.onclick = function(event) {
+            const modal = document.getElementById('imageModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>

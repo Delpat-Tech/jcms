@@ -2,7 +2,7 @@
 const express = require('express');
 const upload = require('../middlewares/upload');
 const { uploadMultipleInSingleField } = require('../middlewares/upload');
-const { uploadFile, getFiles, getFileById, deleteFile, convertFileFormat, getFilesByType, getRawFiles, getRawFileById } = require('../controllers/fileController');
+const { uploadFile, getFiles, getFileById, deleteFile, convertFileFormat, getFilesByType, getRawFiles, getRawFileById, updateFile } = require('../controllers/fileController');
 const { authenticate, requireActiveUser } = require('../middlewares/auth');
 const { logActivity } = require('../middlewares/activityLogger');
 const { checkSubscription } = require('../middlewares/subscription');
@@ -22,6 +22,7 @@ router.get('/type/:type', authenticate, (req, res, next) => {
 }, getFilesByType);
 
 router.put('/:id/convert', authenticate, requireActiveUser, logActivity('file_convert', 'file'), convertFileFormat);
+router.put('/:id', authenticate, requireActiveUser, logActivity('file_update', 'file'), upload.single('file'), updateFile);
 router.delete('/:id', authenticate, requireActiveUser, logActivity('file_delete', 'file'), deleteFile);
 
 // Raw JSON routes

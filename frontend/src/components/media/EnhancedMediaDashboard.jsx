@@ -125,14 +125,60 @@ const EnhancedMediaDashboard = () => {
     });
   };
 
-  const handleBulkDownload = () => {
+  const handleBulkDownload = async () => {
     const selected = filteredAndSortedFiles.filter(f => selectedFiles.has(f._id));
-    selected.forEach(file => {
-      const link = document.createElement('a');
-      link.href = file.fullUrl;
-      link.download = file.filename || file.title || 'download';
-      link.click();
-    });
+    
+    if (selected.length === 0) {
+      addNotification && addNotification('warning', 'No files selected', 'Please select files to download', true, 2000);
+      return;
+    }
+
+    addNotification && addNotification('info', 'Download started', `Starting download of ${selected.length} file(s)`, true, 2000);
+
+    for (const file of selected) {
+      try {
+        const url = file.fullUrl;
+        if (!url) {
+          console.warn('No download URL for file:', file.filename || file.title);
+          continue;
+        }
+
+        // Add a small delay between downloads to avoid overwhelming the browser
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch ${file.filename}: ${response.status}`);
+        }
+
+        const blob = await response.blob();
+        const downloadUrl = URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = file.filename || file.title || `download_${file._id}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Clean up the blob URL
+        URL.revokeObjectURL(downloadUrl);
+        
+      } catch (error) {
+        console.error(`Download failed for ${file.filename}:`, error);
+        // Fallback to direct link
+        const link = document.createElement('a');
+        link.href = file.fullUrl;
+        link.download = file.filename || file.title || 'download';
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    }
+
+    addNotification && addNotification('success', 'Downloads completed', `${selected.length} file(s) downloaded`, true, 3000);
   };
 
   const handleBulkDelete = async () => {

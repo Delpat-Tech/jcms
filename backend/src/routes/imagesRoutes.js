@@ -26,8 +26,73 @@ router.patch('/:id', authenticate, logActivity('image_update', 'image'), upload.
 const { streamSize } = require('../controllers/imageProcessingController');
 router.get('/:id/size/:size', authenticate, streamSize);
 
-// Image resize endpoints for download
-router.get('/:id/thumbnail', async (req, res) => {
+// Public image resize endpoints (no auth required)
+router.get('/:id/public/thumbnail', async (req, res) => {
+  try {
+    const Image = require('../models/image');
+    const sharp = require('sharp');
+    const fs = require('fs');
+    const path = require('path');
+    
+    const image = await Image.findById(req.params.id);
+    if (!image || image.visibility !== 'public') {
+      return res.status(404).json({ success: false, message: 'Public image not found' });
+    }
+    
+    const imagePath = path.join(__dirname, '..', '..', image.internalPath);
+    if (!fs.existsSync(imagePath)) {
+      return res.status(404).json({ success: false, message: 'Image file not found' });
+    }
+    
+    const resizedBuffer = await sharp(imagePath)
+      .resize(150, 150, { fit: 'cover' })
+      .jpeg({ quality: 80 })
+      .toBuffer();
+    
+    res.set({
+      'Content-Type': 'image/jpeg',
+      'Cache-Control': 'public, max-age=86400'
+    });
+    res.send(resizedBuffer);
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+router.get('/:id/public/medium', async (req, res) => {
+  try {
+    const Image = require('../models/image');
+    const sharp = require('sharp');
+    const fs = require('fs');
+    const path = require('path');
+    
+    const image = await Image.findById(req.params.id);
+    if (!image || image.visibility !== 'public') {
+      return res.status(404).json({ success: false, message: 'Public image not found' });
+    }
+    
+    const imagePath = path.join(__dirname, '..', '..', image.internalPath);
+    if (!fs.existsSync(imagePath)) {
+      return res.status(404).json({ success: false, message: 'Image file not found' });
+    }
+    
+    const resizedBuffer = await sharp(imagePath)
+      .resize(800, 600, { fit: 'inside', withoutEnlargement: true })
+      .jpeg({ quality: 85 })
+      .toBuffer();
+    
+    res.set({
+      'Content-Type': 'image/jpeg',
+      'Cache-Control': 'public, max-age=86400'
+    });
+    res.send(resizedBuffer);
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Image resize endpoints for download (authenticated)
+router.get('/:id/thumbnail', authenticate, async (req, res) => {
   try {
     const Image = require('../models/image');
     const sharp = require('sharp');
@@ -59,7 +124,7 @@ router.get('/:id/thumbnail', async (req, res) => {
   }
 });
 
-router.get('/:id/medium', async (req, res) => {
+router.get('/:id/medium', authenticate, async (req, res) => {
   try {
     const Image = require('../models/image');
     const sharp = require('sharp');
@@ -91,7 +156,7 @@ router.get('/:id/medium', async (req, res) => {
   }
 });
 
-router.get('/:id/large', async (req, res) => {
+router.get('/:id/large', authenticate, async (req, res) => {
   try {
     const Image = require('../models/image');
     const sharp = require('sharp');

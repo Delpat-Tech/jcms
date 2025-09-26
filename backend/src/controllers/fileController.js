@@ -297,4 +297,64 @@ const getRawFileById = async (req, res) => {
   }
 };
 
-module.exports = { uploadFile, getFiles, getFileById, deleteFile, convertFileFormat, getFilesByType, getRawFiles, getRawFileById };
+const updateFile = async (req, res) => {
+  try {
+    const file = await File.findById(req.params.id);
+    if (!file) {
+      return res.status(404).json({ success: false, message: 'File not found' });
+    }
+    
+    // Check tenant permissions
+    if (req.user.role.name !== 'superadmin') {
+      const userTenant = req.user.tenant?._id ? req.user.tenant._id.toString() : null;
+      const fileTenant = file.tenant ? file.tenant.toString() : null;
+      
+      if (userTenant !== fileTenant) {
+        return res.status(403).json({ success: false, message: 'Access denied. You can only update files from your tenant.' });
+      }
+      
+      if (req.user.role.name !== 'admin' && file.user.toString() !== req.user.id) {
+        return res.status(403).json({ success: false, message: 'Access denied. You can only update your own files.' });
+      }
+    }
+
+    // Handle file content update for JSON files
+    if (req.file && file.format === 'json') {
+      const safePath = sanitizePath(file.internalPath);
+      
+      // Write new content to existing file path instead of creating new file
+      const fileBuffer = fs.readFileSync(req.file.path);
+      fs.writeFileSync(safePath, fileBuffer);
+      
+      // Update file size
+      file.fileSize = req.file.size;
+      
+      // Clean up temp file
+      if (fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+    }
+    
+    // Update metadata
+    if (req.body.title) file.title = req.body.title;
+    if (req.body.notes !== undefined) file.notes = req.body.notes;
+    
+    await file.save();
+    
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const fileWithFullUrl = {
+      ...file.toObject(),
+      fullUrl: `${baseUrl}${file.fileUrl}`
+    };
+    
+    res.json({ success: true, message: 'File updated successfully', file: fileWithFullUrl });
+  } catch (error) {
+    // Clean up temp file on error
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+module.exports = { uploadFile, getFiles, getFileById, deleteFile, convertFileFormat, getFilesByType, getRawFiles, getRawFileById, updateFile };

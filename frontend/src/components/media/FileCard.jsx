@@ -11,20 +11,42 @@ const FileCard = ({ file, viewMode, selected, onSelect, onPreview, onDelete, onD
     onDelete?.(file);
   };
 
-  const handleDownload = (file) => {
+  const handleDownload = async (file) => {
     const url = file.publicUrl || file.fileUrl || file.fullUrl;
-    if (url) {
-      fetch(url)
-        .then(response => response.blob())
-        .then(blob => {
-          const link = document.createElement('a');
-          link.href = URL.createObjectURL(blob);
-          link.download = file.originalName || file.filename || file.title || 'download';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(link.href);
-        });
+    if (!url) {
+      console.error('No download URL available for file:', file);
+      return;
+    }
+
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch file: ${response.status}`);
+      }
+      
+      const blob = await response.blob();
+      const downloadUrl = URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = file.originalName || file.filename || file.title || 'download';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
+      
+      console.log('Download completed:', file.filename || file.title);
+    } catch (error) {
+      console.error('Download failed:', error);
+      // Fallback to direct link
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = file.originalName || file.filename || file.title || 'download';
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   };
 
@@ -68,7 +90,10 @@ const FileCard = ({ file, viewMode, selected, onSelect, onPreview, onDelete, onD
         <input
           type="checkbox"
           checked={selected}
-          onChange={(e) => onSelect(file._id, e.target.checked)}
+          onChange={(e) => {
+            e.stopPropagation();
+            onSelect(file._id);
+          }}
           className="w-4 h-4 text-blue-600 mr-4"
         />
         
@@ -126,7 +151,10 @@ const FileCard = ({ file, viewMode, selected, onSelect, onPreview, onDelete, onD
         <input
           type="checkbox"
           checked={selected}
-          onChange={(e) => onSelect(file._id, e.target.checked)}
+          onChange={(e) => {
+            e.stopPropagation();
+            onSelect(file._id);
+          }}
           className="absolute top-3 left-3 w-4 h-4 text-blue-600 z-10"
         />
         

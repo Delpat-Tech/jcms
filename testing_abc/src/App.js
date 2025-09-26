@@ -1,11 +1,11 @@
 import React from "react";
-import ImageList from "./components/ImageList";
+import JsonViewer from "./components/JsonViewer";
 
 function App() {
   return (
     <div className="App">
-      <h1>Image Collection</h1>
-      <ImageList />
+      <h1>JSON File Viewer</h1>
+      <JsonViewer />
     </div>
   );
 }

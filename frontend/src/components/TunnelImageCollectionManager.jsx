@@ -4,6 +4,28 @@ import Button from './ui/Button.jsx';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
+// Helper function to get proper image URL
+const getImageUrl = (image) => {
+  if (!image) return '';
+  
+  if (image.fileUrl) {
+    if (image.fileUrl.startsWith('http')) {
+      return image.fileUrl;
+    }
+    return `${API_BASE_URL}${image.fileUrl}`;
+  }
+  
+  if (image.filename) {
+    return `${API_BASE_URL}/uploads/${image.filename}`;
+  }
+  
+  if (image.internalPath) {
+    return `${API_BASE_URL}/${image.internalPath}`;
+  }
+  
+  return '';
+};
+
 const TunnelImageCollectionManager = () => {
   const [view, setView] = useState('collections');
   const [collections, setCollections] = useState([]);
@@ -15,6 +37,7 @@ const TunnelImageCollectionManager = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [tunnelStatus, setTunnelStatus] = useState({ isRunning: false, tunnelUrl: null });
   const [startingTunnel, setStartingTunnel] = useState(false);
+  const [showTunnelModal, setShowTunnelModal] = useState(false);
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const token = localStorage.getItem('token');
@@ -104,15 +127,33 @@ const TunnelImageCollectionManager = () => {
   }, [loadCollections, loadTunnelStatus]);
 
   const handleStartTunnel = async () => {
+    // Check if any collections are public
+    const publicCollections = collections.filter(c => c.visibility === 'public');
+    
+    if (publicCollections.length === 0) {
+      alert('No public collections found. Please make at least one collection public before starting the tunnel.');
+      return;
+    }
+
+    // Show collection selection modal
+    setShowTunnelModal(true);
+  };
+
+  const handleStartTunnelWithCollections = async (selectedCollectionIds) => {
     try {
       setStartingTunnel(true);
+      
       const result = await apiCall('/api/image-management/tunnel/start', {
-        method: 'POST'
+        method: 'POST',
+        body: JSON.stringify({ 
+          selectedCollections: selectedCollectionIds 
+        })
       });
 
       if (result.success) {
         setTunnelStatus(result.data.status);
-        alert(`Tunnel started successfully!\nPublic URL: ${result.data.tunnelUrl}`);
+        alert(`Tunnel started successfully!\nPublic URL: ${result.data.tunnelUrl}\n\nSelected ${selectedCollectionIds.length} collection(s) for public access.`);
+        setShowTunnelModal(false);
       }
     } catch (error) {
       console.error('Failed to start tunnel:', error);
@@ -354,12 +395,26 @@ const TunnelImageCollectionManager = () => {
                     />
                   ) : collection.recentImages && collection.recentImages.length > 0 ? (
                     <img
-                      src={collection.recentImages[0].fileUrl?.startsWith('http') ? collection.recentImages[0].fileUrl : `${API_BASE_URL}${collection.recentImages[0].fileUrl}`}
+                      src={getImageUrl(collection.recentImages[0])}
                       alt={collection.name}
                       className="w-full h-full object-cover"
                       onError={(e) => {
                         console.log('Image failed to load:', collection.recentImages[0]);
-                        e.target.style.display = 'none';
+                        // Try alternative URLs
+                        const img = collection.recentImages[0];
+                        const altUrls = [
+                          `${API_BASE_URL}/uploads/${img.filename}`,
+                          `${API_BASE_URL}/public/${collection.slug}/${img.filename}`,
+                          `${API_BASE_URL}/public/kitty/download.jpeg`
+                        ];
+                        
+                        let currentIndex = parseInt(e.target.dataset.urlIndex || '0');
+                        if (currentIndex < altUrls.length - 1) {
+                          e.target.dataset.urlIndex = (currentIndex + 1).toString();
+                          e.target.src = altUrls[currentIndex + 1];
+                        } else {
+                          e.target.style.display = 'none';
+                        }
                       }}
                     />
                   ) : (
@@ -451,6 +506,16 @@ const TunnelImageCollectionManager = () => {
         <CreateCollectionModal
           onClose={() => setShowCreateModal(false)}
           onCreate={handleCreateCollection}
+        />
+      )}
+
+      {/* Tunnel Collection Selection Modal */}
+      {showTunnelModal && (
+        <TunnelCollectionSelectionModal
+          collections={collections.filter(c => c.visibility === 'public')}
+          onClose={() => setShowTunnelModal(false)}
+          onStart={handleStartTunnelWithCollections}
+          isStarting={startingTunnel}
         />
       )}
     </div>
@@ -548,9 +613,27 @@ const CollectionDetailView = ({
               <div key={image.index || index} className="border rounded-lg overflow-hidden">
                 <div className="relative">
                   <img
-                    src={image.accessUrl || image.fileUrl}
+                    src={getImageUrl(image)}
                     alt={image.title}
                     className="w-full h-48 object-cover"
+                    onError={(e) => {
+                      console.log('Detail image failed to load:', image);
+                      // Try alternative URLs
+                      const altUrls = [
+                        `${API_BASE_URL}/uploads/${image.filename}`,
+                        `${API_BASE_URL}/public/kitty/download.jpeg`,
+                        image.accessUrl,
+                        image.fileUrl
+                      ].filter(Boolean);
+                      
+                      let currentIndex = parseInt(e.target.dataset.urlIndex || '0');
+                      if (currentIndex < altUrls.length - 1) {
+                        e.target.dataset.urlIndex = (currentIndex + 1).toString();
+                        e.target.src = altUrls[currentIndex + 1];
+                      } else {
+                        e.target.style.display = 'none';
+                      }
+                    }}
                   />
                   <div className="absolute top-2 left-2">
                     <span className={`px-2 py-1 text-xs font-medium rounded ${
@@ -562,7 +645,6 @@ const CollectionDetailView = ({
                     </span>
                   </div>
                   <button
-                    onClick={() => onRemoveImage(image._id, collection._id)}
                     onClick={() => onRemoveImage(image._id, collection._id)}
                     className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold z-10 cursor-pointer shadow-lg"
                   >
@@ -677,6 +759,119 @@ const CreateCollectionModal = ({ onClose, onCreate }) => {
             </Button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+};
+
+// Tunnel Collection Selection Modal
+const TunnelCollectionSelectionModal = ({ collections, onClose, onStart, isStarting }) => {
+  const [selectedCollections, setSelectedCollections] = useState(new Set());
+
+  const handleToggleCollection = (collectionId) => {
+    const newSelected = new Set(selectedCollections);
+    if (newSelected.has(collectionId)) {
+      newSelected.delete(collectionId);
+    } else {
+      newSelected.add(collectionId);
+    }
+    setSelectedCollections(newSelected);
+  };
+
+  const handleSelectAll = () => {
+    setSelectedCollections(new Set(collections.map(c => c._id)));
+  };
+
+  const handleClearAll = () => {
+    setSelectedCollections(new Set());
+  };
+
+  const handleStart = () => {
+    if (selectedCollections.size === 0) {
+      alert('Please select at least one collection to make public via tunnel.');
+      return;
+    }
+    onStart(Array.from(selectedCollections));
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[80vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-semibold">Select Collections for Public Tunnel</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+        </div>
+        
+        <div className="mb-4 p-4 bg-blue-50 rounded-lg">
+          <p className="text-blue-800 text-sm">
+            <strong>⚠️ Security Notice:</strong> Selected collections will be publicly accessible via the tunnel URL. 
+            Only choose collections you want to share publicly.
+          </p>
+        </div>
+
+        <div className="flex gap-3 mb-4">
+          <Button onClick={handleSelectAll} size="sm" variant="secondary">
+            Select All ({collections.length})
+          </Button>
+          <Button onClick={handleClearAll} size="sm" variant="secondary">
+            Clear All
+          </Button>
+          <div className="ml-auto text-sm text-gray-600">
+            Selected: {selectedCollections.size} / {collections.length}
+          </div>
+        </div>
+
+        {collections.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            No public collections available. Please make at least one collection public first.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+            {collections.map(collection => (
+              <div
+                key={collection._id}
+                className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                  selectedCollections.has(collection._id)
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+                onClick={() => handleToggleCollection(collection._id)}
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="font-medium text-sm">{collection.name}</h3>
+                  <input
+                    type="checkbox"
+                    checked={selectedCollections.has(collection._id)}
+                    onChange={() => handleToggleCollection(collection._id)}
+                    className="ml-2"
+                  />
+                </div>
+                
+                {collection.description && (
+                  <p className="text-xs text-gray-600 mb-2 line-clamp-2">{collection.description}</p>
+                )}
+                
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>{collection.stats?.totalImages || 0} images</span>
+                  <span className="px-2 py-1 bg-green-100 text-green-800 rounded">public</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="flex gap-3 pt-4 border-t">
+          <Button
+            onClick={handleStart}
+            disabled={selectedCollections.size === 0 || isStarting}
+            className="flex-1 bg-green-600 hover:bg-green-700"
+          >
+            {isStarting ? 'Starting Tunnel...' : `Start Tunnel with ${selectedCollections.size} Collection(s)`}
+          </Button>
+          <Button onClick={onClose} variant="secondary">
+            Cancel
+          </Button>
+        </div>
       </div>
     </div>
   );

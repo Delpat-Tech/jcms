@@ -122,6 +122,10 @@ export const fileApi = {
   getAll: () => api.get('/api/files'),
   upload: (formData) => api.post('/api/files/upload-multiple', formData),
   uploadSingle: (formData) => api.post('/api/files/upload-single', formData),
+  update: (id, data) => apiRequest(`/api/files/${id}`, {
+    method: 'PUT',
+    body: data instanceof FormData ? data : JSON.stringify(data)
+  }),
   delete: (id) => api.delete(`/api/files/${id}`),
   getByUser: (userId) => api.get(`/api/users/${userId}/files`),
   getRaw: () => api.get('/api/files?raw=true').then(res => res.json()),

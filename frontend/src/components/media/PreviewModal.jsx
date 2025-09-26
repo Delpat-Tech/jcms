@@ -1,11 +1,15 @@
-import React, { useState } from 'react';
-import { X, ChevronLeft, ChevronRight, Download, Edit3, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, ChevronLeft, ChevronRight, Download, Edit3, Trash2, Save } from 'lucide-react';
 
 const PreviewModal = ({ file, onClose, onNext, onPrev, onDelete, onDownload }) => {
   const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
   const [dropdownTimeout, setDropdownTimeout] = useState(null);
   const [isRenaming, setIsRenaming] = useState(false);
   const [newTitle, setNewTitle] = useState(file.title || file.filename || '');
+  const [jsonContent, setJsonContent] = useState('');
+  const [isEditingJson, setIsEditingJson] = useState(false);
+  const [jsonError, setJsonError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleImageDownload = (imageId, size) => {
     const url = `http://localhost:5000/api/images/${imageId}/${size}`;
@@ -54,6 +58,55 @@ const PreviewModal = ({ file, onClose, onNext, onPrev, onDelete, onDownload }) =
       console.error('Rename failed:', error);
     }
   };
+
+  const fetchJsonContent = async () => {
+    if (!(file.type === 'json' || file.format === 'json' || (file.filename && file.filename.toLowerCase().endsWith('.json')))) return;
+    try {
+      const url = file.publicUrl || file.fileUrl || file.fullUrl;
+      const fullUrl = url.startsWith('/') ? `http://localhost:5000${url}` : url;
+      const response = await fetch(fullUrl);
+      const text = await response.text();
+      setJsonContent(text);
+    } catch (error) {
+      console.error('Failed to fetch JSON content:', error);
+      setJsonContent('Error loading JSON content');
+    }
+  };
+
+  const handleJsonSave = async () => {
+    try {
+      JSON.parse(jsonContent); // Validate JSON
+      setJsonError('');
+      setIsSaving(true);
+      
+      const { fileApi } = await import('../../api');
+      const blob = new Blob([jsonContent], { type: 'application/json' });
+      const formData = new FormData();
+      formData.append('file', blob, file.filename || file.title || 'file.json');
+      
+      const response = await fileApi.update(file._id, formData);
+      const result = await response.json();
+      
+      if (result.success) {
+        setIsEditingJson(false);
+      } else {
+        setJsonError(result.message || 'Failed to save file');
+      }
+    } catch (error) {
+      if (error instanceof SyntaxError) {
+        setJsonError('Invalid JSON syntax');
+      } else {
+        setJsonError('Failed to save file');
+        console.error('Save failed:', error);
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchJsonContent();
+  }, [file]);
   const handleKeyDown = (e) => {
     switch (e.key) {
       case 'Escape':
@@ -107,6 +160,74 @@ const PreviewModal = ({ file, onClose, onNext, onPrev, onDelete, onDownload }) =
             <source src={file.publicUrl || file.fileUrl || file.fullUrl} />
             Your browser does not support audio playback.
           </audio>
+        </div>
+      );
+    }
+    
+    if (file.type === 'json' || file.format === 'json' || (file.filename && file.filename.toLowerCase().endsWith('.json'))) {
+      return (
+        <div className="w-full h-full max-h-[80vh] flex flex-col p-4">
+          <div className="flex items-center justify-between mb-4 flex-shrink-0">
+            <h3 className="text-lg font-semibold text-white">JSON Editor</h3>
+            <div className="flex gap-2">
+              {isEditingJson ? (
+                <>
+                  <button
+                    onClick={handleJsonSave}
+                    disabled={isSaving || jsonError}
+                    className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 flex items-center gap-1"
+                  >
+                    <Save className="w-4 h-4" />
+                    {isSaving ? 'Saving...' : 'Save'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsEditingJson(false);
+                      setJsonError('');
+                      fetchJsonContent();
+                    }}
+                    className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700"
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setIsEditingJson(true)}
+                  className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1"
+                >
+                  <Edit3 className="w-4 h-4" />
+                  Edit
+                </button>
+              )}
+            </div>
+          </div>
+          {jsonError && (
+            <div className="mb-2 p-2 bg-red-600 text-white rounded text-sm flex-shrink-0">
+              {jsonError}
+            </div>
+          )}
+          <div className="flex-1 min-h-0 overflow-hidden">
+            {isEditingJson ? (
+              <textarea
+                value={jsonContent}
+                onChange={(e) => setJsonContent(e.target.value)}
+                className="w-full h-full p-3 bg-gray-900 text-green-400 font-mono text-sm rounded border resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 overflow-auto"
+                spellCheck={false}
+                style={{ minHeight: '400px', maxHeight: '60vh' }}
+              />
+            ) : (
+              <pre className="w-full h-full p-3 bg-gray-900 text-green-400 font-mono text-sm rounded overflow-auto whitespace-pre-wrap break-words" style={{ minHeight: '400px', maxHeight: '60vh' }}>
+                {jsonContent ? (() => {
+                  try {
+                    return JSON.stringify(JSON.parse(jsonContent), null, 2);
+                  } catch {
+                    return jsonContent;
+                  }
+                })() : 'Loading...'}
+              </pre>
+            )}
+          </div>
         </div>
       );
     }

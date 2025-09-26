@@ -12,17 +12,24 @@ const registerUser = async (req, res) => {
 };
 
 const loginUser = async (req, res) => {
-  const { username, password, rememberMe } = req.body;
+  const { username, email, password, rememberMe } = req.body;
   
   try {
-    if (!username || !password) {
+    const loginField = username || email;
+    if (!loginField || !password) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Username and password are required' 
+        message: 'Username/email and password are required' 
       });
     }
 
-    const user = await User.findOne({ username }).populate('role');
+    // Try to find user by username or email
+    const user = await User.findOne({ 
+      $or: [
+        { username: loginField },
+        { email: loginField }
+      ]
+    }).populate('role');
     
     if (!user) {
       return res.status(400).json({ 
@@ -82,4 +89,39 @@ const loginUser = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, loginUser };
+const getCurrentUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).populate('role').select('-password');
+    
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
+    
+    res.json({ 
+      success: true, 
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        name: user.name || user.username,
+        role: user.role.name,
+        phone: user.phone || null
+      }
+    });
+  } catch (error) {
+    logger.error('Get current user error', { 
+      error: error.message, 
+      userId: req.user.id 
+    });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error', 
+      error: error.message 
+    });
+  }
+};
+
+module.exports = { registerUser, loginUser, getCurrentUser };
