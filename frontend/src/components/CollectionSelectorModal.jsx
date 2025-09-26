@@ -58,14 +58,27 @@ const CollectionSelectorModal = ({
 
   const handleSelectCollection = async (collection) => {
     try {
+      console.log('Adding images to collection:', { collectionId: collection._id, imageIds: selectedImageIds });
+      
       // Add images to the selected collection
       const result = await apiCall(`/api/image-management/collections/${collection._id}/add-images`, {
         method: 'POST',
         body: JSON.stringify({ imageIds: selectedImageIds })
       });
+      
+      console.log('API Response:', result);
 
       if (result.success) {
-        onSelectCollection(collection, result);
+        // Ensure the result has the correct structure for the parent component
+        const enhancedResult = {
+          ...result,
+          data: {
+            ...result.data,
+            modifiedCount: result.modifiedCount || result.data?.modifiedCount || 0
+          }
+        };
+        console.log('Enhanced result:', enhancedResult);
+        onSelectCollection(collection, enhancedResult);
         onClose();
       } else {
         alert('Failed to add images to collection: ' + result.message);
@@ -96,7 +109,15 @@ const CollectionSelectorModal = ({
       });
 
       if (result.success) {
-        onSelectCollection(result.data.collection, result);
+        // Ensure the result has the correct structure for the parent component
+        const enhancedResult = {
+          ...result,
+          data: {
+            ...result.data,
+            modifiedCount: result.data?.movedImages || selectedImageIds.length
+          }
+        };
+        onSelectCollection(result.data.collection, enhancedResult);
         onClose();
       } else {
         alert('Failed to create collection: ' + result.message);

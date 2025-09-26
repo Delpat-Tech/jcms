@@ -488,17 +488,24 @@ class ImageCollectionService {
     try {
       const collection = await this.getCollectionAccess(collectionId, user);
       
+      // Build query based on user role
+      let imageQuery = { _id: { $in: imageIds } };
+      
+      const userRole = user.role && user.role.name ? user.role.name : 'editor';
+      
+      if (userRole === 'superadmin') {
+        // Superadmin can add any images
+      } else if (userRole === 'admin') {
+        // Admin can add any images in their tenant
+        imageQuery.tenant = user.tenant ? user.tenant._id : null;
+      } else {
+        // Regular users can only add their own images
+        imageQuery.user = user.id;
+        imageQuery.tenant = user.tenant ? user.tenant._id : null;
+      }
+      
       // Update images to belong to this collection
-      const result = await Image.updateMany(
-        { 
-          _id: { $in: imageIds },
-          user: (user.role && user.role.name === 'admin') ? { $exists: true } : user.id, // Admin can move any image in tenant
-          tenant: user.tenant ? user.tenant._id : null
-        },
-        { 
-          collection: collectionId 
-        }
-      );
+      const result = await Image.updateMany(imageQuery, { collection: collectionId });
 
       // Update collection stats
       await this.updateCollectionStats(collectionId);

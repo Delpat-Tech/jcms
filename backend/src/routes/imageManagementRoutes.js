@@ -100,6 +100,23 @@ router.post('/collections/:id/add-images',
   imageCollectionController.addImagesToCollection
 );
 
+// Remove images from collection
+router.post('/collections/:id/remove-images', async (req, res) => {
+  try {
+    const { imageIds } = req.body;
+    const Image = require('../models/image');
+    
+    const result = await Image.updateMany(
+      { _id: { $in: imageIds }, collection: req.params.id },
+      { $unset: { collection: 1 } }
+    );
+    
+    res.json({ success: true, message: `Removed ${result.modifiedCount} images from collection`, modifiedCount: result.modifiedCount });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // Individual image routes (MUST come after specific routes)
 router.get('/:id',
   enhancedImageController.getImageById

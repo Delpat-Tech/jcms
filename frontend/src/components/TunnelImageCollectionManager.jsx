@@ -62,7 +62,9 @@ const TunnelImageCollectionManager = () => {
   const loadCollectionDetail = useCallback(async (collectionId) => {
     try {
       setLoading(true);
+      console.log('Loading collection detail for ID:', collectionId);
       const result = await apiCall(`/api/image-management/collections/${collectionId}`);
+      console.log('Collection detail response:', result);
       setCurrentCollection(result.data.collection);
       setCollectionImages(result.data.images);
       setView('collection-detail');
@@ -73,6 +75,28 @@ const TunnelImageCollectionManager = () => {
       setLoading(false);
     }
   }, [apiCall]);
+
+  const handleRemoveImage = async (imageId, collectionId) => {
+    if (window.confirm('Remove this image from the collection?')) {
+      try {
+        console.log('Removing image:', imageId, 'from collection:', collectionId);
+        const result = await apiCall(`/api/image-management/collections/${collectionId}/remove-images`, {
+          method: 'POST',
+          body: JSON.stringify({ imageIds: [imageId] })
+        });
+        console.log('Remove result:', result);
+        if (result.success) {
+          alert('Image removed from collection');
+          loadCollectionDetail(collectionId);
+        } else {
+          alert('Failed to remove image: ' + result.message);
+        }
+      } catch (error) {
+        console.error('Remove image error:', error);
+        alert('Failed to remove image: ' + error.message);
+      }
+    }
+  };
 
   useEffect(() => {
     loadCollections();
@@ -218,6 +242,7 @@ const TunnelImageCollectionManager = () => {
         onDownloadZip={() => handleDownloadCollectionZip(currentCollection._id)}
         tunnelStatus={tunnelStatus}
         formatFileSize={formatFileSize}
+        onRemoveImage={handleRemoveImage}
       />
     );
   }
@@ -328,16 +353,15 @@ const TunnelImageCollectionManager = () => {
                       className="w-full h-full object-cover"
                     />
                   ) : collection.recentImages && collection.recentImages.length > 0 ? (
-                    <div className="grid grid-cols-2 gap-1 h-full">
-                      {collection.recentImages.slice(0, 4).map((image, idx) => (
-                        <img
-                          key={idx}
-                          src={`${API_BASE_URL}${image.fileUrl}`}
-                          alt=""
-                          className="w-full h-full object-cover"
-                        />
-                      ))}
-                    </div>
+                    <img
+                      src={collection.recentImages[0].fileUrl?.startsWith('http') ? collection.recentImages[0].fileUrl : `${API_BASE_URL}${collection.recentImages[0].fileUrl}`}
+                      alt={collection.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        console.log('Image failed to load:', collection.recentImages[0]);
+                        e.target.style.display = 'none';
+                      }}
+                    />
                   ) : (
                     <div className="flex items-center justify-center h-full text-gray-400">
                       <span>No Images</span>
@@ -441,7 +465,8 @@ const CollectionDetailView = ({
   onMakePublic, 
   onDownloadZip, 
   tunnelStatus, 
-  formatFileSize 
+  formatFileSize,
+  onRemoveImage 
 }) => {
   return (
     <div className="max-w-7xl mx-auto p-6">
@@ -523,11 +548,11 @@ const CollectionDetailView = ({
               <div key={image._id} className="border rounded-lg overflow-hidden">
                 <div className="relative">
                   <img
-                    src={`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}${image.fileUrl}`}
+                    src={image.accessUrl || image.fileUrl}
                     alt={image.title}
                     className="w-full h-48 object-cover"
                   />
-                  <div className="absolute top-2 right-2">
+                  <div className="absolute top-2 left-2">
                     <span className={`px-2 py-1 text-xs font-medium rounded ${
                       image.visibility === 'public' 
                         ? 'bg-green-100 text-green-800' 
@@ -536,6 +561,13 @@ const CollectionDetailView = ({
                       {image.visibility}
                     </span>
                   </div>
+                  <button
+                    onClick={() => onRemoveImage(image._id, collection._id)}
+                    onClick={() => onRemoveImage(image._id, collection._id)}
+                    className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold z-10 cursor-pointer shadow-lg"
+                  >
+                    ×
+                  </button>
                 </div>
                 <div className="p-3">
                   <h3 className="font-medium text-sm truncate">{image.title}</h3>
@@ -543,6 +575,7 @@ const CollectionDetailView = ({
                     <div>{image.format?.toUpperCase()} • {formatFileSize(image.fileSize)}</div>
                     <div>{image.daysSinceUpload}d ago</div>
                   </div>
+                  
                   
                   {/* Public URL for individual image */}
                   {image.visibility === 'public' && image.tunnelUrl && (

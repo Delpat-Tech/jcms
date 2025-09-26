@@ -33,19 +33,44 @@ const getCollections = async (req, res) => {
     
     console.log('Found collections:', collections.length);
     
-    // Return simple response
-    const simpleCollections = collections.map(collection => ({
-      ...collection,
-      stats: {
-        totalImages: 0,
-        totalSize: 0,
-        publicImages: 0,
-        privateImages: 0
-      },
-      recentImages: [],
-      formattedSize: '0 B',
-      canMakePublic: false
+    // Get actual image counts for each collection
+    const Image = require('../models/image');
+    const simpleCollections = await Promise.all(collections.map(async (collection) => {
+      const images = await Image.find({ collection: collection._id }).lean();
+      const totalImages = images.length;
+      const totalSize = images.reduce((sum, img) => sum + (img.fileSize || 0), 0);
+      const publicImages = images.filter(img => img.visibility === 'public').length;
+      const privateImages = totalImages - publicImages;
+      
+      // Get recent images for preview
+      const recentImages = images.slice(0, 4).map(img => ({
+        _id: img._id,
+        fileUrl: img.fileUrl,
+        title: img.title
+      }));
+      
+      return {
+        ...collection,
+        stats: {
+          totalImages,
+          totalSize,
+          publicImages,
+          privateImages
+        },
+        recentImages,
+        formattedSize: formatFileSize(totalSize),
+        canMakePublic: totalImages > 0
+      };
     }));
+    
+    // Helper function to format file size
+    function formatFileSize(bytes) {
+      if (!bytes) return '0 B';
+      if (bytes < 1024) return `${bytes} B`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+      if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+      return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+    }
 
     res.json({
       success: true,
