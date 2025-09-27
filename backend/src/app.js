@@ -226,6 +226,7 @@ app.use('/api/image-management', require('./routes/imageManagementRoutes'));
 app.use('/api/files', require('./routes/fileRoutes'));
 app.use('/api/content', require('./routes/contentRoutes'));
 // Public content routes (no auth)
+app.use('/api/public', require('./routes/publicContentRoutes'));
 app.use('/public', require('./routes/publicContentRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
 app.use('/api/auth', require('./routes/authRoutes'));

@@ -44,7 +44,7 @@ const imageCollectionSchema = new mongoose.Schema({
   visibility: {
     type: String,
     enum: ['private', 'public'],
-    default: 'private'
+    default: 'public'
   },
   tags: [{
     type: String,

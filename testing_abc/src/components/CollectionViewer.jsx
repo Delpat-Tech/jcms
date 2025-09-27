@@ -4,8 +4,9 @@ function CollectionViewer() {
   const [collectionData, setCollectionData] = useState(null);
   const [loading, setLoading] = useState(true);
 
+
   // Collection ID from content dashboard
-  const collectionId = "68d56b74a918efc9d7329c8e";
+  const collectionId = "68d7d0ce95795d8f31746341";
   
   // Specify the indices you want to display (null = show all)
   const selectedIndices = null; // Use null for all, or [1,2,3] for specific indices
@@ -14,26 +15,10 @@ function CollectionViewer() {
     const fetchData = async () => {
       try {
         console.log('Using API URL:', process.env.REACT_APP_API_URL || 'http://localhost:5000');
-        // Login to get token
-        const loginRes = await fetch('http://localhost:5000/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            username: 'admin', 
-            password: 'Admin@123' 
-          })
-        });
         
-        const loginData = await loginRes.json();
-        
-        if (!loginData.success) {
-          throw new Error('Login failed');
-        }
-        
-        // Fetch collection data with token
-        const collectionRes = await fetch(`http://localhost:5000/api/image-management/collections/${collectionId}`, {
+        // Fetch collection data from public route (no auth required)
+        const collectionRes = await fetch(`http://localhost:5000/api/public/collections/${collectionId}`, {
           headers: {
-            'Authorization': `Bearer ${loginData.token}`,
             'Content-Type': 'application/json'
           }
         });
@@ -84,20 +69,46 @@ function CollectionViewer() {
             <p style={{ color: "#666", fontSize: "14px" }}>{item.notes}</p>
             
             {item.type === 'image' ? (
-              <img
-                src={item.fileUrl}
-                alt={item.title}
-                style={{ 
-                  width: "100%", 
-                  height: "200px", 
-                  borderRadius: "6px", 
-                  objectFit: "cover",
-                  marginTop: "10px"
-                }}
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                }}
-              />
+              <>
+                <img
+                  src={item.fileUrl}
+                  alt={item.title}
+                  style={{ 
+                    width: "100%", 
+                    height: "200px", 
+                    borderRadius: "6px", 
+                    objectFit: "cover",
+                    marginTop: "10px"
+                  }}
+                  onError={(e) => {
+                    const fallbacks = [
+                      `http://localhost:5000/api/files/${item.fileUrl.split('/').pop()}`,
+                      `http://localhost:5000/uploads/${item.fileUrl.split('/').pop()}`,
+                      `http://localhost:5000/api/public/files/${item.fileUrl.split('/').pop()}`,
+                      `http://localhost:5000/static/${item.fileUrl.split('/').pop()}`
+                    ];
+                    
+                    const currentIndex = fallbacks.indexOf(e.target.src);
+                    if (currentIndex < fallbacks.length - 1) {
+                      e.target.src = fallbacks[currentIndex + 1];
+                    } else {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'block';
+                    }
+                  }}
+                />
+                <div style={{
+                  display: 'none',
+                  padding: '20px',
+                  backgroundColor: '#f8f9fa',
+                  borderRadius: '6px',
+                  textAlign: 'center',
+                  marginTop: '10px'
+                }}>
+                  <div style={{ fontSize: '48px', marginBottom: '10px' }}>🖼️</div>
+                  <p>Image not available</p>
+                </div>
+              </>
             ) : (
               <div style={{ 
                 padding: '20px', 
