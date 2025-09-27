@@ -600,79 +600,96 @@ const CollectionDetailView = ({
       {/* Images Grid */}
       <div className="bg-white rounded-lg border">
         <div className="p-4 border-b">
-          <h2 className="text-xl font-semibold">Images in Collection</h2>
+          <h2 className="text-xl font-semibold">Items in Collection</h2>
         </div>
 
         {images.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
-            This collection is empty. Add some images to get started!
+            This collection is empty. Add some images or files to get started!
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
-            {images.map((image, index) => (
-              <div key={image.index || index} className="border rounded-lg overflow-hidden">
+            {images.map((item, index) => (
+              <div key={item.index || index} className="border rounded-lg overflow-hidden">
                 <div className="relative">
-                  <img
-                    src={getImageUrl(image)}
-                    alt={image.title}
-                    className="w-full h-48 object-cover"
-                    onError={(e) => {
-                      console.log('Detail image failed to load:', image);
-                      // Try alternative URLs
-                      const altUrls = [
-                        `${API_BASE_URL}/uploads/${image.filename}`,
-                        `${API_BASE_URL}/public/kitty/download.jpeg`,
-                        image.accessUrl,
-                        image.fileUrl
-                      ].filter(Boolean);
-                      
-                      let currentIndex = parseInt(e.target.dataset.urlIndex || '0');
-                      if (currentIndex < altUrls.length - 1) {
-                        e.target.dataset.urlIndex = (currentIndex + 1).toString();
-                        e.target.src = altUrls[currentIndex + 1];
-                      } else {
-                        e.target.style.display = 'none';
-                      }
-                    }}
-                  />
+                  {item.type === 'image' ? (
+                    <img
+                      src={getImageUrl(item)}
+                      alt={item.title}
+                      className="w-full h-48 object-cover"
+                      onError={(e) => {
+                        console.log('Detail image failed to load:', item);
+                        // Try alternative URLs
+                        const altUrls = [
+                          `${API_BASE_URL}/uploads/${item.filename}`,
+                          `${API_BASE_URL}/public/kitty/download.jpeg`,
+                          item.accessUrl,
+                          item.fileUrl
+                        ].filter(Boolean);
+                        
+                        let currentIndex = parseInt(e.target.dataset.urlIndex || '0');
+                        if (currentIndex < altUrls.length - 1) {
+                          e.target.dataset.urlIndex = (currentIndex + 1).toString();
+                          e.target.src = altUrls[currentIndex + 1];
+                        } else {
+                          e.target.style.display = 'none';
+                        }
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-48 bg-gray-100 flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="text-4xl mb-2">📄</div>
+                        <div className="text-sm font-medium text-gray-700">{item.format?.toUpperCase()} File</div>
+                        <a 
+                          href={item.fileUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 text-xs mt-1 inline-block"
+                        >
+                          Open File
+                        </a>
+                      </div>
+                    </div>
+                  )}
                   <div className="absolute top-2 left-2">
                     <span className={`px-2 py-1 text-xs font-medium rounded ${
-                      image.visibility === 'public' 
+                      item.visibility === 'public' 
                         ? 'bg-green-100 text-green-800' 
                         : 'bg-gray-100 text-gray-800'
                     }`}>
-                      {image.visibility}
+                      {item.visibility}
                     </span>
                   </div>
                   <button
-                    onClick={() => onRemoveImage(image._id, collection._id)}
+                    onClick={() => onRemoveImage(item._id, collection._id)}
                     className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold z-10 cursor-pointer shadow-lg"
                   >
                     ×
                   </button>
                 </div>
                 <div className="p-3">
-                  <h3 className="font-medium text-sm truncate">{image.title}</h3>
+                  <h3 className="font-medium text-sm truncate">{item.title}</h3>
                   <div className="text-xs text-gray-500 mt-1">
-                    <div>{image.format?.toUpperCase()} • {formatFileSize(image.fileSize)}</div>
-                    <div>{image.daysSinceUpload}d ago</div>
+                    <div>{item.format?.toUpperCase()} • {formatFileSize(item.fileSize)}</div>
+                    <div>{item.daysSinceUpload}d ago</div>
                   </div>
                   
                   
-                  {/* Public URL for individual image */}
-                  {image.visibility === 'public' && image.tunnelUrl && (
+                  {/* Public URL for individual item */}
+                  {item.visibility === 'public' && item.tunnelUrl && (
                     <div className="mt-2 p-2 bg-green-50 rounded text-xs">
                       <div className="font-medium text-green-800 mb-1">Public URL:</div>
-                      <div className="text-green-700 break-all">{image.tunnelUrl}</div>
+                      <div className="text-green-700 break-all">{item.tunnelUrl}</div>
                       <div className="flex gap-1 mt-1">
                         <button
-                          onClick={() => navigator.clipboard.writeText(image.tunnelUrl)}
+                          onClick={() => navigator.clipboard.writeText(item.tunnelUrl)}
                           className="text-green-600 hover:text-green-800 text-xs"
                         >
                           Copy
                         </button>
                         <button
-                          onClick={() => window.open(image.tunnelUrl, '_blank')}
+                          onClick={() => window.open(item.tunnelUrl, '_blank')}
                           className="text-green-600 hover:text-green-800 text-xs"
                         >
                           Open

@@ -1,36 +1,58 @@
 import React, { useEffect, useState } from "react";
 
 function ImageList() {
-  const [images, setImages] = useState([]);
+  const [jsonData, setJsonData] = useState([]);
 
-  // Indices you want to display (1-based)
-  const selectedIndices = [1,2,3,4];
+  // JSON file path
+  const jsonFileUrl = "uploads/68ccee8f6b53841a0c42876d/general/1758891866968.json";
+  
+  // Specify the indices you want to display (null = show all)
+  const selectedIndices = [1,2,4]; // Use null for all, or [1,2,4] for specific indices
 
   useEffect(() => {
-    fetch(
-      "http://localhost:5000/api/image-management/collections/68d56b74a918efc9d7329c8e"
-    )
-      .then((res) => res.json())
-      .then((data) => {
-        // Filter only the selected indices from the images array
-        const filtered = data.data.images.filter((item) =>
-          selectedIndices.includes(item.index)
-        );
-
-        setImages(filtered);
+    // Fetch JSON data
+    fetch(`http://localhost:5000/${jsonFileUrl}`)
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
       })
-      .catch((err) => console.error("Error fetching images:", err));
+      .then((data) => {
+        setJsonData(data);
+      })
+      .catch((err) => {
+        console.error("Error fetching JSON:", err);
+      });
   }, []);
 
+  // Filter data based on selected indices
+  const filteredData = selectedIndices ? jsonData.filter((item) => selectedIndices.includes(item.index)) : jsonData;
+
   return (
-    <div>
-      {images.map((img, idx) => (
-        <div key={idx} style={{ marginBottom: "20px" }}>
-          <h3>{img.title}</h3>
-          <p>{img.notes}</p>
-          <img src={img.fileUrl} alt={img.title} width="200" />
-        </div>
-      ))}
+    <div style={{ padding: "20px" }}>
+      <h2>📋 JSON Data Display</h2>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: "15px" }}>
+        {filteredData.map((item) => (
+          <div
+            key={item.index}
+            style={{
+              border: "1px solid #ddd",
+              borderRadius: "8px",
+              padding: "15px",
+              backgroundColor: "#fff",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+            }}
+          >
+            <h3>{item.name}</h3>
+            <p>{item.bio}</p>
+            <img
+              src={item.pic}
+              alt={item.name}
+              style={{ width: "100%", borderRadius: "6px", objectFit: "cover" }}
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

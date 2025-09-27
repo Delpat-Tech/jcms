@@ -216,8 +216,10 @@ const EnhancedMediaDashboard = () => {
       if (selected.length === 0) return;
       
       const images = selected.filter(f => f.type === 'image');
-      if (images.length === 0) {
-        addNotification && addNotification('warning', 'No images selected', 'Select images to group into Content', true, 2500);
+      const files = selected.filter(f => f.type !== 'image');
+      
+      if (images.length === 0 && files.length === 0) {
+        addNotification && addNotification('warning', 'No files selected', 'Select images or files to group into Content', true, 2500);
         return;
       }
       
@@ -229,8 +231,9 @@ const EnhancedMediaDashboard = () => {
   };
 
   const handleCollectionSelected = (collection, result) => {
-    addNotification && addNotification('success', 'Images added to collection', 
-      `${result.data?.movedImages || 0} image(s) added to "${collection.name}"`, true, 3000);
+    const totalItems = result.data?.modifiedCount || 0;
+    addNotification && addNotification('success', 'Items added to collection', 
+      `${totalItems} item(s) added to "${collection.name}"`, true, 3000);
     setSelectedFiles(new Set());
     setShowCollectionSelector(false);
   };
@@ -239,6 +242,12 @@ const EnhancedMediaDashboard = () => {
     const selected = filteredAndSortedFiles.filter(f => selectedFiles.has(f._id));
     const images = selected.filter(f => f.type === 'image');
     return images.map(img => img._id);
+  };
+
+  const getSelectedFileIds = () => {
+    const selected = filteredAndSortedFiles.filter(f => selectedFiles.has(f._id));
+    const files = selected.filter(f => f.type !== 'image');
+    return files.map(file => file._id);
   };
 
   return (
@@ -409,7 +418,8 @@ const EnhancedMediaDashboard = () => {
         onClose={() => setShowCollectionSelector(false)}
         onSelectCollection={handleCollectionSelected}
         selectedImageIds={getSelectedImageIds()}
-        title="Add Images to Collection"
+        selectedFileIds={getSelectedFileIds()}
+        title="Add Items to Collection"
       />
     </div>
   );

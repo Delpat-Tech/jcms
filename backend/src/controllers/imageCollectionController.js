@@ -95,13 +95,31 @@ const getCollectionById = async (req, res) => {
 
     const result = await imageCollectionService.getCollectionById(id, req.user, imageFilters);
     
+    // Get files in this collection
+    const File = require('../models/file');
+    const files = await File.find({ collection: id }).lean();
+    
     // Clean up the images data
     const cleanImages = result.images.map((image, index) => ({
       index: index + 1,
       title: image.title || '',
       fileUrl: image.fileUrl || image.publicUrl || '',
-      notes: image.notes || ''
+      notes: image.notes || '',
+      type: 'image'
     }));
+    
+    // Clean up the files data
+    const cleanFiles = files.map((file, index) => ({
+      index: cleanImages.length + index + 1,
+      title: file.title || '',
+      fileUrl: file.fileUrl || '',
+      notes: file.notes || '',
+      type: file.format === 'json' ? 'json' : 'file',
+      format: file.format
+    }));
+    
+    // Combine images and files
+    const allItems = [...cleanImages, ...cleanFiles];
 
     res.json({
       success: true,
@@ -111,7 +129,7 @@ const getCollectionById = async (req, res) => {
           name: result.collection.name,
           description: result.collection.description
         },
-        images: cleanImages
+        images: allItems // Keep same field name for compatibility
       }
     });
 
@@ -239,6 +257,53 @@ const addImagesToCollection = async (req, res) => {
 
   } catch (error) {
     logger.error('Failed to add images to collection', {
+      collectionId: req.params.id,
+      error: error.message,
+      userId: req.user?.id
+    });
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Add files to collection
+ */
+const addFilesToCollection = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { fileIds } = req.body;
+
+    if (!Array.isArray(fileIds) || fileIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide an array of file IDs'
+      });
+    }
+
+    // Get collection with access check
+    const collection = await imageCollectionService.getCollectionAccess(id, req.user);
+
+    const File = require('../models/file');
+    const result = await File.updateMany(
+      { _id: { $in: fileIds } },
+      { collection: id }
+    );
+
+    res.json({
+      success: true,
+      message: `${result.modifiedCount} file(s) added to collection`,
+      data: {
+        modifiedCount: result.modifiedCount
+      }
+    });
+
+  } catch (error) {
+    logger.error('Failed to add files to collection', {
       collectionId: req.params.id,
       error: error.message,
       userId: req.user?.id
@@ -408,6 +473,7 @@ module.exports = {
   makeCollectionPublic,
   makeCollectionPrivate,
   addImagesToCollection,
+  addFilesToCollection,
   updateCollection,
   deleteCollection,
   getCollectionJson

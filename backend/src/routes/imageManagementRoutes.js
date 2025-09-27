@@ -104,6 +104,10 @@ router.post('/collections/:id/add-images',
   imageCollectionController.addImagesToCollection
 );
 
+router.post('/collections/:id/add-files',
+  imageCollectionController.addFilesToCollection
+);
+
 // Remove images from collection
 router.post('/collections/:id/remove-images', async (req, res) => {
   try {
@@ -116,6 +120,26 @@ router.post('/collections/:id/remove-images', async (req, res) => {
     );
     
     res.json({ success: true, message: `Removed ${result.modifiedCount} images from collection`, modifiedCount: result.modifiedCount });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Get available files for collection
+router.get('/files/available', async (req, res) => {
+  try {
+    const File = require('../models/file');
+    let filter = { collection: null }; // Only files not in collections
+    
+    if (req.user.role.name !== 'superadmin') {
+      filter.tenant = req.user.tenant?._id || null;
+    }
+    
+    const files = await File.find(filter)
+      .select('_id title originalName fileType format fileSize fileUrl')
+      .sort({ createdAt: -1 });
+    
+    res.json({ success: true, data: files });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

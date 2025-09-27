@@ -9,6 +9,7 @@ const CollectionSelectorModal = ({
   onClose, 
   onSelectCollection, 
   selectedImageIds = [],
+  selectedFileIds = [],
   title = "Add to Collection" 
 }) => {
   const [collections, setCollections] = useState([]);
@@ -58,34 +59,49 @@ const CollectionSelectorModal = ({
 
   const handleSelectCollection = async (collection) => {
     try {
-      console.log('Adding images to collection:', { collectionId: collection._id, imageIds: selectedImageIds });
-      
-      // Add images to the selected collection
-      const result = await apiCall(`/api/image-management/collections/${collection._id}/add-images`, {
-        method: 'POST',
-        body: JSON.stringify({ imageIds: selectedImageIds })
+      console.log('Adding items to collection:', { 
+        collectionId: collection._id, 
+        imageIds: selectedImageIds,
+        fileIds: selectedFileIds 
       });
       
-      console.log('API Response:', result);
-
-      if (result.success) {
-        // Ensure the result has the correct structure for the parent component
-        const enhancedResult = {
-          ...result,
-          data: {
-            ...result.data,
-            modifiedCount: result.modifiedCount || result.data?.modifiedCount || 0
-          }
-        };
-        console.log('Enhanced result:', enhancedResult);
-        onSelectCollection(collection, enhancedResult);
-        onClose();
-      } else {
-        alert('Failed to add images to collection: ' + result.message);
+      let totalModified = 0;
+      
+      // Add images to the selected collection
+      if (selectedImageIds.length > 0) {
+        const imageResult = await apiCall(`/api/image-management/collections/${collection._id}/add-images`, {
+          method: 'POST',
+          body: JSON.stringify({ imageIds: selectedImageIds })
+        });
+        if (imageResult.success) {
+          totalModified += imageResult.data?.modifiedCount || 0;
+        }
       }
+      
+      // Add files to the selected collection
+      if (selectedFileIds.length > 0) {
+        const fileResult = await apiCall(`/api/image-management/collections/${collection._id}/add-files`, {
+          method: 'POST',
+          body: JSON.stringify({ fileIds: selectedFileIds })
+        });
+        if (fileResult.success) {
+          totalModified += fileResult.data?.modifiedCount || 0;
+        }
+      }
+      
+      const enhancedResult = {
+        success: true,
+        data: {
+          modifiedCount: totalModified
+        }
+      };
+      
+      console.log('Enhanced result:', enhancedResult);
+      onSelectCollection(collection, enhancedResult);
+      onClose();
     } catch (error) {
-      console.error('Failed to add images to collection:', error);
-      alert('Failed to add images to collection: ' + error.message);
+      console.error('Failed to add items to collection:', error);
+      alert('Failed to add items to collection: ' + error.message);
     }
   };
 
@@ -148,6 +164,9 @@ const CollectionSelectorModal = ({
         <div className="mb-4 p-3 bg-blue-50 rounded-lg">
           <p className="text-sm text-blue-800">
             Selected: <strong>{selectedImageIds.length} image(s)</strong>
+            {selectedFileIds.length > 0 && (
+              <span>, <strong>{selectedFileIds.length} file(s)</strong></span>
+            )}
           </p>
         </div>
 
