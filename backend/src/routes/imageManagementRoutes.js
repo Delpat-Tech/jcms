@@ -113,10 +113,21 @@ router.post('/collections/:id/remove-images', async (req, res) => {
   try {
     const { imageIds } = req.body;
     const Image = require('../models/image');
+    const collectionId = req.params.id;
     
+    // Remove from both legacy collection field and new collections array
     const result = await Image.updateMany(
-      { _id: { $in: imageIds }, collection: req.params.id },
-      { $unset: { collection: 1 } }
+      { 
+        _id: { $in: imageIds },
+        $or: [
+          { collection: collectionId },
+          { collections: collectionId }
+        ]
+      },
+      { 
+        $unset: { collection: 1 },
+        $pull: { collections: collectionId }
+      }
     );
     
     res.json({ success: true, message: `Removed ${result.modifiedCount} images from collection`, modifiedCount: result.modifiedCount });
