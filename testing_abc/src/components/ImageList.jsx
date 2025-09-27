@@ -7,9 +7,10 @@ function ImageList() {
   const jsonFileUrl = "uploads/68ccee8f6b53841a0c42876d/general/1758891866968.json";
   
   // Specify the indices you want to display (null = show all)
-  const selectedIndices = [1,2,4]; // Use null for all, or [1,2,4] for specific indices
+  const selectedIndices = null// Use null for all, or [1,2,4] for specific indices
 
   useEffect(() => {
+    console.log('Using API URL:', process.env.REACT_APP_API_URL || 'http://localhost:5000');
     // Fetch JSON data
     fetch(`http://localhost:5000/${jsonFileUrl}`)
       .then((res) => {

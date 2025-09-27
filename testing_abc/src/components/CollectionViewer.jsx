@@ -5,7 +5,7 @@ function CollectionViewer() {
   const [loading, setLoading] = useState(true);
 
   // Collection ID from content dashboard
-  const collectionId = "68d66d7e5538825f8ecb25d2";
+  const collectionId = "68d56b74a918efc9d7329c8e";
   
   // Specify the indices you want to display (null = show all)
   const selectedIndices = null; // Use null for all, or [1,2,3] for specific indices
@@ -13,6 +13,7 @@ function CollectionViewer() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        console.log('Using API URL:', process.env.REACT_APP_API_URL || 'http://localhost:5000');
         // Login to get token
         const loginRes = await fetch('http://localhost:5000/api/auth/login', {
           method: 'POST',
