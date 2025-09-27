@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
+import { API_BASE_URL } from '../config.js';
 
 function ImageList() {
   const [jsonData, setJsonData] = useState([]);
 
   // JSON file path
-  const jsonFileUrl = "uploads/68ccee8f6b53841a0c42876d/general/1758891866968.json";
+  const jsonFileUrl = "uploads/system/general/1758967622926.json";
   
   // Specify the indices you want to display (null = show all)
   const selectedIndices = null// Use null for all, or [1,2,4] for specific indices
@@ -12,7 +13,7 @@ function ImageList() {
   useEffect(() => {
     console.log('Using API URL:', process.env.REACT_APP_API_URL || 'http://localhost:5000');
     // Fetch JSON data
-    fetch(`http://localhost:5000/${jsonFileUrl}`)
+    fetch(`${API_BASE_URL}/${jsonFileUrl}`)
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();

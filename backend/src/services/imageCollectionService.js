@@ -113,7 +113,14 @@ class ImageCollectionService {
         collections.map(async (collection) => {
           try {
             const imageStats = await Image.aggregate([
-              { $match: { collection: collection._id } },
+              { 
+                $match: { 
+                  $or: [
+                    { collection: collection._id },
+                    { collections: collection._id }
+                  ]
+                } 
+              },
               {
                 $group: {
                   _id: null,
@@ -137,7 +144,12 @@ class ImageCollectionService {
             };
 
             // Get recent images for preview
-            const recentImages = await Image.find({ collection: collection._id })
+            const recentImages = await Image.find({ 
+              $or: [
+                { collection: collection._id },
+                { collections: collection._id }
+              ]
+            })
               .select('fileUrl title format')
               .sort({ createdAt: -1 })
               .limit(4)
@@ -221,7 +233,12 @@ class ImageCollectionService {
         limit = 20
       } = imageFilters;
 
-      let imageQuery = { collection: collectionId };
+      let imageQuery = { 
+        $or: [
+          { collection: collectionId }, // Legacy single collection field
+          { collections: collectionId } // New collections array field
+        ]
+      };
 
       if (search) {
         imageQuery.$or = [
@@ -292,7 +309,10 @@ class ImageCollectionService {
       
       // Get all images in collection
       const images = await Image.find({ 
-        collection: collectionId,
+        $or: [
+          { collection: collectionId },
+          { collections: collectionId }
+        ],
         visibility: 'private' // Only process private images
       });
 
@@ -410,7 +430,10 @@ class ImageCollectionService {
       
       // Get all public images in collection
       const images = await Image.find({ 
-        collection: collectionId,
+        $or: [
+          { collection: collectionId },
+          { collections: collectionId }
+        ],
         visibility: 'public'
       });
 
@@ -482,7 +505,7 @@ class ImageCollectionService {
   }
 
   /**
-   * Add images to collection
+   * Add images to collection (copy, not move)
    */
   async addImagesToCollection(collectionId, imageIds, user) {
     try {
@@ -504,8 +527,11 @@ class ImageCollectionService {
         imageQuery.tenant = user.tenant ? user.tenant._id : null;
       }
       
-      // Update images to belong to this collection
-      const result = await Image.updateMany(imageQuery, { collection: collectionId });
+      // Add collection to images' collections array (not replace)
+      const result = await Image.updateMany(
+        imageQuery,
+        { $addToSet: { collections: collectionId } }
+      );
 
       // Update collection stats
       await this.updateCollectionStats(collectionId);
@@ -538,7 +564,14 @@ class ImageCollectionService {
   async updateCollectionStats(collectionId) {
     try {
       const stats = await Image.aggregate([
-        { $match: { collection: new mongoose.Types.ObjectId(collectionId) } },
+        { 
+          $match: { 
+            $or: [
+              { collection: new mongoose.Types.ObjectId(collectionId) },
+              { collections: new mongoose.Types.ObjectId(collectionId) }
+            ]
+          } 
+        },
         {
           $group: {
             _id: null,

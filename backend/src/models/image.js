@@ -25,9 +25,13 @@ const imageSchema = new mongoose.Schema({
   },
   collection: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'ImageCollection', // Link to image collection/group
+    ref: 'ImageCollection', // Link to image collection/group (legacy single collection)
     default: null
   },
+  collections: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'ImageCollection' // Multiple collections support
+  }],
   internalPath: { type: String, required: true },
   fileUrl: { type: String, required: true },
   publicUrl: { type: String }, // Local public URL
@@ -98,6 +102,7 @@ imageSchema.index({ visibility: 1, publicationDate: -1 });
 imageSchema.index({ tenant: 1, visibility: 1, createdAt: -1 });
 imageSchema.index({ tags: 1 });
 imageSchema.index({ cloudflareKey: 1 });
+imageSchema.index({ collections: 1 }); // Index for new collections array
 
 // Virtual for public access URL
 imageSchema.virtual('accessUrl').get(function() {

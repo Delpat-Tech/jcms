@@ -379,7 +379,12 @@ const deleteCollection = async (req, res) => {
 
     // Check if collection has images
     const Image = require('../models/image');
-    const imageCount = await Image.countDocuments({ collection: id });
+    const imageCount = await Image.countDocuments({ 
+      $or: [
+        { collection: id },
+        { collections: id }
+      ]
+    });
 
     if (imageCount > 0) {
       return res.status(400).json({
