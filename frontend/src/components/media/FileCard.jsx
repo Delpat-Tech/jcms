@@ -51,7 +51,8 @@ const FileCard = ({ file, viewMode, selected, onSelect, onPreview, onDelete, onD
   };
 
   const handleImageDownload = (imageId, size) => {
-    window.open(`http://localhost:5000/api/images/${imageId}/${size}`, '_blank');
+    const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+    window.open(`${API_URL}/api/images/${imageId}/${size}`, '_blank');
   };
 
   const getFileIcon = (type) => {

@@ -28,8 +28,13 @@ const EnhancedMediaDashboard = () => {
 
   const toAbsoluteUrl = (maybeRelative) => {
     if (!maybeRelative) return '';
-    if (/^https?:\/\//i.test(maybeRelative)) return maybeRelative;
-    return `http://localhost:5000${maybeRelative.startsWith('/') ? maybeRelative : '/' + maybeRelative}`;
+    if (/^https?:\/\//i.test(maybeRelative)) {
+      // Replace old tunnel URLs with current one
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      return maybeRelative.replace(/https:\/\/[^.]+\.trycloudflare\.com/, API_URL);
+    }
+    const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+    return `${API_URL}${maybeRelative.startsWith('/') ? maybeRelative : '/' + maybeRelative}`;
   };
 
   const getFileType = (filename) => {
@@ -199,6 +204,23 @@ const EnhancedMediaDashboard = () => {
       
       addNotification && addNotification('success', 'Files deleted', `${selected.length} file(s) deleted successfully`, true, 2500);
       setSelectedFiles(new Set());
+      fetchFiles();
+    } catch (error) {
+      addNotification && addNotification('error', 'Delete failed', error.message, true, 3000);
+    }
+  };
+
+  const handleSingleDelete = async (file) => {
+    if (!window.confirm(`Delete "${file.filename || file.title}"?`)) return;
+    
+    try {
+      if (file.type === 'image') {
+        await imageApi.delete(file._id);
+      } else {
+        await fileApi.delete(file._id);
+      }
+      
+      addNotification && addNotification('success', 'File deleted', 'File deleted successfully', true, 2500);
       fetchFiles();
     } catch (error) {
       addNotification && addNotification('error', 'Delete failed', error.message, true, 3000);
@@ -394,6 +416,7 @@ const EnhancedMediaDashboard = () => {
                   isSelected={selectedFiles.has(file._id)}
                   onSelect={handleFileSelect}
                   onPreview={setPreviewFile}
+                  onDelete={handleSingleDelete}
                   currentUser={currentUser}
                   onUpdate={fetchFiles}
                 />

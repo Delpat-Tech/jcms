@@ -65,7 +65,8 @@ export default function UserProfilePage() {
       };
       
       // Fetch content statistics
-      const contentResponse = await fetch('http://localhost:5000/api/content', {
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      const contentResponse = await fetch(`${API_URL}/api/content`, {
         headers: authHeaders
       });
       

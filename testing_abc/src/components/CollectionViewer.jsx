@@ -6,7 +6,7 @@ function CollectionViewer() {
 
 
   // Collection ID from content dashboard
-  const collectionId = "68d7d0ce95795d8f31746341";
+  const collectionId = "68d66d7e5538825f8ecb25d2";
   
   // Specify the indices you want to display (null = show all)
   const selectedIndices = null; // Use null for all, or [1,2,3] for specific indices
@@ -14,12 +14,31 @@ function CollectionViewer() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log('Using API URL:', process.env.REACT_APP_API_URL || 'http://localhost:5000');
-        
-        // Fetch collection data from public route (no auth required)
-        const collectionRes = await fetch(`http://localhost:5000/api/public/collections/${collectionId}`, {
+        // Login first to get token
+        const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+        const loginRes = await fetch(`${API_URL}/api/auth/login`, {
+          method: 'POST',
           headers: {
             'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            username: 'superadmin',
+            password: 'admin123'
+          })
+        });
+        
+        const loginResult = await loginRes.json();
+        if (!loginResult.success) {
+          throw new Error('Login failed: ' + loginResult.message);
+        }
+        
+        const token = loginResult.token;
+        
+        // Fetch collection data
+        const collectionRes = await fetch(`${API_URL}/api/image-management/collections/${collectionId}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
           }
         });
         
@@ -27,8 +46,22 @@ function CollectionViewer() {
           throw new Error(`HTTP ${collectionRes.status}`);
         }
         
-        const collectionData = await collectionRes.json();
-        setCollectionData(collectionData.data);
+        const result = await collectionRes.json();
+        console.log('Collection result:', result);
+        
+        // Transform to match expected structure and fix URLs
+        const transformedData = {
+          name: result.data.collection.name,
+          description: result.data.collection.description,
+          items: result.data.images.map(item => ({
+            ...item,
+            fileUrl: item.fileUrl?.startsWith('/') 
+              ? `${API_URL}${item.fileUrl}`
+              : item.fileUrl?.replace(/https?:\/\/[^/]+/, API_URL) || item.fileUrl
+          }))
+        };
+        
+        setCollectionData(transformedData);
         setLoading(false);
         
       } catch (err) {
@@ -50,11 +83,11 @@ function CollectionViewer() {
 
   return (
     <div style={{ padding: "20px" }}>
-      <h2>📁 Collection: {collectionData.collection.name}</h2>
-      <p>{collectionData.collection.description}</p>
+      <h2>📁 Collection: {collectionData.name}</h2>
+      <p>{collectionData.description}</p>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "20px", marginTop: "20px" }}>
-        {(selectedIndices ? collectionData.images.filter(item => selectedIndices.includes(item.index)) : collectionData.images).map((item) => (
+        {(selectedIndices ? collectionData.items.filter(item => selectedIndices.includes(item.index)) : collectionData.items).map((item) => (
           <div
             key={item.index}
             style={{
@@ -71,7 +104,9 @@ function CollectionViewer() {
             {item.type === 'image' ? (
               <>
                 <img
-                  src={item.fileUrl}
+                  src={item.fileUrl?.startsWith('/') 
+                    ? `${API_URL}${item.fileUrl}`
+                    : item.fileUrl?.replace(/https?:\/\/[^/]+/, API_URL) || item.fileUrl}
                   alt={item.title}
                   style={{ 
                     width: "100%", 
@@ -82,10 +117,10 @@ function CollectionViewer() {
                   }}
                   onError={(e) => {
                     const fallbacks = [
-                      `http://localhost:5000/api/files/${item.fileUrl.split('/').pop()}`,
-                      `http://localhost:5000/uploads/${item.fileUrl.split('/').pop()}`,
-                      `http://localhost:5000/api/public/files/${item.fileUrl.split('/').pop()}`,
-                      `http://localhost:5000/static/${item.fileUrl.split('/').pop()}`
+                      `${API_URL}/api/files/${item.fileUrl.split('/').pop()}`,
+                      `${API_URL}/uploads/${item.fileUrl.split('/').pop()}`,
+                      `${API_URL}/api/public/files/${item.fileUrl.split('/').pop()}`,
+                      `${API_URL}/static/${item.fileUrl.split('/').pop()}`
                     ];
                     
                     const currentIndex = fallbacks.indexOf(e.target.src);
@@ -148,7 +183,7 @@ function CollectionViewer() {
         ))}
       </div>
 
-      {collectionData.images.length === 0 && (
+      {collectionData.items.length === 0 && (
         <div style={{ 
           textAlign: "center", 
           padding: "40px", 

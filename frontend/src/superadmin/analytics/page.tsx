@@ -18,7 +18,8 @@ function AnalyticsPage() {
   const fetchTenantAnalytics = useCallback(async (tenantId) => {
     setAnalyticsLoading(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/tenant-analytics/${tenantId}`, {
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${API_URL}/api/tenant-analytics/${tenantId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -34,7 +35,8 @@ function AnalyticsPage() {
 
   const fetchTenants = useCallback(async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/tenants`, {
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${API_URL}/api/tenants`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();

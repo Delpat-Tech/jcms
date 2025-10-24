@@ -7,7 +7,7 @@ const logger = require('./config/logger');
 const app = express();
 
 // Middleware setup
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5000,http://127.0.0.1:5000,http://localhost:3000,http://127.0.0.1:3000')
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5000,http://127.0.0.1:5000,http://localhost:3000,http://127.0.0.1:3000,https://jackson-intellectual-native-assembly.trycloudflare.com,https://chemicals-happy-vinyl-presented.trycloudflare.com')
   .split(',')
   .map(o => o.trim())
   .filter(Boolean);
@@ -15,17 +15,11 @@ const allowLocalhostWildcard = (process.env.ALLOW_LOCALHOST_WILDCARD || 'true').
 const localhostRegex = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
 
 const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    if (allowLocalhostWildcard && localhostRegex.test(origin)) return callback(null, true);
-    if (origin === 'null') return callback(null, true);
-    return callback(null, false);
-  },
+  origin: true,
   credentials: true,
   methods: ['GET','HEAD','PUT','PATCH','POST','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type','Authorization'],
-  optionsSuccessStatus: 204
+  allowedHeaders: ['Content-Type','Authorization','X-Requested-With'],
+  optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
 app.use(express.json());
@@ -239,6 +233,7 @@ app.use('/api/tenant-analytics', require('./routes/tenantAnalyticsRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/activity', require('./routes/activityRoutes'));
 app.use('/api/tenant-switching', require('./routes/tenantSwitchingRoutes'));
+app.use('/api/analytics', require('./routes/analyticsRoutes'));
 app.use('/api/editor', require('./routes/editorRoutes'));
 app.use('/api/help', require('./routes/helpRoutes'));
 app.use('/api/subscriptions', require('./routes/subscriptionRoutes'));

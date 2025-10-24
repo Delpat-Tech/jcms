@@ -12,7 +12,8 @@ const PreviewModal = ({ file, onClose, onNext, onPrev, onDelete, onDownload }) =
   const [isSaving, setIsSaving] = useState(false);
 
   const handleImageDownload = (imageId, size) => {
-    const url = `http://localhost:5000/api/images/${imageId}/${size}`;
+    const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+    const url = `${API_URL}/api/images/${imageId}/${size}`;
     fetch(url)
       .then(response => response.blob())
       .then(blob => {
@@ -63,7 +64,8 @@ const PreviewModal = ({ file, onClose, onNext, onPrev, onDelete, onDownload }) =
     if (!(file.type === 'json' || file.format === 'json' || (file.filename && file.filename.toLowerCase().endsWith('.json')))) return;
     try {
       const url = file.publicUrl || file.fileUrl || file.fullUrl;
-      const fullUrl = url.startsWith('/') ? `http://localhost:5000${url}` : url;
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      const fullUrl = url.startsWith('/') ? `${API_URL}${url}` : url?.replace(/https?:\/\/[^/]+/, API_URL) || url;
       const response = await fetch(fullUrl);
       const text = await response.text();
       setJsonContent(text);
@@ -321,7 +323,8 @@ const PreviewModal = ({ file, onClose, onNext, onPrev, onDelete, onDownload }) =
                   <a 
                     href={(() => {
                       const url = file.publicUrl || file.fileUrl || file.fullUrl;
-                      return url && url.startsWith('/') ? `http://localhost:5000${url}` : url;
+                      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+                      return url && url.startsWith('/') ? `${API_URL}${url}` : url;
                     })()} 
                     target="_blank" 
                     rel="noopener noreferrer"
@@ -329,7 +332,8 @@ const PreviewModal = ({ file, onClose, onNext, onPrev, onDelete, onDownload }) =
                   >
                     {(() => {
                       const url = file.publicUrl || file.fileUrl || file.fullUrl;
-                      return url && url.startsWith('/') ? `http://localhost:5000${url}` : url;
+                      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+                      return url && url.startsWith('/') ? `${API_URL}${url}` : url;
                     })()}
                   </a>
                 </div>

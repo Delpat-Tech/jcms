@@ -328,7 +328,7 @@ export const imageManagementApi = {
   getTunnelStatus: () => api.get('/api/image-management/tunnel/status'),
   makeCollectionPublicViaTunnel: (id) => api.post(`/api/image-management/tunnel/collections/${id}/make-public`),
   makeCollectionPrivateViaTunnel: (id) => api.post(`/api/image-management/tunnel/collections/${id}/make-private`),
-  downloadCollectionZip: (id) => fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/image-management/tunnel/collections/${id}/download-zip`, {
+  downloadCollectionZip: (id) => fetch(`${API_BASE_URL}/api/image-management/tunnel/collections/${id}/download-zip`, {
     headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
   })
 };

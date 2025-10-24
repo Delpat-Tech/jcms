@@ -27,8 +27,13 @@ const MediaDashboard = () => {
 
   const toAbsoluteUrl = (maybeRelative) => {
     if (!maybeRelative) return '';
-    if (/^https?:\/\//i.test(maybeRelative)) return maybeRelative;
-    return `http://localhost:5000${maybeRelative.startsWith('/') ? maybeRelative : '/' + maybeRelative}`;
+    if (/^https?:\/\//i.test(maybeRelative)) {
+      // Replace old tunnel URLs with current one
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      return maybeRelative.replace(/https:\/\/[^.]+\.trycloudflare\.com/, API_URL);
+    }
+    const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+    return `${API_URL}${maybeRelative.startsWith('/') ? maybeRelative : '/' + maybeRelative}`;
   };
 
   const getFileType = (filename) => {

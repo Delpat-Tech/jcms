@@ -148,7 +148,7 @@ export default function ContentEditor() {
   }, [activeTab]);
   
   // API calls
-  const API_BASE = 'http://localhost:5000';
+  const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
   const getAuthHeaders = () => ({
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${localStorage.getItem('token')}`,

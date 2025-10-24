@@ -19,7 +19,8 @@ function RolesPage() {
 
   const fetchRoles = useCallback(async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/superadmin/roles`, {
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${API_URL}/api/superadmin/roles`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -40,9 +41,10 @@ function RolesPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
       const url = editingRole 
-        ? `http://localhost:5000/api/superadmin/roles/${editingRole._id}`
-        : `http://localhost:5000/api/superadmin/roles`;
+        ? `${API_URL}/api/superadmin/roles/${editingRole._id}`
+        : `${API_URL}/api/superadmin/roles`;
       
       const res = await fetch(url, {
         method: editingRole ? "PUT" : "POST",
@@ -82,7 +84,8 @@ function RolesPage() {
     if (!window.confirm("Are you sure you want to delete this role?")) return;
     
     try {
-      const res = await fetch(`http://localhost:5000/api/superadmin/roles/${roleId}`, {
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${API_URL}/api/superadmin/roles/${roleId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });
