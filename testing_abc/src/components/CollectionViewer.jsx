@@ -4,8 +4,11 @@ const CollectionViewer = () => {
   const [collection, setCollection] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // 🔹 Define which indexes to show (empty array means show all)
+  const showIndexes = [1,4,3]; // Example: [1, 4] → only show index 1 and 4
+
   const COLLECTION_URL =
-    "http://localhost:5000/api/public/collection/catcollection-qxxc";
+    "http://localhost:5000/api/public/collection/abc-on5x";
 
   useEffect(() => {
     const fetchCollection = async () => {
@@ -39,79 +42,61 @@ const CollectionViewer = () => {
     );
   }
 
+  // 🔹 Filter items based on index array
+  const filteredItems =
+    showIndexes.length > 0
+      ? collection.items.filter((item) => showIndexes.includes(item.index))
+      : collection.items;
+
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-6 bg-gray-50 min-h-screen w-full overflow-x-hidden">
       <h1 className="text-3xl font-bold mb-2 text-gray-800">
         Collection: {collection.name}
       </h1>
       <p className="text-gray-600 mb-6">{collection.description}</p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {collection.items.map((item, idx) => (
-          <div
-            key={idx}
-            className="border rounded-xl shadow-sm bg-white overflow-hidden transition-all hover:shadow-lg hover:scale-[1.01]"
-          >
-            {/* For Image Type */}
-            {item.type === "image" && (
-              <div>
-                <img
-                  src={item.fileUrl}
-                  alt={item.title}
-                  className="w-full h-44 object-cover"
-                />
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold mb-1 text-gray-800">
-                    {item.title}
+      {filteredItems.length === 0 ? (
+        <p className="text-center text-gray-500 text-lg">
+          No items found for selected indexes.
+        </p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 place-items-center">
+          {filteredItems.map((item, idx) => {
+            const imageSrc = item.pic || item.fileUrl;
+            const title = item.title || item.name || "Untitled";
+
+            return (
+              <div
+                key={`${item.index}-${item.type}-${idx}`}
+                className="w-full max-w-sm border rounded-xl shadow-sm bg-white overflow-hidden hover:shadow-lg transition-all"
+              >
+                <div className="flex flex-col items-center p-4">
+                  {imageSrc && (
+                    <img
+                      src={imageSrc}
+                      alt={title}
+                      className="w-full h-48 object-cover rounded-md mb-3"
+                      onError={(e) => (e.target.style.display = "none")}
+                    />
+                  )}
+
+                  <h3 className="text-lg font-semibold text-gray-800 mb-1 truncate">
+                    {title}
                   </h3>
-                  <p className="text-sm text-gray-500">
+
+                  {item.bio && (
+                    <p className="text-sm text-gray-600 mb-2">{item.bio}</p>
+                  )}
+
+                  <p className="text-xs text-gray-400">
                     Index: {item.index} | Type: {item.type}
                   </p>
                 </div>
               </div>
-            )}
-
-            {/* For JSON Type */}
-            {item.type === "json" && (
-              <div className="p-4">
-                {/* Display picture */}
-                {item.pic && item.pic !== "url" && (
-                  <img
-                    src={item.pic}
-                    alt={item.name || "User"}
-                    className="w-full h-36 object-cover rounded-md mb-3"
-                    onError={(e) => (e.target.style.display = "none")}
-                  />
-                )}
-
-                {/* Name & Bio */}
-                <div className="mb-2">
-                  {item.name && (
-                    <h4 className="text-lg font-semibold text-gray-800">
-                      {item.name}
-                    </h4>
-                  )}
-                  {item.bio && (
-                    <p className="text-sm text-gray-600 mb-1">{item.bio}</p>
-                  )}
-                </div>
-
-                {/* Other key-value data */}
-                <div className="mt-1 text-xs text-gray-500 space-y-1">
-                  {Object.entries(item).map(([key, value]) => {
-                    if (["name", "bio", "pic", "index", "type"].includes(key)) return null;
-                    return (
-                      <div key={key}>
-                        <strong>{key}:</strong> {String(value)}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
