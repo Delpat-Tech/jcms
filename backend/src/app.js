@@ -176,7 +176,10 @@ app.get('/api/public/collection/:slug', async (req, res) => {
     
     // Get files in collection
     const files = await File.find({ 
-      collection: collection._id 
+      $or: [
+        { collection: collection._id },
+        { collections: collection._id }
+      ]
     }).sort({ createdAt: -1 });
     
     // Transform to clean format
