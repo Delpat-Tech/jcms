@@ -136,6 +136,29 @@ router.post('/collections/:id/remove-images', async (req, res) => {
   }
 });
 
+// Remove files from collection
+router.post('/collections/:id/remove-files', async (req, res) => {
+  try {
+    const { fileIds } = req.body;
+    const File = require('../models/file');
+    const collectionId = req.params.id;
+    
+    const result = await File.updateMany(
+      { 
+        _id: { $in: fileIds },
+        collection: collectionId
+      },
+      { 
+        $unset: { collection: 1 }
+      }
+    );
+    
+    res.json({ success: true, message: `Removed ${result.modifiedCount} files from collection`, modifiedCount: result.modifiedCount });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // Get available files for collection
 router.get('/files/available', async (req, res) => {
   try {

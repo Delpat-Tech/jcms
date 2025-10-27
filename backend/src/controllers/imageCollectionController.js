@@ -101,15 +101,18 @@ const getCollectionById = async (req, res) => {
     
     // Clean up the images data
     const cleanImages = result.images.map((image, index) => ({
+      _id: image._id,
       index: index + 1,
       title: image.title || '',
       fileUrl: image.fileUrl || image.publicUrl || '',
       notes: image.notes || '',
-      type: 'image'
+      type: 'image',
+      visibility: image.visibility
     }));
     
     // Clean up the files data
     const cleanFiles = files.map((file, index) => ({
+      _id: file._id,
       index: cleanImages.length + index + 1,
       title: file.title || '',
       fileUrl: file.fileUrl || '',

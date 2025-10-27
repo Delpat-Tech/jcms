@@ -87,24 +87,33 @@ const ImageCollectionManager = () => {
     }
   }, [apiCall]);
 
-  const handleRemoveImage = async (imageId, collectionId) => {
-    if (window.confirm('Remove this image from the collection?')) {
+  const handleRemoveItem = async (itemId, collectionId, itemType) => {
+    const itemName = itemType === 'image' ? 'image' : 'file';
+    if (window.confirm(`Remove this ${itemName} from the collection?`)) {
       try {
-        console.log('Removing image:', imageId, 'from collection:', collectionId);
-        const result = await apiCall(`/api/image-management/collections/${collectionId}/remove-images`, {
+        console.log('Removing item:', itemId, 'type:', itemType, 'from collection:', collectionId);
+        
+        const endpoint = itemType === 'image' 
+          ? `/api/image-management/collections/${collectionId}/remove-images`
+          : `/api/image-management/collections/${collectionId}/remove-files`;
+        
+        const bodyKey = itemType === 'image' ? 'imageIds' : 'fileIds';
+        
+        const result = await apiCall(endpoint, {
           method: 'POST',
-          body: JSON.stringify({ imageIds: [imageId] })
+          body: JSON.stringify({ [bodyKey]: [itemId] })
         });
+        
         console.log('Remove result:', result);
         if (result.success) {
-          alert('Image removed from collection');
+          alert(`${itemName.charAt(0).toUpperCase() + itemName.slice(1)} removed from collection`);
           loadCollectionDetail(collectionId);
         } else {
-          alert('Failed to remove image: ' + result.message);
+          alert(`Failed to remove ${itemName}: ` + result.message);
         }
       } catch (error) {
-        console.error('Remove image error:', error);
-        alert('Failed to remove image: ' + error.message);
+        console.error('Remove item error:', error);
+        alert(`Failed to remove ${itemName}: ` + error.message);
       }
     }
   };
@@ -180,7 +189,7 @@ const ImageCollectionManager = () => {
         onBack={() => setView('collections')}
         onDownloadZip={() => handleDownloadCollectionZip(currentCollection._id)}
         formatFileSize={formatFileSize}
-        onRemoveImage={handleRemoveImage}
+        onRemoveItem={handleRemoveItem}
       />
     );
   }
@@ -370,7 +379,7 @@ const CollectionDetailView = ({
   onBack, 
   onDownloadZip, 
   formatFileSize,
-  onRemoveImage 
+  onRemoveItem 
 }) => {
   return (
     <div className="max-w-7xl mx-auto p-6">
@@ -479,7 +488,10 @@ const CollectionDetailView = ({
                     </span>
                   </div>
                   <button
-                    onClick={() => onRemoveImage(item._id, collection._id)}
+                    onClick={() => {
+                      console.log('Remove button clicked:', { itemId: item._id || item.id, collectionId: collection._id, type: item.type });
+                      onRemoveItem(item._id || item.id, collection._id, item.type);
+                    }}
                     className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold z-10 cursor-pointer shadow-lg"
                   >
                     ×
