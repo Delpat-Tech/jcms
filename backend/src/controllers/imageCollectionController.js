@@ -97,7 +97,12 @@ const getCollectionById = async (req, res) => {
     
     // Get files in this collection
     const File = require('../models/file');
-    const files = await File.find({ collection: id }).lean();
+    const files = await File.find({ 
+      $or: [
+        { collection: id },
+        { collections: id }
+      ]
+    }).lean();
     
     // Clean up the images data
     const cleanImages = result.images.map((image, index) => ({
@@ -294,7 +299,9 @@ const addFilesToCollection = async (req, res) => {
     const File = require('../models/file');
     const result = await File.updateMany(
       { _id: { $in: fileIds } },
-      { collection: id }
+      { 
+        $addToSet: { collections: id }
+      }
     );
 
     res.json({

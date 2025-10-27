@@ -183,18 +183,57 @@ app.get('/api/public/collection/:slug', async (req, res) => {
     const cleanImages = images.map((image, index) => ({
       index: index + 1,
       title: image.title || '',
+      type: 'image',
       fileUrl: image.fileUrl || image.publicUrl || '',
-      notes: image.notes || '',
-      type: 'image'
+      notes: {}
     }));
     
-    const cleanFiles = files.map((file, index) => ({
-      index: cleanImages.length + index + 1,
-      title: file.title || '',
-      fileUrl: file.fileUrl || '',
-      notes: file.notes || '',
-      type: file.format === 'json' ? 'json' : 'file',
-      format: file.format
+    const fs = require('fs');
+    
+    const cleanFiles = await Promise.all(files.map(async (file, index) => {
+      const fileItem = {
+        index: cleanImages.length + index + 1,
+        title: file.title || '',
+        type: file.format === 'json' ? 'json' : 'file',
+        fileUrl: file.fileUrl || '',
+        notes: file.notes || ''
+      };
+      
+      // If it's a JSON file, try to read and parse the content
+      if (file.format === 'json' && file.fileUrl) {
+        try {
+          // Extract path from URL if it's a full URL
+          let filePath = file.fileUrl;
+          if (filePath.startsWith('http')) {
+            const url = new URL(filePath);
+            filePath = url.pathname;
+          }
+          
+          const possiblePaths = [
+            path.join(__dirname, '..', filePath.replace(/^\//, '')),
+            path.join(__dirname, '../uploads', filePath.replace(/^\/uploads\//, '')),
+            filePath.startsWith('/') ? path.join(__dirname, '..', filePath.substring(1)) : path.join(__dirname, '..', filePath)
+          ];
+          
+          let jsonContent = null;
+          for (const filePath of possiblePaths) {
+            if (fs.existsSync(filePath)) {
+              jsonContent = fs.readFileSync(filePath, 'utf8');
+              break;
+            }
+          }
+          
+          if (jsonContent) {
+            fileItem.data = JSON.parse(jsonContent);
+          } else {
+            console.log('JSON file not found at any path:', possiblePaths);
+          }
+        } catch (error) {
+          console.log('Failed to read JSON file:', error.message);
+        }
+      }
+      
+      return fileItem;
     }));
     
     const allItems = [...cleanImages, ...cleanFiles];

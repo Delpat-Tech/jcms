@@ -114,29 +114,52 @@ const CollectionSelectorModal = ({
     try {
       setCreating(true);
       
-      // Create collection with the selected images
-      const result = await apiCall('/api/image-management/migration/create-collection-with-images', {
+      // Create empty collection first
+      const createResult = await apiCall('/api/image-management/collections', {
         method: 'POST',
         body: JSON.stringify({
-          collectionName: newCollectionName.trim(),
-          description: `Collection created from Media Management`,
-          imageIds: selectedImageIds
+          name: newCollectionName.trim(),
+          description: `Collection created from Media Management`
         })
       });
 
-      if (result.success) {
-        // Ensure the result has the correct structure for the parent component
+      if (createResult.success) {
+        const collection = createResult.data;
+        let totalModified = 0;
+        
+        // Add images to the new collection
+        if (selectedImageIds.length > 0) {
+          const imageResult = await apiCall(`/api/image-management/collections/${collection._id}/add-images`, {
+            method: 'POST',
+            body: JSON.stringify({ imageIds: selectedImageIds })
+          });
+          if (imageResult.success) {
+            totalModified += imageResult.data?.modifiedCount || 0;
+          }
+        }
+        
+        // Add files to the new collection
+        if (selectedFileIds.length > 0) {
+          const fileResult = await apiCall(`/api/image-management/collections/${collection._id}/add-files`, {
+            method: 'POST',
+            body: JSON.stringify({ fileIds: selectedFileIds })
+          });
+          if (fileResult.success) {
+            totalModified += fileResult.data?.modifiedCount || 0;
+          }
+        }
+        
         const enhancedResult = {
-          ...result,
+          success: true,
           data: {
-            ...result.data,
-            modifiedCount: result.data?.movedImages || selectedImageIds.length
+            modifiedCount: totalModified
           }
         };
-        onSelectCollection(result.data.collection, enhancedResult);
+        
+        onSelectCollection(collection, enhancedResult);
         onClose();
       } else {
-        alert('Failed to create collection: ' + result.message);
+        alert('Failed to create collection: ' + createResult.message);
       }
     } catch (error) {
       console.error('Failed to create collection:', error);

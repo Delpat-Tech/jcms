@@ -3,6 +3,7 @@ const User = require('../models/user');
 const Image = require('../models/image');
 const File = require('../models/file');
 const Content = require('../models/content');
+const ImageCollection = require('../models/imageCollection');
 const ActivityLog = require('../models/activityLog');
 const Tenant = require('../models/tenant');
 
@@ -39,6 +40,10 @@ const getDashboard = async (req, res) => {
     // Get tenant content
     const content = await Content.find({ tenant: tenantId });
 
+    // Get tenant collections
+    const collections = await ImageCollection.find({ tenant: tenantId });
+    console.log(`Found ${collections.length} collections for tenant ${tenantId}`);
+
     // Get recent activity for tenant users
     const tenantUserIds = users.map(u => u._id);
     const recentActivity = await ActivityLog.find({ 
@@ -57,6 +62,8 @@ const getDashboard = async (req, res) => {
     const totalFiles = files.length;
     const totalContent = content.length;
     const publishedContent = content.filter(c => c.status === 'published').length;
+    const totalCollections = collections.length;
+    const publicCollections = collections.filter(c => c.visibility === 'public').length;
 
     // Calculate storage
     const imageSize = images.reduce((acc, img) => acc + (img.fileSize || 0), 0);
@@ -95,6 +102,9 @@ const getDashboard = async (req, res) => {
         totalContent,
         publishedContent,
         draftContent: totalContent - publishedContent,
+        totalCollections,
+        publicCollections,
+        privateCollections: totalCollections - publicCollections,
         totalStorage
       },
       analytics: {

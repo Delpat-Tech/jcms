@@ -97,12 +97,6 @@ export default function AdminOverview() {
               {refreshing ? <TrioLoader size="16" color="#6b7280" /> : <RefreshCcw className="w-4 h-4 text-gray-500" />}
               <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
             </button>
-            {lastUpdated && (
-              <span className="text-xs text-gray-500">
-                Last updated: {lastUpdated.toLocaleTimeString()}
-              </span>
-            )}
-            <Button variant="secondary" onClick={handleLogout}>Logout</Button>
           </div>
         </div>
 
@@ -144,15 +138,15 @@ export default function AdminOverview() {
 
               <div 
                 className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-all duration-300 cursor-pointer hover:border-green-300 hover:scale-105"
-                onClick={() => navigate('/admin/content')}
+                onClick={() => navigate('/content')}
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Content</p>
-                    <p className="text-3xl font-bold text-green-600 mt-2">{dashboardData.overview?.totalContent || 0}</p>
-                    <p className="text-sm text-gray-500 mt-1">{dashboardData.overview?.publishedContent || 0} published</p>
+                    <p className="text-sm font-medium text-gray-600">Collections</p>
+                    <p className="text-3xl font-bold text-green-600 mt-2">{dashboardData.overview?.totalCollections || 0}</p>
+                    <p className="text-sm text-gray-500 mt-1">{dashboardData.overview?.publicCollections || 0} public</p>
                   </div>
-                  <FileText className="w-12 h-12 text-green-500 opacity-20 hover:opacity-40 transition-opacity" />
+                  <Folder className="w-12 h-12 text-green-500 opacity-20 hover:opacity-40 transition-opacity" />
                 </div>
               </div>
 

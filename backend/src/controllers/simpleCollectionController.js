@@ -36,7 +36,12 @@ const getCollections = async (req, res) => {
     // Get actual image counts for each collection
     const Image = require('../models/image');
     const simpleCollections = await Promise.all(collections.map(async (collection) => {
-      const images = await Image.find({ collection: collection._id }).lean();
+      const images = await Image.find({ 
+        $or: [
+          { collection: collection._id },
+          { collections: collection._id }
+        ]
+      }).lean();
       const totalImages = images.length;
       const totalSize = images.reduce((sum, img) => sum + (img.fileSize || 0), 0);
       const publicImages = images.filter(img => img.visibility === 'public').length;

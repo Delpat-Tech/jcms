@@ -146,10 +146,14 @@ router.post('/collections/:id/remove-files', async (req, res) => {
     const result = await File.updateMany(
       { 
         _id: { $in: fileIds },
-        collection: collectionId
+        $or: [
+          { collection: collectionId },
+          { collections: collectionId }
+        ]
       },
       { 
-        $unset: { collection: 1 }
+        $unset: { collection: 1 },
+        $pull: { collections: collectionId }
       }
     );
     

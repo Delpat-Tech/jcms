@@ -22,6 +22,10 @@ const fileSchema = new mongoose.Schema({
     ref: 'ImageCollection',
     default: null
   },
+  collections: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'ImageCollection'
+  }],
   internalPath: { type: String, required: true },
   fileUrl: { type: String, required: true },
   publicUrl: { type: String },
