@@ -1,202 +1,119 @@
 import React, { useEffect, useState } from "react";
 
-function CollectionViewer() {
-  const [collectionData, setCollectionData] = useState(null);
+const CollectionViewer = () => {
+  const [collection, setCollection] = useState(null);
   const [loading, setLoading] = useState(true);
 
-
-  // Collection ID from content dashboard
-  const collectionId = "68d66d7e5538825f8ecb25d2";
-  
-  // Specify the indices you want to display (null = show all)
-  const selectedIndices = null; // Use null for all, or [1,2,3] for specific indices
+  const COLLECTION_URL =
+    "http://localhost:5000/api/public/collection/catcollection-qxxc";
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchCollection = async () => {
       try {
-        // Login first to get token
-        const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-        const loginRes = await fetch(`${API_URL}/api/auth/login`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            username: 'superadmin',
-            password: 'admin123'
-          })
-        });
-        
-        const loginResult = await loginRes.json();
-        if (!loginResult.success) {
-          throw new Error('Login failed: ' + loginResult.message);
-        }
-        
-        const token = loginResult.token;
-        
-        // Fetch collection data
-        const collectionRes = await fetch(`${API_URL}/api/image-management/collections/${collectionId}`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (!collectionRes.ok) {
-          throw new Error(`HTTP ${collectionRes.status}`);
-        }
-        
-        const result = await collectionRes.json();
-        console.log('Collection result:', result);
-        
-        // Transform to match expected structure and fix URLs
-        const transformedData = {
-          name: result.data.collection.name,
-          description: result.data.collection.description,
-          items: result.data.images.map(item => ({
-            ...item,
-            fileUrl: item.fileUrl?.startsWith('/') 
-              ? `${API_URL}${item.fileUrl}`
-              : item.fileUrl?.replace(/https?:\/\/[^/]+/, API_URL) || item.fileUrl
-          }))
-        };
-        
-        setCollectionData(transformedData);
+        const res = await fetch(COLLECTION_URL);
+        const data = await res.json();
+        setCollection(data.data);
         setLoading(false);
-        
-      } catch (err) {
-        console.error("Error:", err);
+      } catch (error) {
+        console.error("Error fetching collection:", error);
         setLoading(false);
       }
     };
-    
-    fetchData();
+
+    fetchCollection();
   }, []);
 
   if (loading) {
-    return <div style={{ padding: "20px" }}>Loading collection...</div>;
+    return (
+      <div className="text-center text-lg mt-10 animate-pulse">
+        Loading collection...
+      </div>
+    );
   }
 
-  if (!collectionData) {
-    return <div style={{ padding: "20px" }}>Failed to load collection</div>;
+  if (!collection) {
+    return (
+      <div className="text-center text-lg mt-10 text-red-500">
+        Failed to load collection.
+      </div>
+    );
   }
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h2>📁 Collection: {collectionData.name}</h2>
-      <p>{collectionData.description}</p>
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <h1 className="text-3xl font-bold mb-2 text-gray-800">
+        Collection: {collection.name}
+      </h1>
+      <p className="text-gray-600 mb-6">{collection.description}</p>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "20px", marginTop: "20px" }}>
-        {(selectedIndices ? collectionData.items.filter(item => selectedIndices.includes(item.index)) : collectionData.items).map((item) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {collection.items.map((item, idx) => (
           <div
-            key={item.index}
-            style={{
-              border: "1px solid #ddd",
-              borderRadius: "8px",
-              padding: "15px",
-              backgroundColor: "#fff",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
-            }}
+            key={idx}
+            className="border rounded-xl shadow-sm bg-white overflow-hidden transition-all hover:shadow-lg hover:scale-[1.01]"
           >
-            <h3>{item.title}</h3>
-            <p style={{ color: "#666", fontSize: "14px" }}>{item.notes}</p>
-            
-            {item.type === 'image' ? (
-              <>
+            {/* For Image Type */}
+            {item.type === "image" && (
+              <div>
                 <img
-                  src={item.fileUrl?.startsWith('/') 
-                    ? `${API_URL}${item.fileUrl}`
-                    : item.fileUrl?.replace(/https?:\/\/[^/]+/, API_URL) || item.fileUrl}
+                  src={item.fileUrl}
                   alt={item.title}
-                  style={{ 
-                    width: "100%", 
-                    height: "200px", 
-                    borderRadius: "6px", 
-                    objectFit: "cover",
-                    marginTop: "10px"
-                  }}
-                  onError={(e) => {
-                    const fallbacks = [
-                      `${API_URL}/api/files/${item.fileUrl.split('/').pop()}`,
-                      `${API_URL}/uploads/${item.fileUrl.split('/').pop()}`,
-                      `${API_URL}/api/public/files/${item.fileUrl.split('/').pop()}`,
-                      `${API_URL}/static/${item.fileUrl.split('/').pop()}`
-                    ];
-                    
-                    const currentIndex = fallbacks.indexOf(e.target.src);
-                    if (currentIndex < fallbacks.length - 1) {
-                      e.target.src = fallbacks[currentIndex + 1];
-                    } else {
-                      e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'block';
-                    }
-                  }}
+                  className="w-full h-44 object-cover"
                 />
-                <div style={{
-                  display: 'none',
-                  padding: '20px',
-                  backgroundColor: '#f8f9fa',
-                  borderRadius: '6px',
-                  textAlign: 'center',
-                  marginTop: '10px'
-                }}>
-                  <div style={{ fontSize: '48px', marginBottom: '10px' }}>🖼️</div>
-                  <p>Image not available</p>
+                <div className="p-4">
+                  <h3 className="text-lg font-semibold mb-1 text-gray-800">
+                    {item.title}
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    Index: {item.index} | Type: {item.type}
+                  </p>
                 </div>
-              </>
-            ) : (
-              <div style={{ 
-                padding: '20px', 
-                backgroundColor: '#f8f9fa', 
-                borderRadius: '6px', 
-                textAlign: 'center',
-                marginTop: "10px"
-              }}>
-                <div style={{ fontSize: "48px", marginBottom: "10px" }}>📄</div>
-                <p><strong>{item.format?.toUpperCase()} File</strong></p>
-                <a 
-                  href={item.fileUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  style={{ 
-                    color: '#007bff', 
-                    textDecoration: 'underline',
-                    fontSize: "14px"
-                  }}
-                >
-                  Open {item.format} file
-                </a>
               </div>
             )}
-            
-            <div style={{ 
-              marginTop: "10px", 
-              padding: "8px", 
-              backgroundColor: "#f0f0f0", 
-              borderRadius: "4px",
-              fontSize: "12px"
-            }}>
-              <strong>Index:</strong> {item.index} | <strong>Type:</strong> {item.type || 'file'}
-              {item.format && <span> | <strong>Format:</strong> {item.format}</span>}
-            </div>
+
+            {/* For JSON Type */}
+            {item.type === "json" && (
+              <div className="p-4">
+                {/* Display picture */}
+                {item.pic && item.pic !== "url" && (
+                  <img
+                    src={item.pic}
+                    alt={item.name || "User"}
+                    className="w-full h-36 object-cover rounded-md mb-3"
+                    onError={(e) => (e.target.style.display = "none")}
+                  />
+                )}
+
+                {/* Name & Bio */}
+                <div className="mb-2">
+                  {item.name && (
+                    <h4 className="text-lg font-semibold text-gray-800">
+                      {item.name}
+                    </h4>
+                  )}
+                  {item.bio && (
+                    <p className="text-sm text-gray-600 mb-1">{item.bio}</p>
+                  )}
+                </div>
+
+                {/* Other key-value data */}
+                <div className="mt-1 text-xs text-gray-500 space-y-1">
+                  {Object.entries(item).map(([key, value]) => {
+                    if (["name", "bio", "pic", "index", "type"].includes(key)) return null;
+                    return (
+                      <div key={key}>
+                        <strong>{key}:</strong> {String(value)}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>
-
-      {collectionData.items.length === 0 && (
-        <div style={{ 
-          textAlign: "center", 
-          padding: "40px", 
-          color: "#666",
-          backgroundColor: "#f8f9fa",
-          borderRadius: "8px",
-          marginTop: "20px"
-        }}>
-          No items found in this collection
-        </div>
-      )}
     </div>
   );
-}
+};
 
 export default CollectionViewer;

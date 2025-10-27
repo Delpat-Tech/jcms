@@ -2,6 +2,7 @@
 const File = require('../models/file');
 const { processFile } = require('../services/fileService');
 const { convertFile } = require('../services/conversionService');
+const { processJsonFile } = require('../services/jsonProcessingService');
 const { sanitizePath } = require('../utils/pathSanitizer');
 const { sanitizeForLog } = require('../utils/inputSanitizer');
 const fs = require('fs');
@@ -26,13 +27,13 @@ const uploadFile = async (req, res) => {
       if (!file) continue;
 
       const { title, notes, section = 'general' } = req.body;
-      const fileTitle = title || file.originalname;
       const tenantPath = req.user.tenant ? req.user.tenant._id.toString() : 'system';
       
       console.log('File upload data:', { title, notes, tenantPath, section });
       console.log('Creating file with notes:', notes);
 
       const processedFile = await processFile(file, tenantPath, section);
+      const fileTitle = processedFile.format === 'json' ? file.originalname : (title || file.originalname);
     
       const baseUrl = `${req.protocol}://${req.get('host')}`;
       const fullFileUrl = `${baseUrl}${processedFile.fileUrl}`;
@@ -44,7 +45,7 @@ const uploadFile = async (req, res) => {
         tenantName: req.user.tenant ? req.user.tenant.name : 'System',
         originalName: file.originalname,
         fileSize: file.size,
-        notes: notes || '',
+        notes: processedFile.format === 'json' ? {} : (notes || ''),
         fileUrl: fullFileUrl,
         publicUrl: fullFileUrl,
         internalPath: processedFile.internalPath,
@@ -54,15 +55,32 @@ const uploadFile = async (req, res) => {
 
       await newFile.save();
       
+      // Process JSON files automatically
+      let jsonProcessingResult = null;
+      if (processedFile.format === 'json') {
+        jsonProcessingResult = await processJsonFile(
+          newFile, 
+          req.user, 
+          req.user.tenant?._id || null,
+          req.body.collection || null
+        );
+      }
+      
       // Clean up temp file
       if (fs.existsSync(file.path)) {
         fs.unlinkSync(file.path);
       }
 
-      uploadedFiles.push({
+      const fileResult = {
         ...newFile.toObject(),
         fullUrl: `${baseUrl}${processedFile.fileUrl}`
-      });
+      };
+      
+      if (jsonProcessingResult) {
+        fileResult.jsonProcessing = jsonProcessingResult;
+      }
+      
+      uploadedFiles.push(fileResult);
     }
 
     // Format file size helper
@@ -328,6 +346,11 @@ const updateFile = async (req, res) => {
       
       // Update file size
       file.fileSize = req.file.size;
+      
+      // Refresh JSON documents in database
+      const JsonDocument = require('../models/jsonDocument');
+      await JsonDocument.deleteMany({ sourceFile: file._id });
+      await processJsonFile(file, req.user, file.tenant, file.collection);
       
       // Clean up temp file
       if (fs.existsSync(req.file.path)) {
