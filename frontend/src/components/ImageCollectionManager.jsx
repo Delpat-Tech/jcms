@@ -181,6 +181,28 @@ const ImageCollectionManager = () => {
     return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
   };
 
+  const handleDeleteCollection = async (collectionId, collectionName) => {
+    if (!window.confirm(`Are you sure you want to delete the collection "${collectionName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const result = await apiCall(`/api/image-management/collections/${collectionId}`, {
+        method: 'DELETE'
+      });
+
+      if (result.success) {
+        alert(`Collection "${collectionName}" has been deleted successfully`);
+        loadCollections();
+      } else {
+        alert(`Failed to delete collection: ${result.message}`);
+      }
+    } catch (error) {
+      console.error('Delete collection error:', error);
+      alert(`Failed to delete collection: ${error.message}`);
+    }
+  };
+
   if (view === 'collection-detail') {
     return (
       <CollectionDetailView
@@ -350,6 +372,17 @@ const ImageCollectionManager = () => {
                       className="flex-1"
                     >
                       Download ZIP
+                    </Button>
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteCollection(collection._id, collection.name);
+                      }}
+                      variant="secondary"
+                      size="sm"
+                      className="bg-red-500 hover:bg-red-600 text-white"
+                    >
+                      Delete
                     </Button>
                   </div>
                 </div>
