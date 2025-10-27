@@ -291,12 +291,22 @@ const ImageCollectionManager = () => {
                     <p className="text-gray-600 text-sm mb-3 line-clamp-2">{collection.description}</p>
                   )}
                   
-                  {/* Collection ID Display */}
+                  {/* Collection API URL Display */}
                   <div className="mb-3 p-2 bg-gray-50 border border-gray-200 rounded-lg">
-                    <div className="text-xs font-medium text-gray-700 mb-1">Collection ID:</div>
+                    <div className="text-xs font-medium text-gray-700 mb-1">Public API URL:</div>
                     <div className="text-xs font-mono text-gray-600 break-all bg-white px-2 py-1 rounded border">
-                      {collection._id}
+                      {`${API_BASE_URL}/api/public/collection/${collection.slug}`}
                     </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigator.clipboard.writeText(`${API_BASE_URL}/api/public/collection/${collection.slug}`);
+                        alert('API URL copied to clipboard!');
+                      }}
+                      className="mt-1 text-xs text-blue-600 hover:text-blue-800"
+                    >
+                      Copy URL
+                    </button>
                   </div>
                   
                   <div className="flex justify-between items-center text-sm text-gray-500 mb-3">

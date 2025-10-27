@@ -146,6 +146,143 @@ app.get('/api/public/collections/:ids/images', async (req, res) => {
   }
 });
 
+// Public API endpoint to get collection by slug (no auth required)
+app.get('/api/public/collection/:slug', async (req, res) => {
+  try {
+    const ImageCollection = require('./models/imageCollection');
+    const Image = require('./models/image');
+    const File = require('./models/file');
+    
+    // Find collection by slug
+    const collection = await ImageCollection.findOne({ 
+      slug: req.params.slug,
+      visibility: 'public'
+    });
+    
+    if (!collection) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Collection not found or not public' 
+      });
+    }
+    
+    // Get images in collection (all images if collection is public)
+    const images = await Image.find({ 
+      $or: [
+        { collection: collection._id },
+        { collections: collection._id }
+      ]
+    }).sort({ createdAt: -1 });
+    
+    // Get files in collection
+    const files = await File.find({ 
+      collection: collection._id 
+    }).sort({ createdAt: -1 });
+    
+    // Transform to clean format
+    const cleanImages = images.map((image, index) => ({
+      index: index + 1,
+      title: image.title || '',
+      fileUrl: image.fileUrl || image.publicUrl || '',
+      notes: image.notes || '',
+      type: 'image'
+    }));
+    
+    const cleanFiles = files.map((file, index) => ({
+      index: cleanImages.length + index + 1,
+      title: file.title || '',
+      fileUrl: file.fileUrl || '',
+      notes: file.notes || '',
+      type: file.format === 'json' ? 'json' : 'file',
+      format: file.format
+    }));
+    
+    const allItems = [...cleanImages, ...cleanFiles];
+    
+    res.json({
+      success: true,
+      data: {
+        slug: collection.slug,
+        name: collection.name,
+        description: collection.description,
+        items: allItems
+      }
+    });
+    
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Public API endpoint to get collection by ID (no auth required)
+app.get('/api/public/collection/id/:id', async (req, res) => {
+  try {
+    const ImageCollection = require('./models/imageCollection');
+    const Image = require('./models/image');
+    const File = require('./models/file');
+    
+    // Find collection by ID
+    const collection = await ImageCollection.findOne({ 
+      _id: req.params.id,
+      visibility: 'public'
+    });
+    
+    if (!collection) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Collection not found or not public' 
+      });
+    }
+    
+    // Get images in collection (all images if collection is public)
+    const images = await Image.find({ 
+      $or: [
+        { collection: collection._id },
+        { collections: collection._id }
+      ]
+    }).sort({ createdAt: -1 });
+    
+    // Get files in collection
+    const files = await File.find({ 
+      collection: collection._id 
+    }).sort({ createdAt: -1 });
+    
+    // Transform to clean format
+    const cleanImages = images.map((image, index) => ({
+      index: index + 1,
+      title: image.title || '',
+      fileUrl: image.fileUrl || image.publicUrl || '',
+      notes: image.notes || '',
+      type: 'image'
+    }));
+    
+    const cleanFiles = files.map((file, index) => ({
+      index: cleanImages.length + index + 1,
+      title: file.title || '',
+      fileUrl: file.fileUrl || '',
+      notes: file.notes || '',
+      type: file.format === 'json' ? 'json' : 'file',
+      format: file.format
+    }));
+    
+    const allItems = [...cleanImages, ...cleanFiles];
+    
+    res.json({
+      success: true,
+      data: {
+        id: collection._id,
+        slug: collection.slug,
+        name: collection.name,
+        description: collection.description,
+        items: allItems
+      }
+    });
+    
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // Add a simple endpoint to get sample images from public folder
 app.get('/api/sample-images', (req, res) => {
   try {
