@@ -8,11 +8,9 @@ import { authApi } from "../api";
 function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState(null); // 'success' | 'error'
-  const { addNotification } = useToasts() || { addNotification: () => {} };
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const { addNotification } = useToasts() || { addNotification: () => {} };
 
   const UserIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
@@ -47,25 +45,10 @@ function Login() {
     </svg>
   );
 
-  const SuccessIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600">
-      <path d="M9 12l2 2 4-4" />
-      <circle cx="12" cy="12" r="10" />
-    </svg>
-  );
-
-  const ErrorIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-600">
-      <circle cx="12" cy="12" r="10" />
-      <line x1="15" y1="9" x2="9" y2="15"></line>
-      <line x1="9" y1="9" x2="15" y2="15"></line>
-    </svg>
-  );
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessageType(null);
-    setMessage("Logging in...");
+
+    addNotification("info", "Logging in", "Please wait...");
 
     try {
       const res = await authApi.login({ username, password, rememberMe });
@@ -75,10 +58,7 @@ function Login() {
         throw new Error(data.message || "Login failed");
       }
 
-      setMessageType('success');
-      setMessage("Login successful!");
-      addNotification('success', 'Logged in', `Welcome ${data.user.username}`);
-      console.log("User data:", data);
+      addNotification("success", "Login successful", `Welcome ${data.user.username}`);
 
       const primary = rememberMe ? localStorage : sessionStorage;
       const secondary = rememberMe ? sessionStorage : localStorage;
@@ -91,9 +71,7 @@ function Login() {
 
       window.location.href = "/dashboard";
     } catch (err) {
-      setMessageType('error');
-      setMessage(err.message);
-      addNotification('error', 'Login failed', err.message);
+      addNotification("error", "Login failed", err.message);
     }
   };
 
@@ -168,22 +146,14 @@ function Login() {
               </button>
             </div>
 
-            <Button type="submit" variant="primary" size="lg" className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700">
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+            >
               Sign In
             </Button>
-
-            {message && (
-              <div className={`p-3 rounded-lg text-sm flex items-start gap-2 ${
-                messageType === 'success'
-                  ? 'bg-green-50 text-green-700 border border-green-200'
-                  : messageType === 'error'
-                  ? 'bg-red-50 text-red-700 border border-red-200'
-                  : 'bg-gray-50 text-gray-700 border border-gray-200'
-              }`}>
-                <span className="mt-0.5">{messageType === 'success' ? <SuccessIcon /> : messageType === 'error' ? <ErrorIcon /> : null}</span>
-                <span>{message}</span>
-              </div>
-            )}
           </form>
 
           <div className="mt-8 pt-6 border-t border-gray-200">

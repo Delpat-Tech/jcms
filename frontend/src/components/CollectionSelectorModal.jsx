@@ -118,8 +118,8 @@ const CollectionSelectorModal = ({
       const createResult = await apiCall('/api/image-management/collections', {
         method: 'POST',
         body: JSON.stringify({
-          name: newCollectionName.trim(),
-          description: `Collection created from Media Management`
+          name: newCollectionName.trim()
+          
         })
       });
 

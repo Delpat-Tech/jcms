@@ -1,6 +1,7 @@
 // components/ImageCollectionManager.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import Button from './ui/Button.jsx';
+import { useToasts } from './util/Toasts.jsx';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -33,6 +34,7 @@ const ImageCollectionManager = () => {
   const [collectionImages, setCollectionImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const { addNotification } = useToasts() || { addNotification: () => {} };
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const token = localStorage.getItem('token');
@@ -332,7 +334,7 @@ const ImageCollectionManager = () => {
                       onClick={(e) => {
                         e.stopPropagation();
                         navigator.clipboard.writeText(`${API_BASE_URL}/api/public/collection/${collection.slug}`);
-                        alert('API URL copied to clipboard!');
+                        addNotification('success', 'Copied!', 'API URL copied to clipboard');
                       }}
                       className="mt-1 text-xs text-blue-600 hover:text-blue-800"
                     >
@@ -414,6 +416,8 @@ const CollectionDetailView = ({
   formatFileSize,
   onRemoveItem 
 }) => {
+  const { addNotification } = useToasts() || { addNotification: () => {} };
+  
   return (
     <div className="max-w-7xl mx-auto p-6">
       {/* Header */}
@@ -432,9 +436,26 @@ const CollectionDetailView = ({
           </span>
         </div>
 
-        {collection.description && (
+        {collection.description && collection.description !== 'Collection created from Media Management' && (
           <p className="text-gray-600 mb-4">{collection.description}</p>
         )}
+        
+        {/* Collection API URL Display */}
+        <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+          <div className="text-sm font-medium text-gray-700 mb-2">Public API URL:</div>
+          <div className="text-sm font-mono text-gray-600 break-all bg-white px-3 py-2 rounded border">
+            {`${API_BASE_URL}/api/public/collection/${collection.slug}`}
+          </div>
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(`${API_BASE_URL}/api/public/collection/${collection.slug}`);
+              addNotification('success', 'Copied!', 'API URL copied to clipboard');
+            }}
+            className="mt-2 text-sm text-blue-600 hover:text-blue-800"
+          >
+            Copy URL
+          </button>
+        </div>
 
 
 
