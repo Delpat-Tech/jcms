@@ -256,13 +256,11 @@ const UploadPanel = ({ onUploadSuccess, currentFilter }) => {
                   type="button"
                   onClick={() => {
                     const template = [
-                      { name: "Akash", bio: "Hello", pic: "url" },
-                      { name: "Akash", bio: "Hello", pic: "url" },
-                      { name: "Akash", bio: "Hello", pic: "url" },
-                      { name: "Akash", bio: "Hello", pic: "url" },
-                      { name: "Akash", bio: "Hello", pic: "url" },
-                      { name: "Akash", bio: "Hello", pic: "url" },
-                      { name: "Akash", bio: "Hello", pic: "url" }
+                      { name: "abc", bio: "Hello", pic: "url" },
+                      { name: "abc", bio: "Hello", pic: "url" },
+                      { name: "abc", bio: "Hello", pic: "url" },
+                      { name: "abc", bio: "Hello", pic: "url" },
+                      { name: "abc", bio: "Hello", pic: "url" }
                     ];
                     setJsonText(JSON.stringify(template, null, 2));
                   }}
@@ -282,7 +280,7 @@ const UploadPanel = ({ onUploadSuccess, currentFilter }) => {
             <textarea
               value={jsonText}
               onChange={(e) => setJsonText(e.target.value)}
-              placeholder={`[\n  { "name": "Akash", "bio": "Hello", "pic": "url" },\n  { "name": "John", "bio": "World", "pic": "url2" }\n]`}
+              placeholder={`[\n  { "name": "abc", "bio": "Hello", "pic": "url" },\n  { "name": "John", "bio": "World", "pic": "url2" }\n]`}
               rows={12}
               className="w-full font-mono text-sm px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />

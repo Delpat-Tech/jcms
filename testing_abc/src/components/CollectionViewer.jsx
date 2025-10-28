@@ -5,10 +5,10 @@ const CollectionViewer = () => {
   const [loading, setLoading] = useState(true);
 
   // 🔹 Define which indexes to show (empty array means show all)
-  const showIndexes = [1,4,3]; // Example: [1, 4] → only show index 1 and 4
+  const showIndexes = [];// Example: [1, 4] → only show index 1 and 4
 
   const COLLECTION_URL =
-    "http://localhost:5000/api/public/collection/abc-on5x";
+    "http://localhost:5000/api/public/collection/mycollection-7maf";
 
   useEffect(() => {
     const fetchCollection = async () => {
@@ -60,7 +60,7 @@ const CollectionViewer = () => {
           No items found for selected indexes.
         </p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 place-items-center">
+        <div className="grid grid-cols-3 gap-6 place-items-center">
           {filteredItems.map((item, idx) => {
             const imageSrc = item.pic || item.fileUrl;
             const title = item.title || item.name || "Untitled";
@@ -68,28 +68,25 @@ const CollectionViewer = () => {
             return (
               <div
                 key={`${item.index}-${item.type}-${idx}`}
-                className="w-full max-w-sm border rounded-xl shadow-sm bg-white overflow-hidden hover:shadow-lg transition-all"
+                className="w-48 h-56 border-2 rounded-lg shadow-md bg-white overflow-hidden hover:shadow-lg transition-all"
               >
                 <div className="flex flex-col items-center p-4">
                   {imageSrc && (
                     <img
                       src={imageSrc}
                       alt={title}
-                      className="w-full h-48 object-cover rounded-md mb-3"
+                      className="w-32 h-32 object-cover rounded mb-3"
+                      style={{ width: '128px', height: '128px', maxWidth: '128px', maxHeight: '128px' }}
                       onError={(e) => (e.target.style.display = "none")}
                     />
                   )}
 
-                  <h3 className="text-lg font-semibold text-gray-800 mb-1 truncate">
+                  <h3 className="text-sm font-semibold text-gray-800 mb-2 truncate text-center">
                     {title}
                   </h3>
 
-                  {item.bio && (
-                    <p className="text-sm text-gray-600 mb-2">{item.bio}</p>
-                  )}
-
-                  <p className="text-xs text-gray-400">
-                    Index: {item.index} | Type: {item.type}
+                  <p className="text-xs text-gray-400 text-center">
+                    Index: {item.index}
                   </p>
                 </div>
               </div>

@@ -136,7 +136,14 @@ const getFilesByType = async (req, res) => {
     const { type } = req.params;
     
     let filter = { fileType: type };
-    if (req.user.role.name !== 'superadmin') {
+    if (req.user.role.name === 'superadmin') {
+      // Superadmin can see all files
+    } else if (req.user.role.name === 'admin') {
+      // Admin can see all files in their tenant
+      filter.tenant = req.user.tenant?._id || null;
+    } else {
+      // Editor can only see their own files
+      filter.user = req.user.id;
       filter.tenant = req.user.tenant?._id || null;
     }
     
@@ -156,12 +163,16 @@ const getFilesByType = async (req, res) => {
 
 const getFiles = async (req, res) => {
   try {
-    // Apply tenant filtering
+    // Apply role-based filtering
     let filter = {};
     if (req.user.role.name === 'superadmin') {
       // Superadmin can see all files
+    } else if (req.user.role.name === 'admin') {
+      // Admin can see all files in their tenant
+      filter.tenant = req.user.tenant?._id || null;
     } else {
-      // Tenant users can only see their tenant's files
+      // Editor can only see their own files
+      filter.user = req.user.id;
       filter.tenant = req.user.tenant?._id || null;
     }
     

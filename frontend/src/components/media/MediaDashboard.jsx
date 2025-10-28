@@ -28,7 +28,7 @@ const MediaDashboard = () => {
   const toAbsoluteUrl = (maybeRelative) => {
     if (!maybeRelative) return '';
     if (/^https?:\/\//i.test(maybeRelative)) {
-      // Replace old tunnel URLs with current one
+      
       const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
       return maybeRelative.replace(/https:\/\/[^.]+\.trycloudflare\.com/, API_URL);
     }
