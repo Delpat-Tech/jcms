@@ -23,7 +23,7 @@ import AdminOverview from "./admin/overview/page.tsx";
 import AdminUsers from "./admin/users/page.tsx";
 import AdminContent from "./admin/content/page.tsx";
 import AdminMedia from "./admin/media/page.tsx";
-import AdminGalleries from "./admin/galleries/page.tsx";
+
 import AdminAnalytics from "./admin/analytics/page.jsx";
 import AdminProfile from "./admin/profile/page.tsx";
 
@@ -31,7 +31,7 @@ import AdminProfile from "./admin/profile/page.tsx";
 import EditorOverview from "./editor/overview/page.jsx";
 import EditorContent from "./editor/content/page.jsx";
 import EditorMedia from "./editor/media/page.jsx";
-import EditorGalleries from "./editor/galleries/page.jsx";
+
 import EditorProfile from "./editor/profile/page.jsx";
 import EditorHelp from "./editor/help/page.jsx";
 import SubscriptionPage from "./pages/SubscriptionDashboard.jsx";
@@ -81,7 +81,7 @@ function App() {
             <Route path="/admin/users" element={<AuthGuard requiredRole="admin"><AdminUsers /></AuthGuard>} />
             <Route path="/admin/content" element={<AuthGuard requiredRole="admin"><AdminContent /></AuthGuard>} />
             <Route path="/admin/media" element={<AuthGuard requiredRole="admin"><AdminMedia /></AuthGuard>} />
-            <Route path="/admin/galleries" element={<AuthGuard requiredRole="admin"><AdminGalleries /></AuthGuard>} />
+
             <Route path="/admin/analytics" element={<AuthGuard requiredRole="admin"><AdminAnalytics /></AuthGuard>} />
             <Route path="/admin/profile" element={<AuthGuard requiredRole="admin"><AdminProfile /></AuthGuard>} />
             
@@ -92,7 +92,7 @@ function App() {
             <Route path="/user/overview" element={<AuthGuard requiredRole="editor"><EditorOverview /></AuthGuard>} />
             <Route path="/user/content" element={<AuthGuard requiredRole="editor"><EditorContent /></AuthGuard>} />
             <Route path="/user/media" element={<AuthGuard requiredRole="editor"><EditorMedia /></AuthGuard>} />
-            <Route path="/user/galleries" element={<AuthGuard requiredRole="editor"><EditorGalleries /></AuthGuard>} />
+
             <Route path="/user/profile" element={<AuthGuard requiredRole="editor"><EditorProfile /></AuthGuard>} />
             <Route path="/user/help" element={<AuthGuard requiredRole="editor"><EditorHelp /></AuthGuard>} />
             

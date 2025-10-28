@@ -275,80 +275,83 @@ const EnhancedMediaDashboard = () => {
   return (
     <div className="flex h-full bg-gray-50 flex-col md:flex-row">
       {/* Left Panel */}
-      <div className="w-full md:w-80 bg-white border-r border-gray-200 flex flex-col">
-        <div className="p-6 border-b border-gray-200">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Media Management</h1>
+      <div className="w-full md:w-72 bg-white border-r border-gray-200 flex flex-col overflow-y-auto">
+        <div className="p-4 border-b border-gray-200">
+          <h1 className="text-xl font-bold text-gray-900 mb-3">Media</h1>
           
           {/* Search */}
-          <div className="relative mb-4">
+          <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
               type="text"
               placeholder="Search files..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-10 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
+          </div>
+        </div>
+
+        {/* Filters Section */}
+        <div className="p-4 space-y-4 border-b border-gray-200">
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">View</label>
+            <select
+              value={ownerFilter}
+              onChange={(e) => setOwnerFilter(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="all">All Files</option>
+              <option value="mine">My Files</option>
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Type</label>
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="all">All Types</option>
+              <option value="image">Images</option>
+              <option value="video">Videos</option>
+              <option value="audio">Audio</option>
+              <option value="pdf">PDFs</option>
+              <option value="json">JSON</option>
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Sort</label>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="uploaded">Recent</option>
+              <option value="name">Name</option>
+              <option value="size">Size</option>
+            </select>
           </div>
 
           {/* ID Filter */}
-          <div className="mb-4">
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Filter by ID</label>
             <input
               type="text"
-              placeholder="Filter by ID..."
+              placeholder="Enter file ID..."
               value={idFilter}
               onChange={(e) => setIdFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
-          </div>
-          
-          {/* Filters */}
-          <div className="space-y-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">View</label>
-              <select
-                value={ownerFilter}
-                onChange={(e) => setOwnerFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="all">All Files</option>
-                <option value="mine">My Files</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">File Type</label>
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="all">All Files</option>
-                <option value="image">Images</option>
-                <option value="video">Videos</option>
-                <option value="audio">Audios</option>
-                <option value="pdf">PDFs</option>
-                <option value="json">JSON</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="uploaded">Recently Uploaded</option>
-                <option value="name">Name</option>
-                <option value="size">Size</option>
-              </select>
-            </div>
           </div>
         </div>
         
         {/* Upload Panel */}
-        <UploadPanel onUploadComplete={fetchFiles} currentFilter={filterType} />
+        <div className="flex-1">
+          <UploadPanel onUploadComplete={fetchFiles} currentFilter={filterType} />
+        </div>
       </div>
 
       {/* Main Content */}
@@ -366,15 +369,20 @@ const EnhancedMediaDashboard = () => {
         )}
 
         {/* View Toggle */}
-        <div className="bg-white border-b border-gray-200 px-6 py-3">
+        <div className="bg-white border-b border-gray-200 px-4 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">
-                {filteredAndSortedFiles.length} file{filteredAndSortedFiles.length !== 1 ? 's' : ''}
+            <div className="flex items-center space-x-3">
+              <span className="text-sm font-medium text-gray-700">
+                {filteredAndSortedFiles.length} {filteredAndSortedFiles.length === 1 ? 'file' : 'files'}
               </span>
+              {selectedFiles.size > 0 && (
+                <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                  {selectedFiles.size} selected
+                </span>
+              )}
               <button
                 onClick={fetchFiles}
-                className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
                 title="Refresh files"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -383,16 +391,18 @@ const EnhancedMediaDashboard = () => {
               </button>
             </div>
             
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-lg ${viewMode === 'grid' ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+                className={`p-2 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-blue-500 text-white' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'}`}
+                title="Grid view"
               >
                 <Grid className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-2 rounded-lg ${viewMode === 'list' ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+                className={`p-2 rounded-lg transition-colors ${viewMode === 'list' ? 'bg-blue-500 text-white' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'}`}
+                title="List view"
               >
                 <List className="w-4 h-4" />
               </button>
@@ -401,20 +411,22 @@ const EnhancedMediaDashboard = () => {
         </div>
 
         {/* File Grid */}
-        <div className="flex-1 overflow-auto p-6">
+        <div className="flex-1 overflow-auto p-4">
           {loading ? (
             <div className="flex items-center justify-center h-64">
               <TrioLoader />
             </div>
           ) : filteredAndSortedFiles.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-gray-500">
-              <Upload className="w-12 h-12 mb-4" />
-              <p className="text-lg font-medium">No files found</p>
-              <p className="text-sm">Upload some files to get started</p>
+              <Upload className="w-12 h-12 mb-4 opacity-50" />
+              <p className="text-lg font-medium text-gray-700">No files found</p>
+              <p className="text-sm text-gray-500 mt-1">
+                {searchQuery || idFilter ? 'Try adjusting your filters' : 'Upload files to get started'}
+              </p>
             </div>
           ) : (
             <div className={viewMode === 'grid' 
-              ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
+              ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3"
               : "space-y-2"
             }>
               {filteredAndSortedFiles.map(file => (
