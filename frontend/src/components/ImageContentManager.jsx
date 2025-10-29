@@ -1,6 +1,7 @@
 // components/ImageContentManager.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import Button from './ui/Button.jsx';
+import TrioLoader from './ui/TrioLoader';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -472,9 +473,8 @@ const ImageContentManager = () => {
         </div>
 
         {loading ? (
-          <div className="p-8 text-center">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <div className="mt-2 text-gray-600">Loading images...</div>
+          <div className="p-8 flex items-center justify-center">
+            <TrioLoader size="40" color="#2563eb" />
           </div>
         ) : images.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
@@ -717,9 +717,10 @@ const ImageUploadModal = ({ onClose, onUpload, uploading }) => {
             <Button
               type="submit"
               disabled={uploading || files.length === 0}
-              className="flex-1"
+              className="flex-1 flex items-center justify-center gap-2"
             >
-              {uploading ? 'Uploading...' : 'Upload Images'}
+              {uploading && <TrioLoader size="16" color="#ffffff" />}
+              {uploading ? 'Uploading' : 'Upload Images'}
             </Button>
             <Button
               type="button"

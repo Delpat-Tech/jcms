@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { imageApi } from '../../api';
+import TrioLoader from '../ui/TrioLoader';
 
 function ImageUpload({ onUploadSuccess }) {
   const [file, setFile] = useState(null);
@@ -112,9 +113,10 @@ function ImageUpload({ onUploadSuccess }) {
         <button
           type="submit"
           disabled={!file || uploading}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
-          {uploading ? 'Uploading...' : 'Upload Image'}
+          {uploading && <TrioLoader size="16" color="#ffffff" />}
+          {uploading ? 'Uploading' : 'Upload Image'}
         </button>
       </form>
     </div>

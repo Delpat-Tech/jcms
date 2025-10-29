@@ -48,7 +48,7 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    addNotification("info", "Logging in", "Please wait...");
+    addNotification("loading", "Logging in");
 
     try {
       const res = await authApi.login({ username, password, rememberMe });

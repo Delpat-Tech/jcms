@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import TrioLoader from '../components/ui/TrioLoader';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -38,7 +39,7 @@ export default function PublicContentPage() {
     run();
   }, [idOrSlug]);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><TrioLoader size="40" color="#4f46e5" /></div>;
   if (error || !data) return <div className="min-h-screen flex items-center justify-center text-red-600">{error || 'Not found'}</div>;
 
   return (

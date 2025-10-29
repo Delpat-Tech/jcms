@@ -73,7 +73,6 @@ const DashboardWidget = ({
         {loading && (
           <div className="widget-loading">
             <TrioLoader size="30" color="#3b82f6" />
-            <span>Loading...</span>
           </div>
         )}
         

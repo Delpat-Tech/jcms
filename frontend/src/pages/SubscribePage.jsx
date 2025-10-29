@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { subscriptionApi } from '../api';
 import Button from "../components/ui/Button.jsx";
 import Input from "../components/ui/Input.jsx";
+import TrioLoader from '../components/ui/TrioLoader';
 
 function useQuery() {
   return useMemo(() => new URLSearchParams(window.location.search), []);
@@ -75,7 +76,7 @@ export default function SubscribePage() {
     }
   };
 
-  if (loading) return <div className="p-6">Loading...</div>;
+  if (loading) return <div className="p-6 flex items-center justify-center"><TrioLoader size="40" color="#4f46e5" /></div>;
 
   return (
     <div className="p-6 max-w-lg mx-auto">

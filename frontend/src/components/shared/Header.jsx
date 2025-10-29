@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import TenantLogo from '../TenantLogo';
 import { useTheme } from '../../contexts/ThemeContext';
 import { notificationApi } from '../../api';
+import TrioLoader from '../ui/TrioLoader';
 
 function Header({ title = "JCMS", user, onMenuClick }) {
     const [showUserDropdown, setShowUserDropdown] = useState(false);
@@ -105,7 +106,7 @@ function Header({ title = "JCMS", user, onMenuClick }) {
                                 </div>
                                 <div className="max-h-80 overflow-auto">
                                     {loadingNotifs ? (
-                                        <div className="p-4 text-sm text-gray-500">Loading...</div>
+                                        <div className="p-4 flex items-center justify-center"><TrioLoader size="24" color="#6b7280" /></div>
                                     ) : notifications.length === 0 ? (
                                         <div className="p-4 text-sm text-gray-500">No notifications</div>
                                     ) : (

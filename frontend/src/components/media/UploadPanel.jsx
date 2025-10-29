@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Upload, X, CheckCircle, AlertCircle } from 'lucide-react';
 import { imageApi, fileApi } from '../../api';
+import TrioLoader from '../ui/TrioLoader';
 
 const UploadPanel = ({ onUploadSuccess, currentFilter }) => {
   const [isDragging, setIsDragging] = useState(false);
@@ -310,9 +311,10 @@ const UploadPanel = ({ onUploadSuccess, currentFilter }) => {
             <button
               onClick={uploadFiles}
               disabled={isUploading || !title.trim()}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
             >
-              {isUploading ? 'Uploading...' : 'Upload'}
+              {isUploading && <TrioLoader size="16" color="#ffffff" />}
+              {isUploading ? 'Uploading' : 'Upload'}
             </button>
             <button
               onClick={clearAll}

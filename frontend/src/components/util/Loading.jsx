@@ -1,11 +1,10 @@
 import React from "react";
 import TrioLoader from '../ui/TrioLoader';
 
-function Loading({ label = "Loading..." }) {
+function Loading({ size = "20", color = "#4f46e5" }) {
 	return (
-		<div className="flex items-center gap-3 text-sm text-gray-600">
-			<TrioLoader size="20" color="#4f46e5" />
-			<span>{label}</span>
+		<div className="flex items-center justify-center">
+			<TrioLoader size={size} color={color} />
 		</div>
 	);
 }

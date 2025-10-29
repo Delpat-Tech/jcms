@@ -180,7 +180,7 @@ const PreviewModal = ({ file, onClose, onNext, onPrev, onDelete, onDownload }) =
                     className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 flex items-center gap-1"
                   >
                     <Save className="w-4 h-4" />
-                    {isSaving ? 'Saving...' : 'Save'}
+                    Save
                   </button>
                   <button
                     onClick={() => {
