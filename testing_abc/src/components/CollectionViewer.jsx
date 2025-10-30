@@ -8,7 +8,7 @@ const CollectionViewer = () => {
   const showIndexes = [];// Example: [1, 4] → only show index 1 and 4
 
   const COLLECTION_URL =
-    "http://localhost:5000/api/public/collection/mycollection-7maf";
+    "http://localhost:5000/api/public/collection/testing-r2jw";
 
   useEffect(() => {
     const fetchCollection = async () => {
