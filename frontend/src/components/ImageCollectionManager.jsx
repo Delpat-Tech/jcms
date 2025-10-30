@@ -76,9 +76,20 @@ const ImageCollectionManager = () => {
     try {
       setLoading(true);
       console.log('Loading collection detail for ID:', collectionId);
+      
+      // Find the collection from the current collections list to preserve slug
+      const existingCollection = collections.find(c => c._id === collectionId);
+      
       const result = await apiCall(`/api/image-management/collections/${collectionId}`);
       console.log('Collection detail response:', result);
-      setCurrentCollection(result.data.collection);
+      
+      // Merge the existing collection data (including slug) with the detailed response
+      const detailedCollection = {
+        ...existingCollection,
+        ...result.data.collection
+      };
+      
+      setCurrentCollection(detailedCollection);
       setCollectionImages(result.data.images);
       setView('collection-detail');
     } catch (error) {
@@ -87,7 +98,7 @@ const ImageCollectionManager = () => {
     } finally {
       setLoading(false);
     }
-  }, [apiCall]);
+  }, [apiCall, collections]);
 
   const handleRemoveItem = async (itemId, collectionId, itemType) => {
     const itemName = itemType === 'image' ? 'image' : 'file';
@@ -305,16 +316,7 @@ const ImageCollectionManager = () => {
                     </div>
                   )}
                   
-                  {/* Status Badge */}
-                  <div className="absolute top-2 right-2">
-                    <span className={`px-2 py-1 text-xs font-medium rounded ${
-                      collection.visibility === 'public' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {collection.visibility}
-                    </span>
-                  </div>
+
                 </div>
 
                 {/* Collection Info */}
@@ -427,13 +429,6 @@ const CollectionDetailView = ({
             ← Back to Collections
           </Button>
           <h1 className="text-3xl font-bold text-gray-900">{collection.name}</h1>
-          <span className={`px-3 py-1 text-sm font-medium rounded ${
-            collection.visibility === 'public' 
-              ? 'bg-green-100 text-green-800' 
-              : 'bg-gray-100 text-gray-800'
-          }`}>
-            {collection.visibility}
-          </span>
         </div>
 
         {collection.description && collection.description !== 'Collection created from Media Management' && (
@@ -532,15 +527,7 @@ const CollectionDetailView = ({
                       </div>
                     </div>
                   )}
-                  <div className="absolute top-2 left-2">
-                    <span className={`px-2 py-1 text-xs font-medium rounded ${
-                      item.visibility === 'public' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {item.visibility}
-                    </span>
-                  </div>
+
                   <button
                     onClick={() => {
                       console.log('Remove button clicked:', { itemId: item._id || item.id, collectionId: collection._id, type: item.type });
