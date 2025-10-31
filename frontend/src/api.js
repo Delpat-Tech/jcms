@@ -267,7 +267,10 @@ export const subscriptionApi = {
   getPlans: () => api.get('/api/subscriptions/plans'),
   getStatus: () => api.get('/api/subscriptions/status'),
   create: (plan) => api.post('/api/subscriptions', { plan }),
-  verify: (paymentReference) => api.post('/api/subscriptions/verify', { paymentReference })
+  verify: (paymentReference) => api.post('/api/subscriptions/verify', { paymentReference }),
+  cancel: () => api.post('/api/subscriptions/cancel'),
+  getHistory: () => api.get('/api/subscriptions/history'),
+  getInvoice: (invoiceId) => api.get(`/api/subscriptions/invoice/${invoiceId}`)
 };
 
 export const imageManagementApi = {

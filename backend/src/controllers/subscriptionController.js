@@ -1,5 +1,6 @@
 const Subscription = require('../models/subscription');
 const SubscriptionPlan = require('../models/subscriptionPlan');
+const Invoice = require('../models/invoice');
 
 const DEFAULT_PLANS = [
   {
@@ -75,12 +76,11 @@ const createSubscription = async (req, res) => {
     const planDoc = await SubscriptionPlan.findOne({ name: plan.toLowerCase(), isActive: true });
     if (!planDoc) return res.status(404).json({ success: false, message: 'Plan not found' });
 
-    // Calculate expiry: free plan with duration 0 => set expiry far future but mark as active
     let expiryDate;
     if (planDoc.durationDays && planDoc.durationDays > 0) {
       expiryDate = addDays(new Date(), planDoc.durationDays);
     } else {
-      expiryDate = addDays(new Date(), 3650); // ~10 years for free plan
+      expiryDate = addDays(new Date(), 3650);
     }
 
     const subscription = await Subscription.create({
@@ -89,10 +89,27 @@ const createSubscription = async (req, res) => {
       startDate: new Date(),
       expiryDate,
       paymentStatus: planDoc.priceCents > 0 ? 'pending' : 'paid',
-      status: planDoc.priceCents > 0 ? 'active' : 'active',
+      status: 'active',
     });
 
-    // Mock payment: if free, instantly considered paid
+    // Create invoice
+    if (planDoc.priceCents > 0) {
+      const invoiceNumber = `INV-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+      await Invoice.create({
+        invoiceNumber,
+        user: req.user.id,
+        subscription: subscription._id,
+        plan: planDoc.name,
+        amount: planDoc.priceCents,
+        currency: planDoc.currency,
+        status: 'pending',
+        billingDetails: {
+          name: req.user.username,
+          email: req.user.email
+        }
+      });
+    }
+
     return res.status(201).json({ success: true, message: 'Subscription created', data: subscription });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Failed to create subscription', error: err.message });
@@ -108,10 +125,15 @@ const verifyPayment = async (req, res) => {
     if (!sub) return res.status(404).json({ success: false, message: 'No active subscription found' });
     if (sub.paymentStatus === 'paid') return res.status(200).json({ success: true, message: 'Already paid' });
 
-    // Mock verify: any non-empty reference succeeds
     sub.paymentStatus = 'paid';
     sub.paymentReference = paymentReference;
     await sub.save();
+
+    // Update invoice
+    await Invoice.findOneAndUpdate(
+      { subscription: sub._id, status: 'pending' },
+      { status: 'paid', paymentReference }
+    );
 
     return res.status(200).json({ success: true, message: 'Payment verified', data: sub });
   } catch (err) {
@@ -137,10 +159,55 @@ const getStatus = async (req, res) => {
   }
 };
 
+const cancelSubscription = async (req, res) => {
+  try {
+    const sub = await getActiveSubscription(req.user.id);
+    if (!sub) return res.status(404).json({ success: false, message: 'No active subscription found' });
+    if (sub.status === 'canceled') return res.status(400).json({ success: false, message: 'Already canceled' });
+
+    sub.status = 'canceled';
+    await sub.save();
+
+    return res.status(200).json({ success: true, message: 'Subscription canceled', data: sub });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Failed to cancel subscription', error: err.message });
+  }
+};
+
+const getPaymentHistory = async (req, res) => {
+  try {
+    const invoices = await Invoice.find({ user: req.user.id })
+      .populate('subscription', 'plan startDate expiryDate')
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({ success: true, data: invoices });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Failed to fetch payment history', error: err.message });
+  }
+};
+
+const getInvoice = async (req, res) => {
+  try {
+    const { invoiceId } = req.params;
+    const invoice = await Invoice.findOne({ _id: invoiceId, user: req.user.id })
+      .populate('subscription', 'plan startDate expiryDate')
+      .populate('user', 'username email');
+
+    if (!invoice) return res.status(404).json({ success: false, message: 'Invoice not found' });
+
+    return res.status(200).json({ success: true, data: invoice });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Failed to fetch invoice', error: err.message });
+  }
+};
+
 module.exports = {
   getPlans,
   createSubscription,
   verifyPayment,
   getStatus,
   getActiveSubscription,
+  cancelSubscription,
+  getPaymentHistory,
+  getInvoice,
 };
