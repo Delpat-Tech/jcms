@@ -23,9 +23,9 @@ import AdminOverview from "./admin/overview/page.tsx";
 import AdminUsers from "./admin/users/page.tsx";
 import AdminContent from "./admin/content/page.tsx";
 import AdminMedia from "./admin/media/page.tsx";
-
 import AdminAnalytics from "./admin/analytics/page.jsx";
 import AdminProfile from "./admin/profile/page.tsx";
+import AdminSubscriptions from "./admin/subscriptions/page.jsx";
 
 // User/Editor Pages
 import EditorOverview from "./editor/overview/page.jsx";
@@ -64,7 +64,7 @@ function App() {
             <Route path="/dashboard/media" element={<MediaPage />} />
             <Route path="/register" element={<RegisterTenant />} />
             <Route path="/subscription" element={<AuthGuard><SubscriptionPage /></AuthGuard>} />
-            <Route path="/subscribe" element={<SubscribePage />} />
+            <Route path="/subscribe" element={<AuthGuard><SubscribePage /></AuthGuard>} />
             
             {/* SuperAdmin Routes */}
             <Route path="/superadmin/overview" element={<AuthGuard requiredRole="superadmin"><SuperAdminOverview /></AuthGuard>} />
@@ -81,7 +81,7 @@ function App() {
             <Route path="/admin/users" element={<AuthGuard requiredRole="admin"><AdminUsers /></AuthGuard>} />
             <Route path="/admin/content" element={<AuthGuard requiredRole="admin"><AdminContent /></AuthGuard>} />
             <Route path="/admin/media" element={<AuthGuard requiredRole="admin"><AdminMedia /></AuthGuard>} />
-
+            <Route path="/admin/subscriptions" element={<AuthGuard requiredRole="admin"><AdminSubscriptions /></AuthGuard>} />
             <Route path="/admin/analytics" element={<AuthGuard requiredRole="admin"><AdminAnalytics /></AuthGuard>} />
             <Route path="/admin/profile" element={<AuthGuard requiredRole="admin"><AdminProfile /></AuthGuard>} />
             

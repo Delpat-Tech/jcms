@@ -1,15 +1,75 @@
 const mongoose = require('mongoose');
 
-const SubscriptionSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-  plan: { type: String, enum: ['free', 'standard', 'premium'], required: true },
-  startDate: { type: Date, required: true, default: Date.now },
-  expiryDate: { type: Date, required: true },
-  paymentStatus: { type: String, enum: ['pending', 'paid', 'failed'], default: 'pending' },
-  paymentReference: { type: String },
-  status: { type: String, enum: ['active', 'expired', 'canceled'], default: 'active' }
-}, { timestamps: true });
+const subscriptionSchema = new mongoose.Schema({
+  tenant: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Tenant',
+    required: true
+  },
+  subscriptionType: {
+    type: String,
+    enum: ['Monthly', 'Yearly'],
+    required: true
+  },
+  startDate: {
+    type: Date,
+    required: true
+  },
+  endDate: {
+    type: Date,
+    required: true
+  },
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  isExpired: {
+    type: Boolean,
+    default: false
+  },
+  razorpayOrderId: String,
+  razorpayPaymentId: String,
+  amount: {
+    type: Number,
+    required: true
+  },
+  currency: {
+    type: String,
+    default: 'INR'
+  },
+  paymentStatus: {
+    type: String,
+    enum: ['pending', 'completed', 'failed'],
+    default: 'pending'
+  }
+}, {
+  timestamps: true
+});
 
-SubscriptionSchema.index({ user: 1, status: 1 });
+// Pre-save middleware to check expiry
+subscriptionSchema.pre('save', function(next) {
+  const currentDate = new Date();
+  if (this.endDate < currentDate) {
+    this.isExpired = true;
+    this.isActive = false;
+  }
+  next();
+});
 
-module.exports = mongoose.model('Subscription', SubscriptionSchema);
+// Pre-find middleware to update expired subscriptions
+subscriptionSchema.pre(/^find/, async function(next) {
+  try {
+    const currentDate = new Date();
+    await this.model.updateMany(
+      { endDate: { $lt: currentDate }, isExpired: false },
+      { $set: { isExpired: true, isActive: false } }
+    );
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+
+const Subscription = mongoose.model('Subscription', subscriptionSchema);
+
+module.exports = Subscription;

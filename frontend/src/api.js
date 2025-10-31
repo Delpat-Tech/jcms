@@ -264,10 +264,10 @@ export const helpApi = {
 };
 
 export const subscriptionApi = {
-  getPlans: () => api.get('/api/subscriptions/plans'),
-  getStatus: () => api.get('/api/subscriptions/status'),
-  create: (plan) => api.post('/api/subscriptions', { plan }),
-  verify: (paymentReference) => api.post('/api/subscriptions/verify', { paymentReference })
+  getPlans: () => api.get('/api/subscription/prices'),
+  getStatus: () => api.get('/api/subscription/status'),
+  createOrder: (subtype) => api.post('/api/subscription/create-order', { subtype }),
+  verifyPayment: (paymentData) => api.post('/api/subscription/verify-payment', paymentData)
 };
 
 export const imageManagementApi = {

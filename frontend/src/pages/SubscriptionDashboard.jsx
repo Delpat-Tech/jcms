@@ -23,7 +23,11 @@ export default function SubscriptionPage() {
       try {
         const res = await subscriptionApi.getStatus();
         const data = await res.json();
-        setStatus(data);
+        if (data.success) {
+          setStatus(data.data);
+        } else {
+          setStatusError(data.message || 'Failed to load subscription status');
+        }
       } catch (e) {
         setStatusError(e.message || 'Failed to load subscription status');
       } finally {
@@ -38,7 +42,11 @@ export default function SubscriptionPage() {
       try {
         const res = await subscriptionApi.getPlans();
         const data = await res.json();
-        setPlans(data || []);
+        if (data.success) {
+          setPlans(data.data.prices || []);
+        } else {
+          setPlansError(data.message || 'Failed to load plans');
+        }
       } catch (e) {
         setPlansError(e.message || 'Failed to load plans');
       } finally {
@@ -66,13 +74,19 @@ export default function SubscriptionPage() {
             <div className="text-red-600">{statusError}</div>
           ) : status ? (
             <div className="bg-white border rounded-md p-4 shadow-sm">
-              <div className="mb-2"><span className="font-semibold">Plan:</span> {status.plan}</div>
-              <div className="mb-2"><span className="font-semibold">Active:</span> {String(status.active)}</div>
-              {status.paymentStatus && (
-                <div className="mb-2"><span className="font-semibold">Payment:</span> {status.paymentStatus}</div>
-              )}
-              {status.expiresAt && (
-                <div className="mb-2"><span className="font-semibold">Expires:</span> {new Date(status.expiresAt).toLocaleString()}</div>
+              {status.hasActiveSubscription && status.subscription ? (
+                <>
+                  <div className="mb-2"><span className="font-semibold">Plan:</span> {status.subscription.subscriptionType}</div>
+                  <div className="mb-2"><span className="font-semibold">Active:</span> {String(status.subscription.isActive && !status.subscription.isExpired)}</div>
+                  <div className="mb-2"><span className="font-semibold">Amount:</span> ₹{status.subscription.amount}</div>
+                  <div className="mb-2"><span className="font-semibold">Start Date:</span> {new Date(status.subscription.startDate).toLocaleDateString()}</div>
+                  <div className="mb-2"><span className="font-semibold">End Date:</span> {new Date(status.subscription.endDate).toLocaleDateString()}</div>
+                  {status.subscription.paymentStatus && (
+                    <div className="mb-2"><span className="font-semibold">Payment:</span> {status.subscription.paymentStatus}</div>
+                  )}
+                </>
+              ) : (
+                <div className="text-gray-600">No active subscription</div>
               )}
             </div>
           ) : (
@@ -88,20 +102,18 @@ export default function SubscriptionPage() {
           ) : plansError ? (
             <div className="text-red-600">{plansError}</div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {plans.map((p) => (
-                <div key={p.name} className={`border rounded-lg p-4 shadow-sm bg-white ${status?.plan === p.name ? 'ring-2 ring-indigo-400' : ''}`}>
-                  <h3 className="text-lg font-semibold mb-2">{p.displayName}</h3>
-                  <div className="text-2xl font-bold mb-2">{p.priceCents === 0 ? 'Free' : `$${(p.priceCents/100).toFixed(2)}/${p.durationDays || 30}d`}</div>
-                  <ul className="text-sm text-gray-700 mb-4 list-disc pl-5">
-                    {Array.isArray(p.features) && p.features.map((f, idx) => (
-                      <li key={idx}>{f}</li>
-                    ))}
-                  </ul>
-                  {status?.plan === p.name ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {Object.entries(plans).map(([planType, price]) => (
+                <div key={planType} className={`border rounded-lg p-4 shadow-sm bg-white ${status?.subscription?.subscriptionType === planType ? 'ring-2 ring-indigo-400' : ''}`}>
+                  <h3 className="text-lg font-semibold mb-2">{planType} Plan</h3>
+                  <div className="text-2xl font-bold mb-2">₹{price}</div>
+                  <div className="text-sm text-gray-600 mb-4">
+                    {planType === 'Monthly' ? 'Billed monthly' : 'Billed annually'}
+                  </div>
+                  {status?.subscription?.subscriptionType === planType && status?.hasActiveSubscription ? (
                     <Button disabled>Current Plan</Button>
                   ) : (
-                    <Button onClick={() => handleChoose(p.name)}>Choose {p.displayName}</Button>
+                    <Button onClick={() => handleChoose(planType)}>Choose {planType}</Button>
                   )}
                 </div>
               ))}

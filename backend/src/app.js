@@ -419,7 +419,7 @@ app.use('/api/tenant-switching', require('./routes/tenantSwitchingRoutes'));
 app.use('/api/analytics', require('./routes/analyticsRoutes'));
 app.use('/api/editor', require('./routes/editorRoutes'));
 app.use('/api/help', require('./routes/helpRoutes'));
-app.use('/api/subscriptions', require('./routes/subscriptionRoutes'));
+app.use('/api/subscription', require('./routes/subscriptionRoutes'));
 app.use('/api/json-documents', require('./routes/jsonDocumentRoutes'));
 
 // Public settings endpoint
