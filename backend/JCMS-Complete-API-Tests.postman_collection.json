@@ -1,0 +1,486 @@
+{
+  "info": {
+    "name": "JCMS Complete API Tests",
+    "description": "Complete API testing collection for JCMS",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "imageId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "contentId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Login - SuperAdmin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('token', response.token);",
+                  "    pm.collectionVariables.set('userId', response.user._id);",
+                  "    pm.test('Login successful', () => {",
+                  "        pm.expect(response.success).to.be.true;",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"superadmin\",\n  \"password\": \"admin123\",\n  \"rememberMe\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login - Admin",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"dev_admin\",\n  \"password\": \"dev123\",\n  \"rememberMe\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login - Editor",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"test_editor\",\n  \"password\": \"test123\",\n  \"rememberMe\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "me"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Image Upload & Limits",
+      "item": [
+        {
+          "name": "Upload Image - Free User (10MB limit)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('imageId', response.data._id);",
+                  "    pm.test('Image uploaded', () => {",
+                  "        pm.expect(response.success).to.be.true;",
+                  "        pm.expect(response.data.userPlan).to.eql('free');",
+                  "        pm.expect(response.data.expiresAt).to.exist;",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {"key": "image", "type": "file", "src": ""},
+                {"key": "title", "value": "Test Image", "type": "text"},
+                {"key": "format", "value": "webp", "type": "text"}
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/images",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "images"]
+            }
+          }
+        },
+        {
+          "name": "Get All Images",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/api/images",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "images"]
+            }
+          }
+        },
+        {
+          "name": "Get Image by ID",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/api/images/{{imageId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "images", "{{imageId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Image",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/api/images/{{imageId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "images", "{{imageId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Subscription Management",
+      "item": [
+        {
+          "name": "Get Subscription Plans",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/subscriptions/plans",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "subscriptions", "plans"]
+            }
+          }
+        },
+        {
+          "name": "Get Subscription Status",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/api/subscriptions/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "subscriptions", "status"]
+            }
+          }
+        },
+        {
+          "name": "Create Subscription - Standard",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plan\": \"standard\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/subscriptions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "subscriptions"]
+            }
+          }
+        },
+        {
+          "name": "Verify Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentReference\": \"mock_{{$timestamp}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/subscriptions/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "subscriptions", "verify"]
+            }
+          }
+        },
+        {
+          "name": "Get Payment History",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/api/subscriptions/history",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "subscriptions", "history"]
+            }
+          }
+        },
+        {
+          "name": "Cancel Subscription",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/api/subscriptions/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "subscriptions", "cancel"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Content Management",
+      "item": [
+        {
+          "name": "Create Content",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('contentId', response.data._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Test Article\",\n  \"content\": \"<p>This is test content</p>\",\n  \"status\": \"draft\",\n  \"type\": \"article\",\n  \"tags\": [\"test\", \"demo\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/content",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "content"]
+            }
+          }
+        },
+        {
+          "name": "Get All Content",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/api/content",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "content"]
+            }
+          }
+        },
+        {
+          "name": "Update Content",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Article\",\n  \"content\": \"<p>Updated content</p>\",\n  \"status\": \"published\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/content/{{contentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "content", "{{contentId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Content",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/api/content/{{contentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "content", "{{contentId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. User Management",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            }
+          }
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser_{{$timestamp}}\",\n  \"email\": \"test{{$timestamp}}@example.com\",\n  \"password\": \"Test123!\",\n  \"role\": \"editor\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. File Management",
+      "item": [
+        {
+          "name": "Upload File",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {"key": "files", "type": "file", "src": ""},
+                {"key": "title", "value": "Test File", "type": "text"}
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/files/upload-multiple",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "files", "upload-multiple"]
+            }
+          }
+        },
+        {
+          "name": "Get All Files",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/api/files",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "files"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Analytics",
+      "item": [
+        {
+          "name": "Get Dashboard Analytics",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/api/analytics/dashboard",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "analytics", "dashboard"]
+            }
+          }
+        },
+        {
+          "name": "Get User Analytics",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/api/analytics/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "analytics", "users"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Health & Status",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

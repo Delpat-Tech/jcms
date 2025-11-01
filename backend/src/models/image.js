@@ -92,7 +92,10 @@ const imageSchema = new mongoose.Schema({
     path: String,
     cloudflareKey: String,
     createdAt: { type: Date, default: Date.now }
-  }]
+  }],
+  // Subscription-based expiry
+  expiresAt: { type: Date },
+  userPlan: { type: String, enum: ['free', 'standard', 'premium'], default: 'free' }
 }, { timestamps: true });
 
 // Indexes for performance
@@ -103,6 +106,7 @@ imageSchema.index({ tenant: 1, visibility: 1, createdAt: -1 });
 imageSchema.index({ tags: 1 });
 imageSchema.index({ cloudflareKey: 1 });
 imageSchema.index({ collections: 1 }); // Index for new collections array
+imageSchema.index({ expiresAt: 1 });
 
 // Virtual for public access URL
 imageSchema.virtual('accessUrl').get(function() {

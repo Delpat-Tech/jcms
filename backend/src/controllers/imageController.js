@@ -72,6 +72,15 @@ const createImage = async (req, res) => {
     const fileUrl = `${req.protocol}://${req.get('host')}/${relativePath}`;
 
     console.log('Creating database record...');
+    
+    // Set expiry for free users (15 days)
+    const userPlan = req.userPlan || 'free';
+    let expiresAt = null;
+    if (userPlan === 'free') {
+      expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 15);
+    }
+    
     const imageData = {
       title,
       user: userId,
@@ -83,6 +92,8 @@ const createImage = async (req, res) => {
       format: chosenFormat,
       fileSize,
       notes: req.body.notes || {},
+      userPlan,
+      expiresAt
     };
     console.log('Image data to save:', imageData);
     const newImage = await Image.create(imageData);

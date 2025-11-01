@@ -39,6 +39,11 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`🔧 Debug notes: http://localhost:${PORT}/api/debug-notes`);
 });
 
+// Start image cleanup service
+const { startCleanupSchedule } = require('./services/imageCleanupService');
+startCleanupSchedule();
+logger.info('Image cleanup service started');
+
 // Initialize WebSocket
 const { initializeSocket } = require('./services/socketService');
 const io = initializeSocket(server);
