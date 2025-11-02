@@ -70,6 +70,4 @@ subscriptionSchema.pre(/^find/, async function(next) {
   }
 });
 
-const Subscription = mongoose.model('Subscription', subscriptionSchema);
-
-module.exports = Subscription;
+module.exports = mongoose.models.Subscription || mongoose.model('Subscription', subscriptionSchema);

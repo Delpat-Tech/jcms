@@ -13,13 +13,14 @@ const { authenticate, requireAdminOrAbove } = require('../middlewares/auth');
 const { restrictEditorAccess } = require('../middlewares/editorRestriction');
 const { logActivity } = require('../middlewares/activityLogger');
 const { validateSingleSuperAdmin, protectSystemSuperAdmin } = require('../middlewares/superadminValidation');
+const { checkSubscriptionLimits } = require('../middlewares/subscriptionLimits');
 const router = express.Router();
 
 // All routes require authentication, block editors, and admin role or above
 router.use(authenticate, restrictEditorAccess, requireAdminOrAbove);
 
 // User Management Routes - Same API, different results based on role
-router.post('/', validateSingleSuperAdmin, logActivity('CREATE', 'user'), createUserWithRole);           // Create user
+router.post('/', checkSubscriptionLimits, validateSingleSuperAdmin, logActivity('CREATE', 'user'), createUserWithRole);           // Create user
 router.get('/', getAllUsers);                   // Get all users (filtered by role)
 router.get('/:userId', getUserById);            // Get specific user (filtered by role)
 router.put('/:userId', protectSystemSuperAdmin, validateSingleSuperAdmin, logActivity('UPDATE', 'user'), updateUser);             // Update user

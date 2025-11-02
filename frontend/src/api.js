@@ -270,6 +270,12 @@ export const subscriptionApi = {
   verifyPayment: (paymentData) => api.post('/api/subscription/verify-payment', paymentData)
 };
 
+export const cleanupApi = {
+  getStatus: () => api.get('/api/cleanup/status'),
+  runManual: () => api.post('/api/cleanup/run'),
+  getExpiring: (days = 7) => api.get(`/api/cleanup/expiring?days=${days}`)
+};
+
 export const imageManagementApi = {
   // Upload images
   uploadImages: (formData) => apiRequest('/api/image-management/upload', {

@@ -1,11 +1,60 @@
-import React, { useState } from 'react';
-import { Eye, Download, Edit3, Trash2, Play, FileText, Music, Archive } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Eye, Download, Edit3, Trash2, Play, FileText, Music, Archive, Clock, AlertTriangle } from 'lucide-react';
+import { getDaysUntilExpiration, getExpirationStatus } from '../../utils/subscriptionLimits';
 
-const FileCard = ({ file, viewMode, selected, onSelect, onPreview, onDelete, onDownload }) => {
+const FileCard = ({ file, viewMode, selected, onSelect, onPreview, onDelete, onDownload, subscriptionStatus }) => {
   const [isRenaming, setIsRenaming] = useState(false);
   const [newTitle, setNewTitle] = useState(file.title || '');
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdownTimeout, setDropdownTimeout] = useState(null);
+  const [expirationInfo, setExpirationInfo] = useState(null);
+
+  useEffect(() => {
+    // Show expiration info for free users or if no subscription status yet
+    if (file.expiresAt && (!subscriptionStatus || !subscriptionStatus.hasActiveSubscription)) {
+      const info = getExpirationStatus(file.expiresAt);
+      setExpirationInfo(info);
+    } else {
+      setExpirationInfo(null);
+    }
+  }, [file.expiresAt, subscriptionStatus]);
+
+  // Determine if we should show expiration info
+  const shouldShowExpirationInfo = () => {
+    // Check if user is superadmin (always premium)
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (user.role === 'superadmin') {
+      return false;
+    }
+    
+    // Only show expiration info if file has expiration date and user is not premium
+    const isPremiumUser = subscriptionStatus?.hasActiveSubscription === true;
+    return file.expiresAt && !isPremiumUser;
+  };
+
+  // Get expiration display text
+  const getExpirationText = () => {
+    if (!file.expiresAt) {
+      return 'Expires in 15 days (Free Plan)';
+    }
+    
+    const daysLeft = getDaysUntilExpiration(file.expiresAt);
+    if (daysLeft <= 0) {
+      return 'Expired';
+    }
+    return `${daysLeft} day${daysLeft === 1 ? '' : 's'} left`;
+  };
+
+  // Get expiration color based on days left
+  const getExpirationColor = () => {
+    if (!file.expiresAt) return 'bg-blue-50 text-blue-700';
+    
+    const daysLeft = getDaysUntilExpiration(file.expiresAt);
+    if (daysLeft <= 0) return 'bg-red-50 text-red-700';
+    if (daysLeft <= 3) return 'bg-orange-50 text-orange-700';
+    if (daysLeft <= 7) return 'bg-yellow-50 text-yellow-700';
+    return 'bg-blue-50 text-blue-700';
+  };
 
   const handleDelete = async (file) => {
     onDelete?.(file);
@@ -111,6 +160,7 @@ const FileCard = ({ file, viewMode, selected, onSelect, onPreview, onDelete, onD
           <p className="text-xs text-gray-500">
             {file.format?.toUpperCase()} • {formatFileSize(file.size)} • {formatDate(file.createdAt)}
           </p>
+
           {(file.notes?.description || file.notes) && (
             <p className="text-xs text-gray-600 italic truncate" title={file.notes?.description || file.notes}>
               {file.notes?.description || file.notes}
@@ -118,25 +168,37 @@ const FileCard = ({ file, viewMode, selected, onSelect, onPreview, onDelete, onD
           )}
         </div>
         
-        <div className="grid grid-cols-2 gap-2 justify-items-center">
-          <button
-            onClick={() => onPreview(file)}
-            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
-          >
-            <Eye className="w-4 h-4" />
-          </button>
-          <button 
-            onClick={() => handleDownload(file)}
-            className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg"
-          >
-            <Download className="w-4 h-4" />
-          </button>
-          <button 
-            onClick={() => handleDelete(file)}
-            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
+        <div className="flex flex-col items-end gap-2">
+          <div className="grid grid-cols-2 gap-2 justify-items-center">
+            <button
+              onClick={() => onPreview(file)}
+              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
+            >
+              <Eye className="w-4 h-4" />
+            </button>
+            <button 
+              onClick={() => handleDownload(file)}
+              className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg"
+            >
+              <Download className="w-4 h-4" />
+            </button>
+            <button 
+              onClick={() => handleDelete(file)}
+              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+          
+          {/* Expiration Info - Only show for free users */}
+          {shouldShowExpirationInfo() && (
+            <div className={`flex items-center gap-1 text-xs px-2 py-1 rounded ${getExpirationColor()}`}>
+              <Clock className="w-3 h-3" />
+              <span className="font-medium text-xs">
+                {getExpirationText()}
+              </span>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -320,6 +382,16 @@ const FileCard = ({ file, viewMode, selected, onSelect, onPreview, onDelete, onD
             <Trash2 className="w-4 h-4" />
           </button>
         </div>
+        
+        {/* Expiration Info - Only show for free users */}
+        {shouldShowExpirationInfo() && (
+          <div className={`flex items-center justify-center gap-1 text-xs mt-2 p-2 rounded ${getExpirationColor()}`}>
+            <Clock className="w-3 h-3" />
+            <span className="font-medium">
+              {getExpirationText()}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

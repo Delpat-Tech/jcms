@@ -92,7 +92,16 @@ const imageSchema = new mongoose.Schema({
     path: String,
     cloudflareKey: String,
     createdAt: { type: Date, default: Date.now }
-  }]
+  }],
+  // Expiration for free tenants
+  expiresAt: {
+    type: Date,
+    default: null
+  },
+  isExpired: {
+    type: Boolean,
+    default: false
+  }
 }, { timestamps: true });
 
 // Indexes for performance
@@ -103,6 +112,7 @@ imageSchema.index({ tenant: 1, visibility: 1, createdAt: -1 });
 imageSchema.index({ tags: 1 });
 imageSchema.index({ cloudflareKey: 1 });
 imageSchema.index({ collections: 1 }); // Index for new collections array
+imageSchema.index({ expiresAt: 1, isExpired: 1 }); // Index for expiration cleanup
 
 // Virtual for public access URL
 imageSchema.virtual('accessUrl').get(function() {
@@ -115,4 +125,4 @@ imageSchema.virtual('accessUrl').get(function() {
 // Ensure virtual fields are serialized
 imageSchema.set('toJSON', { virtuals: true });
 
-module.exports = mongoose.model('Image', imageSchema);
+module.exports = mongoose.models.Image || mongoose.model('Image', imageSchema);

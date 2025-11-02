@@ -21,6 +21,23 @@ const uploadFile = async (req, res) => {
       return res.status(400).json({ success: false, message: 'No files uploaded' });
     }
 
+    // Check file size limits based on subscription
+    if (req.subscriptionLimits) {
+      const maxFileSize = req.subscriptionLimits.maxFileSize;
+      const oversizedFiles = files.filter(file => file.size > maxFileSize);
+      
+      if (oversizedFiles.length > 0) {
+        const maxSizeMB = Math.floor(maxFileSize / (1024 * 1024));
+        const planType = req.hasActiveSubscription ? 'subscribed' : 'free';
+        
+        return res.status(400).json({
+          success: false,
+          message: `File size limit exceeded. ${planType} users can upload files up to ${maxSizeMB}MB. ${req.hasActiveSubscription ? '' : 'Upgrade to premium for 100MB limit.'}`,
+          oversizedFiles: oversizedFiles.map(f => ({ name: f.originalname, size: f.size }))
+        });
+      }
+    }
+
     const uploadedFiles = [];
     
     for (const file of files) {
@@ -38,7 +55,7 @@ const uploadFile = async (req, res) => {
       const baseUrl = `${req.protocol}://${req.get('host')}`;
       const fullFileUrl = `${baseUrl}${processedFile.fileUrl}`;
     
-      const newFile = new File({
+      const fileData = {
         title: fileTitle,
         user: req.user.id,
         tenant: req.user.tenant?._id || null,
@@ -51,7 +68,16 @@ const uploadFile = async (req, res) => {
         internalPath: processedFile.internalPath,
         fileType: processedFile.fileType,
         format: processedFile.format
-      });
+      };
+
+      // Set expiration for free tenants
+      if (req.subscriptionLimits && req.subscriptionLimits.fileExpirationDays) {
+        const expirationDate = new Date();
+        expirationDate.setDate(expirationDate.getDate() + req.subscriptionLimits.fileExpirationDays);
+        fileData.expiresAt = expirationDate;
+      }
+
+      const newFile = new File(fileData);
 
       await newFile.save();
       

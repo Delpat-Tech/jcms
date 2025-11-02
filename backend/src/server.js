@@ -44,4 +44,8 @@ const { initializeSocket } = require('./services/socketService');
 const io = initializeSocket(server);
 global.io = io;
 
+// Initialize file cleanup job
+const fileCleanupJob = require('./jobs/fileCleanupJob');
+fileCleanupJob.start();
+
 module.exports = app;

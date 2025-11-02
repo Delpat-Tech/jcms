@@ -51,7 +51,19 @@ const fileSchema = new mongoose.Schema({
   notes: {
     type: mongoose.Schema.Types.Mixed,
     default: {}
+  },
+  // Expiration for free tenants
+  expiresAt: {
+    type: Date,
+    default: null
+  },
+  isExpired: {
+    type: Boolean,
+    default: false
   }
 }, { timestamps: true });
 
-module.exports = mongoose.model('File', fileSchema);
+// Indexes for performance
+fileSchema.index({ expiresAt: 1, isExpired: 1 }); // Index for expiration cleanup
+
+module.exports = mongoose.models.File || mongoose.model('File', fileSchema);

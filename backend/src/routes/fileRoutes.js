@@ -6,12 +6,13 @@ const { uploadFile, getFiles, getFileById, deleteFile, convertFileFormat, getFil
 const { authenticate, requireActiveUser } = require('../middlewares/auth');
 const { logActivity } = require('../middlewares/activityLogger');
 const { checkSubscription } = require('../middlewares/subscription');
+const { checkSubscriptionLimits } = require('../middlewares/subscriptionLimits');
 
 const router = express.Router();
 
-router.post('/upload', authenticate, requireActiveUser, logActivity('file_upload', 'file'), uploadMultipleInSingleField, uploadFile);
-router.post('/upload-single', authenticate, requireActiveUser, logActivity('file_upload', 'file'), upload.single('file'), uploadFile);
-router.post('/upload-multiple', authenticate, requireActiveUser, logActivity('file_upload', 'file'), upload.array('files', 10), uploadFile);
+router.post('/upload', authenticate, requireActiveUser, checkSubscriptionLimits, logActivity('file_upload', 'file'), uploadMultipleInSingleField, uploadFile);
+router.post('/upload-single', authenticate, requireActiveUser, checkSubscriptionLimits, logActivity('file_upload', 'file'), upload.single('file'), uploadFile);
+router.post('/upload-multiple', authenticate, requireActiveUser, checkSubscriptionLimits, logActivity('file_upload', 'file'), upload.array('files', 10), uploadFile);
 router.get('/', authenticate, getFiles);
 router.get('/:id', authenticate, getFileById);
 router.get('/type/:type', authenticate, (req, res, next) => {

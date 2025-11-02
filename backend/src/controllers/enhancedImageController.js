@@ -17,6 +17,21 @@ const uploadImages = async (req, res) => {
       });
     }
 
+    // Check file size limits based on subscription
+    const maxFileSize = req.subscriptionLimits.maxFileSize;
+    const oversizedFiles = req.files.filter(file => file.size > maxFileSize);
+    
+    if (oversizedFiles.length > 0) {
+      const maxSizeMB = Math.floor(maxFileSize / (1024 * 1024));
+      const planType = req.hasActiveSubscription ? 'subscribed' : 'free';
+      
+      return res.status(400).json({
+        success: false,
+        message: `File size limit exceeded. ${planType} users can upload files up to ${maxSizeMB}MB. ${req.hasActiveSubscription ? '' : 'Upgrade to premium for 100MB limit.'}`,
+        oversizedFiles: oversizedFiles.map(f => ({ name: f.originalname, size: f.size }))
+      });
+    }
+
     const {
       title,
       project,
@@ -72,7 +87,8 @@ const uploadImages = async (req, res) => {
             tags: parsedTags,
             notes: parsedNotes,
             format,
-            quality: parseInt(quality)
+            quality: parseInt(quality),
+            subscriptionLimits: req.subscriptionLimits
           }
         );
 

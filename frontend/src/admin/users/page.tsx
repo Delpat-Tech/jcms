@@ -4,11 +4,12 @@ import Button from "../../components/ui/Button.jsx";
 import Input from "../../components/ui/Input.jsx";
 import Table from "../../components/ui/Table.jsx";
 import Modal from "../../components/ui/Modal.jsx";
-import { userApi, imageApi, fileApi } from '../../api';
+import { userApi, imageApi, fileApi, subscriptionApi } from '../../api';
+import { checkUserCountLimit } from '../../utils/subscriptionLimits';
 import { useToasts } from '../../components/util/Toasts.jsx';
-import { TriangleAlert, Search } from 'lucide-react';
+import { TriangleAlert, Search, Crown, AlertCircle } from 'lucide-react';
 
-function AddUserModal({ onClose, onUserAdded }) {
+function AddUserModal({ onClose, onUserAdded, users }) {
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -17,9 +18,50 @@ function AddUserModal({ onClose, onUserAdded }) {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [subscriptionStatus, setSubscriptionStatus] = useState(null);
+  const [userLimitError, setUserLimitError] = useState('');
+
+  useEffect(() => {
+    fetchSubscriptionStatus();
+  }, []);
+
+  useEffect(() => {
+    validateUserLimit();
+  }, [formData.role, subscriptionStatus, users]);
+
+  const fetchSubscriptionStatus = async () => {
+    try {
+      const response = await subscriptionApi.getStatus();
+      if (response.success) {
+        setSubscriptionStatus(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching subscription status:', error);
+    }
+  };
+
+  const validateUserLimit = () => {
+    if (!subscriptionStatus || !users) return;
+    
+    const hasActiveSubscription = subscriptionStatus.hasActiveSubscription;
+    const currentEditors = users.filter(u => u.role?.name === 'editor' || u.role === 'editor').length;
+    
+    if (formData.role === 'editor') {
+      const limitCheck = checkUserCountLimit(currentEditors, 'editor', hasActiveSubscription);
+      setUserLimitError(limitCheck.valid ? '' : limitCheck.error);
+    } else {
+      setUserLimitError('');
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (userLimitError) {
+      setError(userLimitError);
+      return;
+    }
+    
     setLoading(true);
     setError('');
 
@@ -44,6 +86,41 @@ function AddUserModal({ onClose, onUserAdded }) {
     <Modal open={true} onClose={onClose}>
       <div className="p-6 w-96">
         <h2 className="text-lg font-semibold mb-4">Add New User</h2>
+        
+        {/* Subscription Status */}
+        {subscriptionStatus && (
+          <div className={`p-3 rounded-lg border ${
+            subscriptionStatus.hasActiveSubscription 
+              ? 'bg-green-50 border-green-200 text-green-800'
+              : 'bg-orange-50 border-orange-200 text-orange-800'
+          }`}>
+            <div className="flex items-center gap-2">
+              <Crown className="w-4 h-4" />
+              <span className="text-sm font-medium">
+                {subscriptionStatus.hasActiveSubscription 
+                  ? `Premium Plan - Up to 10 editors`
+                  : `Free Plan - Up to 1 editor`
+                }
+              </span>
+              {!subscriptionStatus.hasActiveSubscription && (
+                <a href="/subscribe" className="text-sm underline hover:no-underline">
+                  Upgrade
+                </a>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* User Limit Warning */}
+        {userLimitError && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-red-600" />
+              <span className="text-sm font-medium text-red-800">User Limit Reached</span>
+            </div>
+            <p className="text-sm text-red-700 mt-1">{userLimitError}</p>
+          </div>
+        )}
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -109,7 +186,7 @@ function AddUserModal({ onClose, onUserAdded }) {
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading || !!userLimitError}>
               {loading ? 'Creating...' : 'Create User'}
             </Button>
           </div>
@@ -398,6 +475,7 @@ export default function AdminUsersPage() {
 
       {showAddModal && (
         <AddUserModal 
+          users={users}
           onClose={() => setShowAddModal(false)}
           onUserAdded={() => {
             setShowAddModal(false);

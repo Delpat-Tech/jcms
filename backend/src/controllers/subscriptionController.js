@@ -2,6 +2,7 @@ const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const Subscription = require('../models/subscription');
 const Tenant = require('../models/tenant');
+const subscriptionService = require('../services/subscriptionService');
 const logger = require('../config/logger');
 
 // Subscription prices (in INR)
@@ -169,6 +170,13 @@ exports.verifyPayment = async (req, res) => {
       isExpired: false
     });
 
+    // Remove expiration dates from existing files
+    try {
+      await subscriptionService.activateSubscriptionBenefits(tenantId);
+    } catch (error) {
+      logger.warn('Failed to activate subscription benefits', { error: error.message });
+    }
+
     logger.info('Subscription created successfully', {
       subscriptionId: newSubscription._id,
       tenantId,
@@ -271,6 +279,13 @@ exports.handleWebhook = async (req, res) => {
         isExpired: false
       });
 
+      // Remove expiration dates from existing files
+      try {
+        await subscriptionService.activateSubscriptionBenefits(tenantId);
+      } catch (error) {
+        logger.warn('Failed to activate subscription benefits via webhook', { error: error.message });
+      }
+
       logger.info('Subscription created via webhook', {
         subscriptionId: newSubscription._id,
         tenantId,
@@ -304,18 +319,41 @@ exports.handleWebhook = async (req, res) => {
 // Get subscription status
 exports.getSubscriptionStatus = async (req, res) => {
   try {
+    // Superadmin always has premium access
+    if (req.user.role?.name === 'superadmin') {
+      return res.status(200).json({
+        success: true,
+        message: 'Superadmin has premium access',
+        data: {
+          hasActiveSubscription: true,
+          subscription: {
+            subscriptionType: 'Premium',
+            isActive: true,
+            isExpired: false,
+            endDate: null // No expiration for superadmin
+          }
+        }
+      });
+    }
+
     const tenantId = req.user.tenant?._id || req.user.tenant;
     
     if (!tenantId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Tenant ID is required'
+      return res.status(200).json({
+        success: true,
+        message: 'No tenant found - treating as premium',
+        data: {
+          hasActiveSubscription: true,
+          subscription: null
+        }
       });
     }
 
     const subscription = await Subscription.findOne({
       tenant: tenantId,
-      isActive: true
+      isActive: true,
+      isExpired: false,
+      endDate: { $gt: new Date() }
     }).populate('tenant', 'name domain').sort({ createdAt: -1 });
 
     if (!subscription) {
@@ -333,7 +371,7 @@ exports.getSubscriptionStatus = async (req, res) => {
       success: true,
       message: 'Subscription status retrieved successfully',
       data: {
-        hasActiveSubscription: !subscription.isExpired,
+        hasActiveSubscription: true,
         subscription
       }
     });

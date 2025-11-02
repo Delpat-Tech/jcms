@@ -5,7 +5,7 @@ import UploadPanel from './UploadPanel';
 import FileCard from './FileCard';
 import PreviewModal from './PreviewModal';
 import TrioLoader from '../ui/TrioLoader.jsx';
-import { imageApi, fileApi, contentApi, imageManagementApi } from '../../api';
+import { imageApi, fileApi, contentApi, imageManagementApi, subscriptionApi, cleanupApi } from '../../api';
 import BulkActions from './BulkActions.jsx';
 import { useToasts } from '../util/Toasts.jsx';
 import { TriangleAlert } from 'lucide-react';
@@ -25,6 +25,8 @@ const EnhancedMediaDashboard = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [idFilter, setIdFilter] = useState('');
   const [showCollectionSelector, setShowCollectionSelector] = useState(false);
+  const [subscriptionStatus, setSubscriptionStatus] = useState(null);
+  const [expiringFiles, setExpiringFiles] = useState({ images: 0, files: 0, total: 0 });
 
   const toAbsoluteUrl = (maybeRelative) => {
     if (!maybeRelative) return '';
@@ -93,7 +95,44 @@ const EnhancedMediaDashboard = () => {
     fetchFiles();
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     setCurrentUser(user);
+    fetchSubscriptionStatus();
+    fetchExpiringFiles();
   }, [fetchFiles]);
+
+  const fetchSubscriptionStatus = async () => {
+    try {
+      const response = await subscriptionApi.getStatus();
+      if (response && response.success) {
+        setSubscriptionStatus(response.data);
+      } else {
+        setSubscriptionStatus({ hasActiveSubscription: false });
+      }
+    } catch (error) {
+      console.error('Error fetching subscription status:', error);
+      setSubscriptionStatus({ hasActiveSubscription: false });
+    }
+  };
+
+  const fetchExpiringFiles = async () => {
+    try {
+      const response = await cleanupApi.getExpiring(7);
+      if (response && response.success) {
+        setExpiringFiles({
+          images: response.data.images?.length || 0,
+          files: response.data.files?.length || 0,
+          total: (response.data.images?.length || 0) + (response.data.files?.length || 0)
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching expiring files:', error);
+    }
+  };
+
+  // Temporary workaround: Check if user is superadmin (assume premium)
+  const isUserPremium = () => {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    return user.role === 'superadmin';
+  };
 
   const filteredAndSortedFiles = files
     .filter(file => {
@@ -356,6 +395,32 @@ const EnhancedMediaDashboard = () => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
+        {/* Expiration Warning for Free Users */}
+        {(() => {
+          const user = JSON.parse(localStorage.getItem('user') || '{}');
+          const isSuperAdmin = user.role === 'superadmin';
+          const isPremium = subscriptionStatus?.hasActiveSubscription === true;
+          const shouldShowWarning = !isSuperAdmin && !isPremium && expiringFiles.total > 0;
+          
+          return shouldShowWarning && (
+            <div className="bg-orange-50 border-l-4 border-orange-400 p-4 mx-4 mt-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <TriangleAlert className="h-5 w-5 text-orange-400" />
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-orange-700">
+                    <span className="font-medium">{expiringFiles.total} file{expiringFiles.total === 1 ? '' : 's'} will expire</span> in the next 7 days.
+                    {expiringFiles.images > 0 && ` ${expiringFiles.images} image${expiringFiles.images === 1 ? '' : 's'}`}
+                    {expiringFiles.files > 0 && ` ${expiringFiles.files} file${expiringFiles.files === 1 ? '' : 's'}`}.
+                    Upgrade to premium to keep your files permanently.
+                  </p>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Bulk Actions */}
         {selectedFiles.size > 0 && (
           <BulkActions
@@ -440,6 +505,7 @@ const EnhancedMediaDashboard = () => {
                   onDelete={handleSingleDelete}
                   currentUser={currentUser}
                   onUpdate={fetchFiles}
+                  subscriptionStatus={subscriptionStatus || { hasActiveSubscription: isUserPremium() }}
                 />
               ))}
             </div>

@@ -3,6 +3,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const { authenticate, requireEditorOrAbove } = require('../middlewares/auth');
+const { checkSubscriptionLimits } = require('../middlewares/subscriptionLimits');
 const enhancedImageController = require('../controllers/enhancedImageController');
 const imageCollectionController = require('../controllers/imageCollectionController');
 const simpleCollectionController = require('../controllers/simpleCollectionController');
@@ -40,21 +41,30 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-const upload = multer({
-  storage: storage,
-  fileFilter: fileFilter,
-  limits: {
-    fileSize: 50 * 1024 * 1024, // 50MB limit
-    files: 10 // Maximum 10 files at once
-  }
-});
+// Dynamic multer configuration based on subscription
+const createUpload = (maxFileSize = 100 * 1024 * 1024) => {
+  return multer({
+    storage: storage,
+    fileFilter: fileFilter,
+    limits: {
+      fileSize: maxFileSize,
+      files: 10 // Maximum 10 files at once
+    }
+  });
+};
 
-// Apply authentication and role requirements to all routes
-router.use(authenticate, requireEditorOrAbove);
+const upload = createUpload();
 
-// Image upload routes
+// Apply authentication, role requirements, and subscription limits to all routes
+router.use(authenticate, requireEditorOrAbove, checkSubscriptionLimits);
+
+// Image upload routes with dynamic file size limits
 router.post('/upload', 
-  upload.array('images', 10),
+  (req, res, next) => {
+    const maxFileSize = req.subscriptionLimits?.maxFileSize || 10 * 1024 * 1024;
+    const dynamicUpload = createUpload(maxFileSize);
+    dynamicUpload.array('images', 10)(req, res, next);
+  },
   enhancedImageController.uploadImages
 );
 
@@ -253,9 +263,12 @@ router.get('/tunnel/collections/:id/download-zip',
 router.use((error, req, res, next) => {
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
+      const maxSizeMB = req.subscriptionLimits ? Math.floor(req.subscriptionLimits.maxFileSize / (1024 * 1024)) : 10;
+      const planType = req.hasActiveSubscription ? 'subscribed' : 'free';
+      
       return res.status(400).json({
         success: false,
-        message: 'File size too large. Maximum size is 50MB per file.'
+        message: `File size too large. ${planType} users can upload files up to ${maxSizeMB}MB. ${req.hasActiveSubscription ? '' : 'Upgrade to premium for 100MB limit.'}`
       });
     }
     if (error.code === 'LIMIT_FILE_COUNT') {

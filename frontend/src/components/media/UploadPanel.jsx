@@ -1,6 +1,7 @@
-import React, { useState, useRef } from 'react';
-import { Upload, X, CheckCircle, AlertCircle } from 'lucide-react';
-import { imageApi, fileApi } from '../../api';
+import React, { useState, useRef, useEffect } from 'react';
+import { Upload, X, CheckCircle, AlertCircle, Crown } from 'lucide-react';
+import { imageApi, fileApi, subscriptionApi, imageManagementApi } from '../../api';
+import { checkFileSizeLimit, formatFileSize, getFileExpirationInfo } from '../../utils/subscriptionLimits';
 import TrioLoader from '../ui/TrioLoader';
 
 const UploadPanel = ({ onUploadSuccess, currentFilter }) => {
@@ -12,7 +13,24 @@ const UploadPanel = ({ onUploadSuccess, currentFilter }) => {
   const [format, setFormat] = useState('webp');
   const [isUploading, setIsUploading] = useState(false);
   const [jsonText, setJsonText] = useState('');
+  const [subscriptionStatus, setSubscriptionStatus] = useState(null);
+  const [fileSizeErrors, setFileSizeErrors] = useState([]);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    fetchSubscriptionStatus();
+  }, []);
+
+  const fetchSubscriptionStatus = async () => {
+    try {
+      const response = await subscriptionApi.getStatus();
+      if (response.success) {
+        setSubscriptionStatus(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching subscription status:', error);
+    }
+  };
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -37,14 +55,29 @@ const UploadPanel = ({ onUploadSuccess, currentFilter }) => {
   };
 
   const handleFiles = (files) => {
-    const newFiles = Array.from(files).map(file => ({
-      id: Date.now() + Math.random(),
-      file,
-      name: file.name,
-      size: file.size,
-      type: file.type
-    }));
-    setSelectedFiles(prev => [...prev, ...newFiles]);
+    const hasActiveSubscription = subscriptionStatus?.hasActiveSubscription || false;
+    const errors = [];
+    
+    const validFiles = [];
+    
+    Array.from(files).forEach(file => {
+      const sizeCheck = checkFileSizeLimit(file, hasActiveSubscription);
+      
+      if (!sizeCheck.valid) {
+        errors.push({ fileName: file.name, error: sizeCheck.error });
+      } else {
+        validFiles.push({
+          id: Date.now() + Math.random(),
+          file,
+          name: file.name,
+          size: file.size,
+          type: file.type
+        });
+      }
+    });
+    
+    setFileSizeErrors(errors);
+    setSelectedFiles(prev => [...prev, ...validFiles]);
   };
 
   const uploadFiles = async () => {
@@ -179,6 +212,65 @@ const UploadPanel = ({ onUploadSuccess, currentFilter }) => {
 
   return (
     <div className="space-y-4">
+      {/* Subscription Status Banner */}
+      {subscriptionStatus && (
+        <div className="space-y-2">
+          <div className={`p-3 rounded-lg border ${
+            subscriptionStatus.hasActiveSubscription 
+              ? 'bg-green-50 border-green-200 text-green-800'
+              : 'bg-orange-50 border-orange-200 text-orange-800'
+          }`}>
+            <div className="flex items-center gap-2">
+              <Crown className="w-4 h-4" />
+              <span className="text-sm font-medium">
+                {subscriptionStatus.hasActiveSubscription 
+                  ? `Premium Plan - Upload files up to 100MB`
+                  : `Free Plan - Upload files up to 10MB`
+                }
+              </span>
+              {!subscriptionStatus.hasActiveSubscription && (
+                <a href="/subscribe" className="text-sm underline hover:no-underline">
+                  Upgrade
+                </a>
+              )}
+            </div>
+          </div>
+          
+          {/* File Expiration Warning */}
+          {(() => {
+            const expirationInfo = getFileExpirationInfo(subscriptionStatus.hasActiveSubscription);
+            if (expirationInfo.hasExpiration) {
+              return (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-yellow-600" />
+                    <span className="text-sm text-yellow-800">
+                      {expirationInfo.message}
+                    </span>
+                  </div>
+                </div>
+              );
+            }
+            return null;
+          })()}
+        </div>
+      )}
+
+      {/* File Size Errors */}
+      {fileSizeErrors.length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertCircle className="w-4 h-4 text-red-600" />
+            <span className="text-sm font-medium text-red-800">File Size Limit Exceeded</span>
+          </div>
+          {fileSizeErrors.map((error, index) => (
+            <div key={index} className="text-sm text-red-700 ml-6">
+              • {error.fileName}: {error.error}
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Upload Area */}
       <div
         onDragOver={handleDragOver}
@@ -339,7 +431,7 @@ const UploadPanel = ({ onUploadSuccess, currentFilter }) => {
                     {file.name}
                   </span>
                   <p className="text-xs text-gray-500">
-                    {(file.size / 1024).toFixed(1)} KB
+                    {formatFileSize(file.size)}
                   </p>
                 </div>
                 <button

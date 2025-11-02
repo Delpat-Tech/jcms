@@ -100,6 +100,13 @@ class ImageManagementService {
         }]
       };
 
+      // Set expiration for free tenants
+      if (options.subscriptionLimits && options.subscriptionLimits.fileExpirationDays) {
+        const expirationDate = new Date();
+        expirationDate.setDate(expirationDate.getDate() + options.subscriptionLimits.fileExpirationDays);
+        imageData.expiresAt = expirationDate;
+      }
+
       const newImage = await Image.create(imageData);
 
       // Clean up temp file

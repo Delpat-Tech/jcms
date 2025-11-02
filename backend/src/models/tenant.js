@@ -60,4 +60,4 @@ const tenantSchema = new mongoose.Schema({
   isActive: { type: Boolean, default: true }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Tenant', tenantSchema);
+module.exports = mongoose.models.Tenant || mongoose.model('Tenant', tenantSchema);

@@ -421,6 +421,7 @@ app.use('/api/editor', require('./routes/editorRoutes'));
 app.use('/api/help', require('./routes/helpRoutes'));
 app.use('/api/subscription', require('./routes/subscriptionRoutes'));
 app.use('/api/json-documents', require('./routes/jsonDocumentRoutes'));
+app.use('/api/cleanup', require('./routes/cleanupRoutes'));
 
 // Public settings endpoint
 app.get('/api/settings', async (req, res) => {

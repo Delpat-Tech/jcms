@@ -17,6 +17,21 @@ const createImage = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please upload an image.' });
     }
 
+    // Check file size limits based on subscription
+    if (req.subscriptionLimits) {
+      const maxFileSize = req.subscriptionLimits.maxFileSize;
+      
+      if (req.file.size > maxFileSize) {
+        const maxSizeMB = Math.floor(maxFileSize / (1024 * 1024));
+        const planType = req.hasActiveSubscription ? 'subscribed' : 'free';
+        
+        return res.status(400).json({
+          success: false,
+          message: `File size limit exceeded. ${planType} users can upload files up to ${maxSizeMB}MB. ${req.hasActiveSubscription ? '' : 'Upgrade to premium for 100MB limit.'}`
+        });
+      }
+    }
+
     const { title } = req.body;
     const userId = req.user.id;
     
@@ -74,6 +89,7 @@ const createImage = async (req, res) => {
     console.log('Creating database record...');
     const imageData = {
       title,
+      filename: sanitizedFilename,
       user: userId,
       tenant: req.user.tenant ? req.user.tenant._id : null,
       tenantName,
@@ -84,6 +100,14 @@ const createImage = async (req, res) => {
       fileSize,
       notes: req.body.notes || {},
     };
+
+    // Set expiration for free tenants
+    if (req.subscriptionLimits && req.subscriptionLimits.fileExpirationDays) {
+      const expirationDate = new Date();
+      expirationDate.setDate(expirationDate.getDate() + req.subscriptionLimits.fileExpirationDays);
+      imageData.expiresAt = expirationDate;
+    }
+
     console.log('Image data to save:', imageData);
     const newImage = await Image.create(imageData);
     console.log('Database record created successfully');

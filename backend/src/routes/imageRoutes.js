@@ -3,6 +3,7 @@ const express = require('express');
 const upload = require('../middlewares/upload');
 const { authenticate, requireActiveUser } = require('../middlewares/auth');
 const { logActivity } = require('../middlewares/activityLogger');
+const { checkSubscriptionLimits } = require('../middlewares/subscriptionLimits');
 const auth = authenticate;
 
 const {
@@ -26,7 +27,7 @@ const {
 
 const router = express.Router();
 
-router.post('/', auth, requireActiveUser, logActivity('image_upload', 'image'), upload.single('image'), createImage);
+router.post('/', auth, requireActiveUser, checkSubscriptionLimits, logActivity('image_upload', 'image'), upload.single('image'), createImage);
 router.get('/', auth, getImages);
 router.get('/bulk', auth, getBulkImages);
 

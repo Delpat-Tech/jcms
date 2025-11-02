@@ -57,13 +57,34 @@ const createUserWithRole = async (req, res) => {
       });
     }
 
+    // Find role document first
     const roleDoc = await Role.findOne({ name: roleName });
-    
     if (!roleDoc) {
       return res.status(400).json({
         success: false, 
         message: 'Role not found in database'
       });
+    }
+
+    // Check subscription limits for user count
+    if (currentRole !== 'superadmin' && req.subscriptionLimits) {
+      const tenantId = req.user.tenant?._id || req.user.tenant;
+      
+      if (roleName === 'editor') {
+        const editorCount = await User.countDocuments({ 
+          tenant: tenantId, 
+          role: roleDoc._id,
+          isActive: true 
+        });
+        
+        if (editorCount >= req.subscriptionLimits.maxEditors) {
+          const planType = req.hasActiveSubscription ? 'subscribed' : 'free';
+          return res.status(400).json({
+            success: false,
+            message: `Editor limit reached. ${planType} tenants can have up to ${req.subscriptionLimits.maxEditors} editor(s). ${req.hasActiveSubscription ? '' : 'Upgrade to premium for 10 editors.'}`
+          });
+        }
+      }
     }
 
     // Set tenant for new user based on current user's tenant
