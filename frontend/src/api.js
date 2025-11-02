@@ -273,7 +273,8 @@ export const subscriptionApi = {
 export const cleanupApi = {
   getStatus: () => api.get('/api/cleanup/status'),
   runManual: () => api.post('/api/cleanup/run'),
-  getExpiring: (days = 7) => api.get(`/api/cleanup/expiring?days=${days}`)
+  getExpiring: (days = 7) => api.get(`/api/cleanup/expiring?days=${days}`),
+  checkSubscriptions: () => api.post('/api/cleanup/check-subscriptions')
 };
 
 export const imageManagementApi = {

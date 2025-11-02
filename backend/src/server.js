@@ -48,4 +48,8 @@ global.io = io;
 const fileCleanupJob = require('./jobs/fileCleanupJob');
 fileCleanupJob.start();
 
+// Initialize subscription expiration job
+const subscriptionExpirationJob = require('./jobs/subscriptionExpirationJob');
+subscriptionExpirationJob.start();
+
 module.exports = app;
