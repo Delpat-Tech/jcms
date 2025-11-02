@@ -5,8 +5,8 @@ const { requireRole } = require('../middlewares/roleAuth');
 
 const router = express.Router();
 
-// Public route for payment verification (webhook)
-router.post('/verify-payment', subscriptionController.verifyPayment);
+// Public route for webhook
+router.post('/webhook', subscriptionController.handleWebhook);
 
 // Public route for subscription prices
 router.get('/prices', subscriptionController.getSubscriptionPrices);
@@ -16,6 +16,7 @@ router.use(authenticate);
 
 // User subscription management routes
 router.post('/create-order', subscriptionController.createOrder);
+router.post('/verify-payment', subscriptionController.verifyPayment);
 router.get('/status', subscriptionController.getSubscriptionStatus);
 router.delete('/cancel', subscriptionController.cancelSubscription);
 

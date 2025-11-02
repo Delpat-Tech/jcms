@@ -89,8 +89,112 @@ exports.createOrder = async (req, res) => {
   }
 };
 
-// Verify payment and update subscription
+// Verify payment and update subscription (for client-side)
 exports.verifyPayment = async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, subtype } = req.body;
+    const tenantId = req.user.tenant?._id || req.user.tenant;
+    
+    if (!tenantId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Tenant ID is required'
+      });
+    }
+
+    if (!['Yearly', 'Monthly'].includes(subtype)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid subscription type. Allowed types: 'Yearly', 'Monthly'."
+      });
+    }
+
+    // Verify signature
+    const body = razorpay_order_id + '|' + razorpay_payment_id;
+    const expectedSignature = crypto
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+      .update(body.toString())
+      .digest('hex');
+
+    if (expectedSignature !== razorpay_signature) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid payment signature'
+      });
+    }
+
+    const amount = SUBSCRIPTION_PRICES[subtype];
+    const currentDate = new Date();
+    let startDate = currentDate;
+    let endDate;
+
+    // Check if tenant has existing active subscription
+    const existingSubscription = await Subscription.findOne({
+      tenant: tenantId,
+      isActive: true,
+      isExpired: false
+    });
+
+    if (existingSubscription && existingSubscription.endDate > currentDate) {
+      // Extend from current expiry date
+      startDate = existingSubscription.endDate;
+    }
+
+    // Calculate end date based on subscription type
+    if (subtype === 'Yearly') {
+      endDate = new Date(startDate);
+      endDate.setFullYear(endDate.getFullYear() + 1);
+    } else {
+      endDate = new Date(startDate);
+      endDate.setMonth(endDate.getMonth() + 1);
+    }
+
+    // Always deactivate existing subscriptions when creating new one
+    await Subscription.updateMany(
+      { tenant: tenantId },
+      { $set: { isActive: false } }
+    );
+
+    // Create new subscription
+    const newSubscription = await Subscription.create({
+      tenant: tenantId,
+      subscriptionType: subtype,
+      startDate,
+      endDate,
+      razorpayOrderId: razorpay_order_id,
+      razorpayPaymentId: razorpay_payment_id,
+      amount,
+      paymentStatus: 'completed',
+      isActive: true,
+      isExpired: false
+    });
+
+    logger.info('Subscription created successfully', {
+      subscriptionId: newSubscription._id,
+      tenantId,
+      subscriptionType: subtype,
+      endDate
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Payment verified and subscription updated successfully',
+      data: {
+        subscription: newSubscription
+      }
+    });
+  } catch (error) {
+    logger.error('Error verifying payment:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error verifying payment',
+      error: error.message
+    });
+  }
+};
+
+// Webhook handler for Razorpay events
+exports.handleWebhook = async (req, res) => {
   try {
     if (req.body.event === 'payment.captured') {
       const razorpayPaymentId = req.body.payload.payment.entity.id;
@@ -167,7 +271,7 @@ exports.verifyPayment = async (req, res) => {
         isExpired: false
       });
 
-      logger.info('Subscription created successfully', {
+      logger.info('Subscription created via webhook', {
         subscriptionId: newSubscription._id,
         tenantId,
         subscriptionType,
@@ -188,10 +292,10 @@ exports.verifyPayment = async (req, res) => {
       });
     }
   } catch (error) {
-    logger.error('Error verifying payment:', error);
+    logger.error('Error handling webhook:', error);
     res.status(500).json({
       success: false,
-      message: 'Error verifying payment',
+      message: 'Error handling webhook',
       error: error.message
     });
   }
@@ -212,7 +316,7 @@ exports.getSubscriptionStatus = async (req, res) => {
     const subscription = await Subscription.findOne({
       tenant: tenantId,
       isActive: true
-    }).populate('tenant', 'name domain');
+    }).populate('tenant', 'name domain').sort({ createdAt: -1 });
 
     if (!subscription) {
       return res.status(200).json({

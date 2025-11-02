@@ -77,9 +77,39 @@ const SubscribePage = () => {
         name: 'JCMS Subscription',
         description: `${subtype} Subscription`,
         order_id: orderData.data.order.id,
-        handler: function (response) {
-          alert('Payment successful! Your subscription is now active.');
-          fetchSubscriptionStatus();
+        handler: async function (response) {
+          try {
+            // Verify payment with backend
+            const verifyResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/subscription/verify-payment`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                subtype: subtype
+              })
+            });
+            
+            const verifyData = await verifyResponse.json();
+            
+            if (verifyData.success) {
+              const newEndDate = new Date(verifyData.data.subscription.endDate).toLocaleDateString('en-GB');
+              alert(`Payment successful! Your new subscription will expire on ${newEndDate}`);
+              // Wait a moment then refresh subscription status
+              setTimeout(() => {
+                fetchSubscriptionStatus();
+              }, 1000);
+            } else {
+              alert('Payment verification failed: ' + verifyData.message);
+            }
+          } catch (error) {
+            console.error('Payment verification error:', error);
+            alert('Payment completed but verification failed. Please contact support.');
+          }
         },
         prefill: {
           name: user.username || user.name,
@@ -128,7 +158,12 @@ const SubscribePage = () => {
                 <p className="font-medium">✅ Active Subscription</p>
                 <p>Plan: {subscriptionStatus.subscription?.subscriptionType || 'N/A'}</p>
                 <p>Active: {subscriptionStatus.subscription?.isActive ? 'Yes' : 'No'}</p>
-                <p>Expires: {subscriptionStatus.subscription?.endDate ? new Date(subscriptionStatus.subscription.endDate).toLocaleDateString() : 'N/A'}</p>
+                <p>Expires: {subscriptionStatus.subscription?.endDate ? new Date(subscriptionStatus.subscription.endDate).toLocaleDateString('en-GB') : 'N/A'}</p>
+                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
+                  <p className="text-blue-800 text-sm">
+                    ℹ️ New subscription will start after your current subscription expires
+                  </p>
+                </div>
               </div>
             ) : (
               <div className="text-red-600">
