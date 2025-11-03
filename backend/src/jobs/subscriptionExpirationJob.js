@@ -1,5 +1,5 @@
 const cron = require('node-cron');
-const Subscription = require('../models/Subscription');
+const Subscription = require('../models/subscription');
 const subscriptionService = require('../services/subscriptionService');
 const logger = require('../config/logger');
 

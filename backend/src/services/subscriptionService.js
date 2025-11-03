@@ -1,5 +1,5 @@
-const File = require('../models/File');
-const Image = require('../models/Image');
+const File = require('../models/file');
+const Image = require('../models/image');
 const logger = require('../config/logger');
 
 class SubscriptionService {
