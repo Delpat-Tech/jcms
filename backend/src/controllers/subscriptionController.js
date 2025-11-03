@@ -11,6 +11,12 @@ const SUBSCRIPTION_PRICES = {
   Yearly: 4999   // ₹1999 from premium plan
 };
 
+// Razorpay Plan IDs
+const RAZORPAY_PLAN_IDS = {
+  Monthly: process.env.RAZORPAY_MONTHLY_PLAN_ID || 'plan_monthly_default',
+  Yearly: process.env.RAZORPAY_YEARLY_PLAN_ID || 'plan_yearly_default'
+};
+
 // Initialize Razorpay
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -30,7 +36,7 @@ exports.createOrder = async (req, res) => {
     }
     
     const userId = req.user.id || req.user._id;
-    const tenantId = req.user.tenant?._id || req.user.tenant;
+    const tenantId = req.user.tenant?._id;
     
     if (!tenantId) {
       return res.status(400).json({
@@ -54,6 +60,8 @@ exports.createOrder = async (req, res) => {
       payment_capture: 1,
       notes: {
         subtype: subtype,
+        planId: RAZORPAY_PLAN_IDS[subtype],
+        subscriptionId: `sub_${tenantId}_${Date.now()}`,
         tenantId: tenantId.toString(),
         userId: userId.toString()
       }
@@ -94,7 +102,7 @@ exports.createOrder = async (req, res) => {
 exports.verifyPayment = async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, subtype } = req.body;
-    const tenantId = req.user.tenant?._id || req.user.tenant;
+    const tenantId = req.user.tenant?._id;
     
     if (!tenantId) {
       return res.status(400).json({
@@ -165,7 +173,6 @@ exports.verifyPayment = async (req, res) => {
       razorpayOrderId: razorpay_order_id,
       razorpayPaymentId: razorpay_payment_id,
       amount,
-      paymentStatus: 'completed',
       isActive: true,
       isExpired: false
     });
@@ -274,7 +281,6 @@ exports.handleWebhook = async (req, res) => {
         razorpayOrderId,
         razorpayPaymentId,
         amount,
-        paymentStatus: 'completed',
         isActive: true,
         isExpired: false
       });

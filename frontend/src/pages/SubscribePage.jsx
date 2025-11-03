@@ -53,7 +53,6 @@ const SubscribePage = () => {
     setLoading(true);
     
     try {
-      // Create Razorpay order
       const orderResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/subscription/create-order`, {
         method: 'POST',
         headers: {
@@ -66,10 +65,11 @@ const SubscribePage = () => {
       const orderData = await orderResponse.json();
       
       if (!orderData.success) {
-        throw new Error(orderData.message);
+        alert('❌ ' + orderData.message);
+        setLoading(false);
+        return;
       }
 
-      // Initialize Razorpay checkout
       const options = {
         key: orderData.data.keyId,
         amount: orderData.data.order.amount,
@@ -79,7 +79,6 @@ const SubscribePage = () => {
         order_id: orderData.data.order.id,
         handler: async function (response) {
           try {
-            // Verify payment with backend
             const verifyResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/subscription/verify-payment`, {
               method: 'POST',
               headers: {
@@ -98,17 +97,19 @@ const SubscribePage = () => {
             
             if (verifyData.success) {
               const newEndDate = new Date(verifyData.data.subscription.endDate).toLocaleDateString('en-GB');
-              alert(`Payment successful! Your new subscription will expire on ${newEndDate}`);
-              // Wait a moment then refresh subscription status
-              setTimeout(() => {
-                fetchSubscriptionStatus();
-              }, 1000);
+              alert(`✅ Payment Successful!\n\nYour ${subtype} subscription is now active.\nExpires: ${newEndDate}`);
+              setTimeout(() => fetchSubscriptionStatus(), 1000);
             } else {
-              alert('Payment verification failed: ' + verifyData.message);
+              alert('❌ Payment Verification Failed\n\n' + verifyData.message);
             }
           } catch (error) {
-            console.error('Payment verification error:', error);
-            alert('Payment completed but verification failed. Please contact support.');
+            alert('⚠️ Payment Completed\n\nVerification failed. Please contact support with your payment ID.');
+          }
+        },
+        modal: {
+          ondismiss: function() {
+            alert('❌ Payment Cancelled\n\nYou closed the payment window.');
+            setLoading(false);
           }
         },
         prefill: {
@@ -129,10 +130,13 @@ const SubscribePage = () => {
       const rzp = new window.Razorpay(options);
       rzp.open();
       
+      rzp.on('payment.failed', function (response) {
+        alert(`❌ Payment Failed\n\nReason: ${response.error.description}\nPayment ID: ${response.error.metadata.payment_id}`);
+        setLoading(false);
+      });
+      
     } catch (error) {
-      console.error('Error creating order:', error);
-      alert('Error creating order: ' + error.message);
-    } finally {
+      alert('❌ Error: ' + error.message);
       setLoading(false);
     }
   };

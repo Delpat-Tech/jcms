@@ -38,6 +38,7 @@ import SubscriptionPage from "./pages/SubscriptionDashboard.jsx";
 import PublicContentPage from "./pages/PublicContent.jsx";
 import SubscribePage from "./pages/SubscribePage.jsx";
 import ContentPage from "./pages/ContentPage.jsx";
+import DocsPage from "./pages/DocsPage.jsx";
 
 function App() {
   const storedUser = localStorage.getItem("user") || sessionStorage.getItem("user") || 'null';
@@ -60,6 +61,7 @@ function App() {
             <Route path="/" element={<Login />} />
             {/* Public content route */}
             <Route path="/g/:idOrSlug" element={<PublicContentPage />} />
+            <Route path="/docs" element={<DocsPage />} />
             <Route path="/dashboard" element={<DashboardComponent />} />
             <Route path="/dashboard/media" element={<MediaPage />} />
             <Route path="/register" element={<RegisterTenant />} />
