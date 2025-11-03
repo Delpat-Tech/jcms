@@ -7,8 +7,8 @@ const logger = require('../config/logger');
 
 // Subscription prices (in INR)
 const SUBSCRIPTION_PRICES = {
-  Monthly: 10,
-  Yearly: 100
+  Monthly: 999,  // ₹999 from standard plan
+  Yearly: 4999   // ₹1999 from premium plan
 };
 
 // Initialize Razorpay
