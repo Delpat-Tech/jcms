@@ -99,6 +99,9 @@ const SubscribePage = () => {
               const newEndDate = new Date(verifyData.data.subscription.endDate).toLocaleDateString('en-GB');
               alert(`✅ Payment Successful!\n\nYour ${subtype} subscription is now active.\nExpires: ${newEndDate}`);
               setTimeout(() => fetchSubscriptionStatus(), 1000);
+            } else if (verifyData.message && verifyData.message.includes('already processed')) {
+              alert('✅ Payment Successful!\n\nYour subscription has been activated via webhook.');
+              setTimeout(() => fetchSubscriptionStatus(), 1000);
             } else {
               alert('❌ Payment Verification Failed\n\n' + verifyData.message);
             }

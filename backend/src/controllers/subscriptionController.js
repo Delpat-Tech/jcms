@@ -7,8 +7,8 @@ const logger = require('../config/logger');
 
 // Subscription prices (in INR)
 const SUBSCRIPTION_PRICES = {
-  Monthly: 999,  // ₹999 from standard plan
-  Yearly: 4999   // ₹1999 from premium plan
+  Monthly: 500,
+  Yearly: 5000
 };
 
 // Razorpay Plan IDs
@@ -112,6 +112,17 @@ exports.verifyPayment = async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, subtype } = req.body;
     const tenantId = req.user.tenant?._id;
+    
+    // Check if payment already processed by webhook
+    const processedPayment = await Subscription.findOne({ razorpayPaymentId: razorpay_payment_id });
+    if (processedPayment) {
+      logger.info('Payment already processed by webhook', { paymentId: razorpay_payment_id });
+      return res.status(200).json({
+        success: true,
+        message: 'Payment already processed by webhook',
+        data: { subscription: processedPayment }
+      });
+    }
     
     if (!tenantId) {
       return res.status(400).json({
@@ -241,7 +252,7 @@ exports.handleWebhook = async (req, res) => {
 
     const expectedSignature = crypto
       .createHmac('sha256', webhookSecret)
-      .update(req.body)
+      .update(JSON.stringify(req.body))
       .digest('hex');
 
     if (expectedSignature !== webhookSignature) {
@@ -255,8 +266,21 @@ exports.handleWebhook = async (req, res) => {
       });
     }
 
-    const event = JSON.parse(req.body.toString());
+    const event = req.body;
     logger.info('✅ Verified Razorpay Webhook', { event: event.event });
+    
+    // Check if payment already processed
+    if (event.event === 'payment.captured') {
+      const payment = event.payload.payment.entity;
+      const existingSubscription = await Subscription.findOne({ 
+        razorpayPaymentId: payment.id 
+      });
+      
+      if (existingSubscription) {
+        logger.info('Payment already processed via webhook', { paymentId: payment.id });
+        return res.status(200).json({ success: true, message: 'Already processed' });
+      }
+    }
     
     if (event.event === 'payment.captured') {
       const payment = event.payload.payment.entity;
