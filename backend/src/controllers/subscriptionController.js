@@ -12,10 +12,10 @@ const SUBSCRIPTION_PRICES = {
 };
 
 // Razorpay Plan IDs
-const RAZORPAY_PLAN_IDS = {
-  Monthly: process.env.RAZORPAY_MONTHLY_PLAN_ID || 'plan_monthly_default',
-  Yearly: process.env.RAZORPAY_YEARLY_PLAN_ID || 'plan_yearly_default'
-};
+  const RAZORPAY_PLAN_IDS = {
+    Monthly: process.env.RAZORPAY_MONTHLY_PLAN_ID || 'plan_monthly_default',
+    Yearly: process.env.RAZORPAY_YEARLY_PLAN_ID || 'plan_yearly_default'
+  };
 
 // Initialize Razorpay
 const razorpay = new Razorpay({
@@ -42,6 +42,15 @@ exports.createOrder = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'Tenant ID is required for subscription'
+      });
+    }
+
+    // Verify tenant exists
+    const tenant = await Tenant.findById(tenantId);
+    if (!tenant) {
+      return res.status(404).json({
+        success: false,
+        message: 'Tenant not found'
       });
     }
 
@@ -108,6 +117,15 @@ exports.verifyPayment = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'Tenant ID is required'
+      });
+    }
+
+    // Verify tenant exists
+    const tenant = await Tenant.findById(tenantId);
+    if (!tenant) {
+      return res.status(404).json({
+        success: false,
+        message: 'Tenant not found'
       });
     }
 
@@ -211,12 +229,42 @@ exports.verifyPayment = async (req, res) => {
 // Webhook handler for Razorpay events
 exports.handleWebhook = async (req, res) => {
   try {
-    if (req.body.event === 'payment.captured') {
-      const razorpayPaymentId = req.body.payload.payment.entity.id;
-      const razorpayOrderId = req.body.payload.payment.entity.order_id;
-      const subscriptionType = req.body.payload.payment.entity.notes.subtype;
-      const tenantId = req.body.payload.payment.entity.notes.tenantId;
-      const amount = req.body.payload.payment.entity.amount / 100; // Convert from paise
+    const webhookSignature = req.headers['x-razorpay-signature'];
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+
+    if (!webhookSecret || !webhookSignature) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing webhook secret or signature'
+      });
+    }
+
+    const expectedSignature = crypto
+      .createHmac('sha256', webhookSecret)
+      .update(req.body)
+      .digest('hex');
+
+    if (expectedSignature !== webhookSignature) {
+      logger.warn('Invalid webhook signature', {
+        expected: expectedSignature,
+        received: webhookSignature
+      });
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid webhook signature'
+      });
+    }
+
+    const event = JSON.parse(req.body.toString());
+    logger.info('✅ Verified Razorpay Webhook', { event: event.event });
+    
+    if (event.event === 'payment.captured') {
+      const payment = event.payload.payment.entity;
+      const razorpayPaymentId = payment.id;
+      const razorpayOrderId = payment.order_id;
+      const subscriptionType = payment.notes.subtype;
+      const tenantId = payment.notes.tenantId;
+      const amount = payment.amount / 100; // Convert from paise
 
       if (!tenantId) {
         return res.status(400).json({

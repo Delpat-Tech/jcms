@@ -5,8 +5,8 @@ const { requireRole } = require('../middlewares/roleAuth');
 
 const router = express.Router();
 
-// Public route for webhook
-router.post('/webhook', subscriptionController.handleWebhook);
+// Public route for webhook (with raw body for signature verification)
+router.post('/webhook', express.raw({type: 'application/json'}), subscriptionController.handleWebhook);
 
 // Public route for subscription prices
 router.get('/prices', subscriptionController.getSubscriptionPrices);
