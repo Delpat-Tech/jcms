@@ -99,13 +99,11 @@ const SubscribePage = () => {
       rzp.open();
       
       rzp.on('payment.failed', function (response) {
-        alert(`❌ Payment Failed\n\nReason: ${response.error.description}\nPayment ID: ${response.error.metadata.payment_id}`);
         setLoading(false);
       });
       
       // Handle modal dismiss
       rzp.on('payment.cancel', function() {
-        alert('❌ Payment Cancelled\n\nYou closed the payment window.');
         setLoading(false);
       });
       

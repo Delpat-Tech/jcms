@@ -37,7 +37,6 @@ function Layout({ children, title, user }) {
 			{ href: "/admin/media", label: "Media" },
 			{ href: "/admin/users", label: "Users" },
 			{ href: "/admin/analytics", label: "Analytics" },
-			{ href: "/subscription", label: "Subscription" },
 			{ href: "/admin/profile", label: "Profile" },
 		];
 	} else if (role === "editor") {

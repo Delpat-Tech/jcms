@@ -13,10 +13,7 @@ export default function SubscriptionPage() {
   const [statusLoading, setStatusLoading] = useState(true);
   const [statusError, setStatusError] = useState('');
 
-  // Available plans
-  const [plans, setPlans] = useState([]);
-  const [plansLoading, setPlansLoading] = useState(true);
-  const [plansError, setPlansError] = useState('');
+
 
   useEffect(() => {
     const loadStatus = async () => {
@@ -37,28 +34,9 @@ export default function SubscriptionPage() {
     loadStatus();
   }, []);
 
-  useEffect(() => {
-    const loadPlans = async () => {
-      try {
-        const res = await subscriptionApi.getPlans();
-        const data = await res.json();
-        if (data.success) {
-          setPlans(data.data.prices || []);
-        } else {
-          setPlansError(data.message || 'Failed to load plans');
-        }
-      } catch (e) {
-        setPlansError(e.message || 'Failed to load plans');
-      } finally {
-        setPlansLoading(false);
-      }
-    };
-    loadPlans();
-  }, []);
 
-  const handleChoose = (planName) => {
-    window.location.href = `/subscribe?plan=${encodeURIComponent(planName)}`;
-  };
+
+
 
   return (
     <Layout title="Subscription" user={user}>
@@ -94,31 +72,12 @@ export default function SubscriptionPage() {
           )}
         </section>
 
-        {/* Available Plans */}
+        {/* View Plans */}
         <section>
-          <h2 className="text-xl font-semibold mb-3">Available Plans</h2>
-          {plansLoading ? (
-            <div>Loading plans...</div>
-          ) : plansError ? (
-            <div className="text-red-600">{plansError}</div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {Object.entries(plans).map(([planType, price]) => (
-                <div key={planType} className={`border rounded-lg p-4 shadow-sm bg-white ${status?.subscription?.subscriptionType === planType ? 'ring-2 ring-indigo-400' : ''}`}>
-                  <h3 className="text-lg font-semibold mb-2">{planType} Plan</h3>
-                  <div className="text-2xl font-bold mb-2">₹{price}</div>
-                  <div className="text-sm text-gray-600 mb-4">
-                    {planType === 'Monthly' ? 'Billed monthly' : 'Billed annually'}
-                  </div>
-                  {status?.subscription?.subscriptionType === planType && status?.hasActiveSubscription ? (
-                    <Button disabled>Current Plan</Button>
-                  ) : (
-                    <Button onClick={() => handleChoose(planType)}>Choose {planType}</Button>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+          <div className="flex items-center gap-4">
+            <h2 className="text-xl font-semibold">Subscription Plans</h2>
+            <Button onClick={() => window.location.href = '/subscribe'}>View Plans</Button>
+          </div>
         </section>
       </div>
     </Layout>

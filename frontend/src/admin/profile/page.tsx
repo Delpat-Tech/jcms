@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import AdminLayout from '../layout.tsx';
 import Button from '../../components/ui/Button.jsx';
-import { profileApi } from '../../api';
+import { profileApi, subscriptionApi } from '../../api';
 
 export default function AdminProfilePage() {
   const [profile, setProfile] = useState(() => {
@@ -18,7 +18,11 @@ export default function AdminProfilePage() {
   const [error, setError] = useState('');
   const [strength, setStrength] = useState(0);
   const [hint, setHint] = useState('');
-  const [activeTab, setActiveTab] = useState<'info' | 'password'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'password' | 'subscription'>('info');
+  
+  // Subscription state
+  const [subscriptionStatus, setSubscriptionStatus] = useState(null);
+  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
 
   const handleUpdateProfile = async () => {
     setSaving(true); setMessage(''); setError('');
@@ -89,6 +93,27 @@ export default function AdminProfilePage() {
     }
   };
 
+  const fetchSubscriptionStatus = async () => {
+    setSubscriptionLoading(true);
+    try {
+      const res = await subscriptionApi.getStatus();
+      const data = await res.json();
+      if (data.success) {
+        setSubscriptionStatus(data.data);
+      }
+    } catch (e) {
+      console.error('Error fetching subscription:', e);
+    } finally {
+      setSubscriptionLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'subscription') {
+      fetchSubscriptionStatus();
+    }
+  }, [activeTab]);
+
   return (
     <AdminLayout title="Profile">
       <div className="space-y-6">
@@ -108,6 +133,12 @@ export default function AdminProfilePage() {
             onClick={() => { setActiveTab('password'); setMessage(''); setError(''); }}
           >
             Change Password
+          </button>
+          <button
+            className={`px-4 py-2 -mb-px border-b-2 font-medium text-sm focus:outline-none ${activeTab === 'subscription' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+            onClick={() => { setActiveTab('subscription'); setMessage(''); setError(''); }}
+          >
+            Subscription
           </button>
         </div>
 
@@ -146,6 +177,40 @@ export default function AdminProfilePage() {
               <div className="flex justify-end">
                 <Button variant="destructive" onClick={handleChangePassword} disabled={saving}>Change Password</Button>
               </div>
+            </div>
+          )}
+
+          {activeTab === 'subscription' && (
+            <div className="space-y-6">
+              {/* Current Subscription */}
+              <section>
+                <h2 className="text-xl font-semibold mb-3">Current Subscription</h2>
+                {subscriptionLoading ? (
+                  <div>Loading subscription status...</div>
+                ) : subscriptionStatus ? (
+                  <div className="bg-white border rounded-md p-4 shadow-sm">
+                    {subscriptionStatus.hasActiveSubscription && subscriptionStatus.subscription ? (
+                      <>
+                        <div className="mb-2"><span className="font-semibold">Plan:</span> {subscriptionStatus.subscription.subscriptionType}</div>
+                        <div className="mb-2"><span className="font-semibold">Active:</span> {String(subscriptionStatus.subscription.isActive && !subscriptionStatus.subscription.isExpired)}</div>
+                        <div className="mb-2"><span className="font-semibold">End Date:</span> {new Date(subscriptionStatus.subscription.endDate).toLocaleDateString('en-GB')}</div>
+                      </>
+                    ) : (
+                      <div className="text-gray-600">No active subscription</div>
+                    )}
+                  </div>
+                ) : (
+                  <div>No subscription information found.</div>
+                )}
+              </section>
+
+              {/* View Plans */}
+              <section>
+                <div className="flex items-center gap-4">
+                  <h2 className="text-xl font-semibold">Subscription Plans</h2>
+                  <Button onClick={() => window.location.href = '/subscribe'}>View Plans</Button>
+                </div>
+              </section>
             </div>
           )}
         </div>
