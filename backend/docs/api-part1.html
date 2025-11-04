@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JCMS API Documentation</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; background: #fafafa; }
+        .container { display: flex; min-height: 100vh; }
+        .sidebar { width: 280px; background: #1e293b; color: white; padding: 20px; position: fixed; height: 100vh; overflow-y: auto; }
+        .sidebar h1 { font-size: 24px; margin-bottom: 10px; color: #60a5fa; }
+        .sidebar .version { color: #94a3b8; font-size: 14px; margin-bottom: 30px; }
+        .sidebar nav a { display: block; padding: 10px 15px; color: #cbd5e1; text-decoration: none; border-radius: 6px; margin-bottom: 5px; transition: all 0.2s; }
+        .sidebar nav a:hover { background: #334155; color: white; }
+        .sidebar nav .category { color: #60a5fa; font-weight: 600; margin-top: 20px; margin-bottom: 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+        .content { margin-left: 280px; flex: 1; padding: 40px; max-width: 1200px; }
+        .hero { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 60px 40px; border-radius: 12px; margin-bottom: 40px; }
+        .hero h1 { font-size: 48px; margin-bottom: 15px; }
+        .hero p { font-size: 18px; opacity: 0.9; }
+        .section { background: white; border-radius: 12px; padding: 30px; margin-bottom: 30px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .section h2 { font-size: 28px; margin-bottom: 20px; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+        .endpoint { border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 20px; overflow: hidden; }
+        .endpoint-header { padding: 20px; background: #f8fafc; cursor: pointer; display: flex; align-items: center; gap: 15px; }
+        .endpoint-header:hover { background: #f1f5f9; }
+        .method { padding: 6px 12px; border-radius: 4px; font-weight: 600; font-size: 12px; text-transform: uppercase; }
+        .method.post { background: #10b981; color: white; }
+        .method.get { background: #3b82f6; color: white; }
+        .method.put { background: #f59e0b; color: white; }
+        .method.delete { background: #ef4444; color: white; }
+        .method.patch { background: #8b5cf6; color: white; }
+        .endpoint-path { font-family: 'Courier New', monospace; font-size: 16px; color: #1e293b; flex: 1; }
+        .endpoint-body { padding: 20px; display: none; }
+        .endpoint-body.active { display: block; }
+        .param-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        .param-table th { background: #f8fafc; padding: 12px; text-align: left; font-weight: 600; border-bottom: 2px solid #e2e8f0; }
+        .param-table td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        .badge.required { background: #fee2e2; color: #991b1b; }
+        .badge.optional { background: #dbeafe; color: #1e40af; }
+        .code-block { background: #1e293b; color: #e2e8f0; padding: 20px; border-radius: 8px; overflow-x: auto; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 14px; line-height: 1.6; }
+        .try-btn { background: #3b82f6; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: 600; margin-top: 15px; }
+        .try-btn:hover { background: #2563eb; }
+        .response { margin-top: 20px; padding: 15px; background: #f0fdf4; border-left: 4px solid #10b981; border-radius: 4px; }
+        .tab-buttons { display: flex; gap: 10px; margin-bottom: 15px; }
+        .tab-btn { padding: 8px 16px; border: 1px solid #e2e8f0; background: white; cursor: pointer; border-radius: 6px; }
+        .tab-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .info-box { background: #dbeafe; border-left: 4px solid #3b82f6; padding: 15px; border-radius: 4px; margin: 15px 0; }
+        .warning-box { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; border-radius: 4px; margin: 15px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <h1>JCMS API</h1>
+            <div class="version">v1.0.0</div>
+            <nav>
+                <a href="#overview">Overview</a>
+                <a href="#authentication">Authentication</a>
+                <div class="category">Authentication</div>
+                <a href="#auth-register">Register User</a>
+                <a href="#auth-login">Login</a>
+                <a href="#auth-me">Get Current User</a>
+                <div class="category">Users & Content</div>
+                <a href="api-part2-complete.html#users-create">Create User</a>
+                <a href="api-part2-complete.html#users-list">List Users</a>
+                <a href="api-part2-complete.html#content-create">Create Content</a>
+                <a href="api-part2-complete.html#content-list">List Content</a>
+                <div class="category">Images & Files</div>
+                <a href="api-part3-complete.html#images-upload">Upload Image</a>
+                <a href="api-part3-complete.html#images-list">List Images</a>
+                <a href="api-part3-complete.html#files-upload">Upload File</a>
+                <a href="api-part3-complete.html#files-list">List Files</a>
+                <div class="category">Analytics & More</div>
+                <a href="api-part3-complete.html#analytics-dashboard">Dashboard Stats</a>
+                <a href="api-part3-complete.html#notifications-list">Notifications</a>
+            </nav>
+        </aside>
+        <main class="content">
+            <div class="hero">
+                <h1>JCMS API Documentation</h1>
+                <p>Complete REST API reference for the JCMS Content Management System</p>
+            </div>
+
+            <section id="overview" class="section">
+                <h2>Overview</h2>
+                <p>Welcome to the JCMS API documentation. This API provides a comprehensive content management system with role-based access control, multi-tenant support, and advanced features.</p>
+                <div class="warning-box" style="margin-top: 20px;">
+                    <strong>📖 Navigation:</strong> This page covers Authentication. For other endpoints:
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li><a href="api-part2-complete.html" style="color: #3b82f6;">Users & Content Management →</a></li>
+                        <li><a href="api-part3-complete.html" style="color: #3b82f6;">Images, Files & Analytics →</a></li>
+                    </ul>
+                </div>
+                <div class="info-box">
+                    <strong>Base URL:</strong> <code>http://localhost:5000/api</code><br>
+                    <strong>Demo Base URL:</strong> <code>https://mockapi.dev/jcms/v1</code>
+                </div>
+                <h3 style="margin-top: 20px;">Quick Start</h3>
+                <div class="code-block"># 1. Login to get token
+curl -X POST http://localhost:5000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "superadmin", "password": "admin123"}'
+
+# 2. Use token in subsequent requests
+curl -X GET http://localhost:5000/api/auth/me \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"</div>
+            </section>
+
+            <section id="authentication" class="section">
+                <h2>Authentication</h2>
+                <p>The JCMS API uses JWT (JSON Web Tokens) for authentication. Include the token in the Authorization header:</p>
+                <div class="code-block">Authorization: Bearer YOUR_JWT_TOKEN</div>
+                <div class="warning-box">
+                    <strong>Demo Token:</strong> <code>Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.demo.token</code>
+                </div>
+                <h3 style="margin-top: 30px;">Default Credentials</h3>
+                <ul style="margin-left: 20px; margin-top: 10px; line-height: 2;">
+                    <li><strong>SuperAdmin:</strong> superadmin / admin123</li>
+                    <li><strong>Admin:</strong> dev_admin / dev123</li>
+                    <li><strong>Editor:</strong> test_editor / test123</li>
+                </ul>
+            </section>
+
+            <section id="auth-endpoints" class="section">
+                <h2>Authentication Endpoints</h2>
+                
+                <div id="auth-register" class="endpoint">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method post">POST</span>
+                        <span class="endpoint-path">/api/auth/register</span>
+                        <span>Register a new user</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <p>Create a new user account in the system.</p>
+                        <h4>Request Body</h4>
+                        <table class="param-table">
+                            <tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr>
+                            <tr><td>username</td><td>string</td><td><span class="badge required">Required</span></td><td>Unique username</td></tr>
+                            <tr><td>email</td><td>string</td><td><span class="badge required">Required</span></td><td>Valid email address</td></tr>
+                            <tr><td>password</td><td>string</td><td><span class="badge required">Required</span></td><td>Minimum 6 characters</td></tr>
+                            <tr><td>role</td><td>string</td><td><span class="badge optional">Optional</span></td><td>editor, admin, superadmin</td></tr>
+                        </table>
+                        <div class="tab-buttons">
+                            <button class="tab-btn active" onclick="switchTab(this, 'register-curl')">cURL</button>
+                            <button class="tab-btn" onclick="switchTab(this, 'register-js')">JavaScript</button>
+                            <button class="tab-btn" onclick="switchTab(this, 'register-python')">Python</button>
+                        </div>
+                        <div id="register-curl" class="tab-content active">
+                            <div class="code-block">curl -X POST http://localhost:5000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "john_doe",
+    "email": "john@example.com",
+    "password": "secure123",
+    "role": "editor"
+  }'</div>
+                        </div>
+                        <div id="register-js" class="tab-content">
+                            <div class="code-block">fetch('http://localhost:5000/api/auth/register', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    username: 'john_doe',
+    email: 'john@example.com',
+    password: 'secure123',
+    role: 'editor'
+  })
+}).then(res => res.json()).then(data => console.log(data));</div>
+                        </div>
+                        <div id="register-python" class="tab-content">
+                            <div class="code-block">import requests
+
+response = requests.post('http://localhost:5000/api/auth/register',
+  json={
+    'username': 'john_doe',
+    'email': 'john@example.com',
+    'password': 'secure123',
+    'role': 'editor'
+  })
+print(response.json())</div>
+                        </div>
+                        <h4 style="margin-top: 20px;">Response (201 Created)</h4>
+                        <div class="code-block">{
+  "success": true,
+  "message": "User registered successfully",
+  "data": {
+    "user": {
+      "_id": "507f1f77bcf86cd799439011",
+      "username": "john_doe",
+      "email": "john@example.com",
+      "role": "editor",
+      "isActive": true,
+      "createdAt": "2024-01-15T10:30:00.000Z"
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  }
+}</div>
+                        <h4 style="margin-top: 20px;">Status Codes</h4>
+                        <table class="param-table">
+                            <tr><th>Code</th><th>Description</th></tr>
+                            <tr><td>201</td><td>User created successfully</td></tr>
+                            <tr><td>400</td><td>Invalid input or user already exists</td></tr>
+                            <tr><td>500</td><td>Internal server error</td></tr>
+                        </table>
+                        <button class="try-btn" onclick="tryEndpoint('register')">Try It Out</button>
+                        <div id="register-response" class="response" style="display:none;"></div>
+                    </div>
+                </div>
+
+                <div id="auth-login" class="endpoint">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method post">POST</span>
+                        <span class="endpoint-path">/api/auth/login</span>
+                        <span>Login user</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <p>Authenticate a user and receive a JWT token.</p>
+                        <h4>Request Body</h4>
+                        <table class="param-table">
+                            <tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr>
+                            <tr><td>username</td><td>string</td><td><span class="badge required">Required</span></td><td>Username or email</td></tr>
+                            <tr><td>password</td><td>string</td><td><span class="badge required">Required</span></td><td>User password</td></tr>
+                        </table>
+                        <div class="tab-buttons">
+                            <button class="tab-btn active" onclick="switchTab(this, 'login-curl')">cURL</button>
+                            <button class="tab-btn" onclick="switchTab(this, 'login-js')">JavaScript</button>
+                            <button class="tab-btn" onclick="switchTab(this, 'login-python')">Python</button>
+                        </div>
+                        <div id="login-curl" class="tab-content active">
+                            <div class="code-block">curl -X POST http://localhost:5000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "superadmin",
+    "password": "admin123"
+  }'</div>
+                        </div>
+                        <div id="login-js" class="tab-content">
+                            <div class="code-block">fetch('http://localhost:5000/api/auth/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    username: 'superadmin',
+    password: 'admin123'
+  })
+}).then(res => res.json()).then(data => console.log(data));</div>
+                        </div>
+                        <div id="login-python" class="tab-content">
+                            <div class="code-block">import requests
+
+response = requests.post('http://localhost:5000/api/auth/login',
+  json={'username': 'superadmin', 'password': 'admin123'})
+print(response.json())</div>
+                        </div>
+                        <h4 style="margin-top: 20px;">Response (200 OK)</h4>
+                        <div class="code-block">{
+  "success": true,
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "_id": "678c9b7b2201c52b170dc067",
+    "username": "superadmin",
+    "email": "superadmin@jcms.com",
+    "role": "superadmin",
+    "isActive": true
+  }
+}</div>
+                        <h4 style="margin-top: 20px;">Status Codes</h4>
+                        <table class="param-table">
+                            <tr><th>Code</th><th>Description</th></tr>
+                            <tr><td>200</td><td>Login successful</td></tr>
+                            <tr><td>401</td><td>Invalid credentials</td></tr>
+                            <tr><td>403</td><td>Account inactive</td></tr>
+                            <tr><td>500</td><td>Internal server error</td></tr>
+                        </table>
+                        <button class="try-btn" onclick="tryEndpoint('login')">Try It Out</button>
+                        <div id="login-response" class="response" style="display:none;"></div>
+                    </div>
+                </div>
+
+                <div id="auth-me" class="endpoint">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method get">GET</span>
+                        <span class="endpoint-path">/api/auth/me</span>
+                        <span>Get current user</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <p>Retrieve the currently authenticated user's information.</p>
+                        <h4>Headers</h4>
+                        <table class="param-table">
+                            <tr><th>Header</th><th>Value</th><th>Required</th></tr>
+                            <tr><td>Authorization</td><td>Bearer {token}</td><td><span class="badge required">Required</span></td></tr>
+                        </table>
+                        <div class="tab-buttons">
+                            <button class="tab-btn active" onclick="switchTab(this, 'me-curl')">cURL</button>
+                            <button class="tab-btn" onclick="switchTab(this, 'me-js')">JavaScript</button>
+                            <button class="tab-btn" onclick="switchTab(this, 'me-python')">Python</button>
+                        </div>
+                        <div id="me-curl" class="tab-content active">
+                            <div class="code-block">curl -X GET http://localhost:5000/api/auth/me \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"</div>
+                        </div>
+                        <div id="me-js" class="tab-content">
+                            <div class="code-block">fetch('http://localhost:5000/api/auth/me', {
+  headers: { 'Authorization': 'Bearer YOUR_JWT_TOKEN' }
+}).then(res => res.json()).then(data => console.log(data));</div>
+                        </div>
+                        <div id="me-python" class="tab-content">
+                            <div class="code-block">import requests
+
+headers = {'Authorization': 'Bearer YOUR_JWT_TOKEN'}
+response = requests.get('http://localhost:5000/api/auth/me', headers=headers)
+print(response.json())</div>
+                        </div>
+                        <h4 style="margin-top: 20px;">Response (200 OK)</h4>
+                        <div class="code-block">{
+  "success": true,
+  "user": {
+    "_id": "678c9b7b2201c52b170dc067",
+    "username": "superadmin",
+    "email": "superadmin@jcms.com",
+    "role": "superadmin",
+    "isActive": true,
+    "tenant": null,
+    "createdAt": "2024-01-15T10:30:00.000Z"
+  }
+}</div>
+                        <h4 style="margin-top: 20px;">Status Codes</h4>
+                        <table class="param-table">
+                            <tr><th>Code</th><th>Description</th></tr>
+                            <tr><td>200</td><td>Success</td></tr>
+                            <tr><td>401</td><td>Unauthorized - Invalid or missing token</td></tr>
+                            <tr><td>500</td><td>Internal server error</td></tr>
+                        </table>
+                        <button class="try-btn" onclick="tryEndpoint('me')">Try It Out</button>
+                        <div id="me-response" class="response" style="display:none;"></div>
+                    </div>
+                </div>
+            </section>
+
+            <script>
+                const API_BASE = 'http://localhost:5000/api';
+                let authToken = localStorage.getItem('token') || localStorage.getItem('jcms_token') || '';
+
+                function toggleEndpoint(header) {
+                    const body = header.nextElementSibling;
+                    body.classList.toggle('active');
+                }
+
+                function switchTab(btn, tabId) {
+                    const parent = btn.parentElement.parentElement;
+                    parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    parent.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.getElementById(tabId).classList.add('active');
+                }
+
+                async function tryEndpoint(endpoint) {
+                    const responseDiv = document.getElementById(endpoint + '-response');
+                    responseDiv.style.display = 'block';
+                    responseDiv.innerHTML = '<strong>Loading...</strong>';
+
+                    try {
+                        let response, data;
+                        
+                        if (endpoint === 'register') {
+                            response = await fetch(`${API_BASE}/auth/register`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    username: 'test_' + Date.now(),
+                                    email: `test${Date.now()}@example.com`,
+                                    password: 'test123',
+                                    role: 'editor'
+                                })
+                            });
+                        } else if (endpoint === 'login') {
+                            response = await fetch(`${API_BASE}/auth/login`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    username: 'superadmin',
+                                    password: 'admin123'
+                                })
+                            });
+                            data = await response.json();
+                            if (data.token) {
+                                authToken = data.token;
+                                localStorage.setItem('token', data.token);
+                                localStorage.setItem('jcms_token', data.token);
+                            }
+                        } else if (endpoint === 'me') {
+                            if (!authToken) {
+                                responseDiv.innerHTML = '<strong style="color: #ef4444;">Error:</strong> Please login first to get a token.';
+                                return;
+                            }
+                            response = await fetch(`${API_BASE}/auth/me`, {
+                                headers: { 'Authorization': `Bearer ${authToken}` }
+                            });
+                        }
+
+                        if (!data) data = await response.json();
+                        
+                        if (response.ok) {
+                            responseDiv.style.background = '#f0fdf4';
+                            responseDiv.style.borderLeft = '4px solid #10b981';
+                            responseDiv.innerHTML = `<strong>Success (${response.status}):</strong><pre style="margin-top: 10px; overflow-x: auto;">${JSON.stringify(data, null, 2)}</pre>`;
+                        } else {
+                            responseDiv.style.background = '#fef2f2';
+                            responseDiv.style.borderLeft = '4px solid #ef4444';
+                            responseDiv.innerHTML = `<strong>Error (${response.status}):</strong><pre style="margin-top: 10px;">${JSON.stringify(data, null, 2)}</pre>`;
+                        }
+                    } catch (error) {
+                        responseDiv.style.background = '#fef2f2';
+                        responseDiv.style.borderLeft = '4px solid #ef4444';
+                        responseDiv.innerHTML = `<strong>Error:</strong> ${error.message}<br><small>Make sure your backend is running on ${API_BASE}</small>`;
+                    }
+                }
+            </script>
+        </main>
+    </div>
+</body>
+</html>

@@ -1,0 +1,427 @@
+<!-- IMAGE MANAGEMENT ENDPOINTS -->
+<section id="images-endpoints" class="section">
+    <h2>Image Management</h2>
+    <p>Upload and manage images with processing capabilities.</p>
+
+    <div id="images-upload" class="endpoint">
+        <div class="endpoint-header" onclick="toggleEndpoint(this)">
+            <span class="method post">POST</span>
+            <span class="endpoint-path">/api/images</span>
+            <span>Upload image</span>
+        </div>
+        <div class="endpoint-body">
+            <p>Upload a new image file. Supports JPG, PNG, WebP formats.</p>
+            <h4>Request (multipart/form-data)</h4>
+            <table class="param-table">
+                <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+                <tr><td>image</td><td>file</td><td><span class="badge required">Required</span></td><td>Image file</td></tr>
+                <tr><td>title</td><td>string</td><td><span class="badge optional">Optional</span></td><td>Image title</td></tr>
+                <tr><td>alt</td><td>string</td><td><span class="badge optional">Optional</span></td><td>Alt text</td></tr>
+                <tr><td>tags</td><td>array</td><td><span class="badge optional">Optional</span></td><td>Tags</td></tr>
+            </table>
+            <div class="code-block">curl -X POST http://localhost:5000/api/images \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -F "image=@/path/to/image.jpg" \
+  -F "title=My Image" \
+  -F "alt=Description of image"</div>
+            <h4>Response (201 Created)</h4>
+            <div class="code-block">{
+  "success": true,
+  "message": "Image uploaded successfully",
+  "image": {
+    "_id": "678c9b7b2201c52b170dc070",
+    "filename": "image-1737024000000.jpg",
+    "originalName": "image.jpg",
+    "title": "My Image",
+    "alt": "Description of image",
+    "mimeType": "image/jpeg",
+    "size": 245678,
+    "dimensions": {
+      "width": 1920,
+      "height": 1080
+    },
+    "url": "/uploads/system/690061c2969a396e92040dac/image-1737024000000.jpg",
+    "uploadedBy": "678c9b7b2201c52b170dc067",
+    "createdAt": "2024-01-15T10:30:00.000Z"
+  }
+}</div>
+        </div>
+    </div>
+
+    <div id="images-list" class="endpoint">
+        <div class="endpoint-header" onclick="toggleEndpoint(this)">
+            <span class="method get">GET</span>
+            <span class="endpoint-path">/api/images</span>
+            <span>List images</span>
+        </div>
+        <div class="endpoint-body">
+            <p>Retrieve all images with pagination.</p>
+            <h4>Query Parameters</h4>
+            <table class="param-table">
+                <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
+                <tr><td>page</td><td>number</td><td>Page number (default: 1)</td></tr>
+                <tr><td>limit</td><td>number</td><td>Items per page (default: 20)</td></tr>
+                <tr><td>search</td><td>string</td><td>Search by title or filename</td></tr>
+            </table>
+            <div class="code-block">curl -X GET "http://localhost:5000/api/images?page=1&limit=20" \
+  -H "Authorization: Bearer YOUR_TOKEN"</div>
+            <h4>Response (200 OK)</h4>
+            <div class="code-block">{
+  "success": true,
+  "images": [
+    {
+      "_id": "678c9b7b2201c52b170dc070",
+      "filename": "image-1737024000000.jpg",
+      "title": "My Image",
+      "url": "/uploads/system/690061c2969a396e92040dac/image-1737024000000.jpg",
+      "size": 245678,
+      "dimensions": {
+        "width": 1920,
+        "height": 1080
+      },
+      "createdAt": "2024-01-15T10:30:00.000Z"
+    }
+  ],
+  "pagination": {
+    "total": 50,
+    "page": 1,
+    "pages": 3
+  }
+}</div>
+        </div>
+    </div>
+
+    <div id="images-get" class="endpoint">
+        <div class="endpoint-header" onclick="toggleEndpoint(this)">
+            <span class="method get">GET</span>
+            <span class="endpoint-path">/api/images/:id</span>
+            <span>Get image details</span>
+        </div>
+        <div class="endpoint-body">
+            <p>Retrieve detailed information about a specific image.</p>
+            <div class="code-block">curl -X GET http://localhost:5000/api/images/678c9b7b2201c52b170dc070 \
+  -H "Authorization: Bearer YOUR_TOKEN"</div>
+            <h4>Response (200 OK)</h4>
+            <div class="code-block">{
+  "success": true,
+  "image": {
+    "_id": "678c9b7b2201c52b170dc070",
+    "filename": "image-1737024000000.jpg",
+    "originalName": "image.jpg",
+    "title": "My Image",
+    "alt": "Description of image",
+    "mimeType": "image/jpeg",
+    "size": 245678,
+    "dimensions": {
+      "width": 1920,
+      "height": 1080
+    },
+    "url": "/uploads/system/690061c2969a396e92040dac/image-1737024000000.jpg",
+    "sizes": {
+      "thumbnail": "/uploads/system/690061c2969a396e92040dac/image-1737024000000-thumbnail.jpg",
+      "medium": "/uploads/system/690061c2969a396e92040dac/image-1737024000000-medium.jpg"
+    },
+    "uploadedBy": {
+      "_id": "678c9b7b2201c52b170dc067",
+      "username": "superadmin"
+    },
+    "createdAt": "2024-01-15T10:30:00.000Z"
+  }
+}</div>
+        </div>
+    </div>
+
+    <div id="images-process" class="endpoint">
+        <div class="endpoint-header" onclick="toggleEndpoint(this)">
+            <span class="method post">POST</span>
+            <span class="endpoint-path">/api/images/process/:id/sizes</span>
+            <span>Generate image sizes</span>
+        </div>
+        <div class="endpoint-body">
+            <p>Generate multiple sizes (thumbnail, small, medium, large) for an image.</p>
+            <div class="code-block">curl -X POST http://localhost:5000/api/images/process/678c9b7b2201c52b170dc070/sizes \
+  -H "Authorization: Bearer YOUR_TOKEN"</div>
+            <h4>Response (200 OK)</h4>
+            <div class="code-block">{
+  "success": true,
+  "message": "Image sizes generated successfully",
+  "sizes": {
+    "thumbnail": {
+      "width": 150,
+      "height": 150,
+      "url": "/uploads/system/690061c2969a396e92040dac/image-1737024000000-thumbnail.jpg"
+    },
+    "small": {
+      "width": 320,
+      "height": 180,
+      "url": "/uploads/system/690061c2969a396e92040dac/image-1737024000000-small.jpg"
+    },
+    "medium": {
+      "width": 640,
+      "height": 360,
+      "url": "/uploads/system/690061c2969a396e92040dac/image-1737024000000-medium.jpg"
+    },
+    "large": {
+      "width": 1280,
+      "height": 720,
+      "url": "/uploads/system/690061c2969a396e92040dac/image-1737024000000-large.jpg"
+    }
+  }
+}</div>
+        </div>
+    </div>
+</section>
+
+<!-- FILE MANAGEMENT ENDPOINTS -->
+<section id="files-endpoints" class="section">
+    <h2>File Management</h2>
+    <p>Upload and manage various file types (PDF, DOC, ZIP, etc.).</p>
+
+    <div id="files-upload" class="endpoint">
+        <div class="endpoint-header" onclick="toggleEndpoint(this)">
+            <span class="method post">POST</span>
+            <span class="endpoint-path">/api/files/upload</span>
+            <span>Upload file(s)</span>
+        </div>
+        <div class="endpoint-body">
+            <p>Upload one or multiple files. Supports PDF, DOC, DOCX, XLS, XLSX, ZIP, etc.</p>
+            <h4>Request (multipart/form-data)</h4>
+            <table class="param-table">
+                <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+                <tr><td>file</td><td>file</td><td>Single file upload</td></tr>
+                <tr><td>files</td><td>file[]</td><td>Multiple files (max 10)</td></tr>
+                <tr><td>title</td><td>string</td><td>File title</td></tr>
+                <tr><td>description</td><td>string</td><td>File description</td></tr>
+            </table>
+            <div class="code-block">curl -X POST http://localhost:5000/api/files/upload \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -F "file=@/path/to/document.pdf" \
+  -F "title=Important Document"</div>
+            <h4>Response (201 Created)</h4>
+            <div class="code-block">{
+  "success": true,
+  "message": "File uploaded successfully",
+  "files": [
+    {
+      "_id": "678c9b7b2201c52b170dc071",
+      "filename": "document-1737024000000.pdf",
+      "originalName": "document.pdf",
+      "title": "Important Document",
+      "mimeType": "application/pdf",
+      "size": 1245678,
+      "url": "/uploads/system/690061c2969a396e92040dac/document-1737024000000.pdf",
+      "uploadedBy": "678c9b7b2201c52b170dc067",
+      "createdAt": "2024-01-15T10:30:00.000Z"
+    }
+  ]
+}</div>
+        </div>
+    </div>
+
+    <div id="files-list" class="endpoint">
+        <div class="endpoint-header" onclick="toggleEndpoint(this)">
+            <span class="method get">GET</span>
+            <span class="endpoint-path">/api/files</span>
+            <span>List files</span>
+        </div>
+        <div class="endpoint-body">
+            <p>Retrieve all uploaded files.</p>
+            <h4>Query Parameters</h4>
+            <table class="param-table">
+                <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
+                <tr><td>page</td><td>number</td><td>Page number</td></tr>
+                <tr><td>limit</td><td>number</td><td>Items per page</td></tr>
+                <tr><td>type</td><td>string</td><td>Filter by MIME type</td></tr>
+            </table>
+            <div class="code-block">curl -X GET "http://localhost:5000/api/files?page=1" \
+  -H "Authorization: Bearer YOUR_TOKEN"</div>
+            <h4>Response (200 OK)</h4>
+            <div class="code-block">{
+  "success": true,
+  "files": [
+    {
+      "_id": "678c9b7b2201c52b170dc071",
+      "filename": "document-1737024000000.pdf",
+      "originalName": "document.pdf",
+      "title": "Important Document",
+      "mimeType": "application/pdf",
+      "size": 1245678,
+      "url": "/uploads/system/690061c2969a396e92040dac/document-1737024000000.pdf",
+      "createdAt": "2024-01-15T10:30:00.000Z"
+    }
+  ],
+  "pagination": {
+    "total": 30,
+    "page": 1,
+    "pages": 2
+  }
+}</div>
+        </div>
+    </div>
+</section>
+
+<!-- TENANT MANAGEMENT ENDPOINTS -->
+<section id="tenants-endpoints" class="section">
+    <h2>Tenant Management</h2>
+    <p>Multi-tenant support. SuperAdmin only.</p>
+
+    <div id="tenants-create" class="endpoint">
+        <div class="endpoint-header" onclick="toggleEndpoint(this)">
+            <span class="method post">POST</span>
+            <span class="endpoint-path">/api/tenants</span>
+            <span>Create tenant</span>
+        </div>
+        <div class="endpoint-body">
+            <p>Create a new tenant with admin user. SuperAdmin only.</p>
+            <h4>Request Body</h4>
+            <table class="param-table">
+                <tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr>
+                <tr><td>name</td><td>string</td><td><span class="badge required">Required</span></td><td>Tenant name</td></tr>
+                <tr><td>domain</td><td>string</td><td><span class="badge optional">Optional</span></td><td>Custom domain</td></tr>
+                <tr><td>adminUsername</td><td>string</td><td><span class="badge required">Required</span></td><td>Admin username</td></tr>
+                <tr><td>adminEmail</td><td>string</td><td><span class="badge required">Required</span></td><td>Admin email</td></tr>
+                <tr><td>adminPassword</td><td>string</td><td><span class="badge required">Required</span></td><td>Admin password</td></tr>
+            </table>
+            <div class="code-block">curl -X POST http://localhost:5000/api/tenants \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Acme Corp",
+    "domain": "acme.example.com",
+    "adminUsername": "acme_admin",
+    "adminEmail": "admin@acme.com",
+    "adminPassword": "secure123"
+  }'</div>
+            <h4>Response (201 Created)</h4>
+            <div class="code-block">{
+  "success": true,
+  "message": "Tenant and admin created successfully",
+  "tenant": {
+    "_id": "678c9b7b2201c52b170dc072",
+    "name": "Acme Corp",
+    "domain": "acme.example.com",
+    "isActive": true,
+    "createdAt": "2024-01-15T10:30:00.000Z"
+  },
+  "admin": {
+    "_id": "678c9b7b2201c52b170dc073",
+    "username": "acme_admin",
+    "email": "admin@acme.com",
+    "role": "admin",
+    "tenant": "678c9b7b2201c52b170dc072"
+  }
+}</div>
+        </div>
+    </div>
+
+    <div id="tenants-list" class="endpoint">
+        <div class="endpoint-header" onclick="toggleEndpoint(this)">
+            <span class="method get">GET</span>
+            <span class="endpoint-path">/api/tenants</span>
+            <span>List tenants</span>
+        </div>
+        <div class="endpoint-body">
+            <p>Retrieve all tenants. SuperAdmin only.</p>
+            <div class="code-block">curl -X GET http://localhost:5000/api/tenants \
+  -H "Authorization: Bearer YOUR_TOKEN"</div>
+            <h4>Response (200 OK)</h4>
+            <div class="code-block">{
+  "success": true,
+  "tenants": [
+    {
+      "_id": "678c9b7b2201c52b170dc072",
+      "name": "Acme Corp",
+      "domain": "acme.example.com",
+      "isActive": true,
+      "userCount": 15,
+      "createdAt": "2024-01-15T10:30:00.000Z"
+    }
+  ],
+  "total": 5
+}</div>
+        </div>
+    </div>
+</section>
+
+<!-- ANALYTICS ENDPOINTS -->
+<section id="analytics-endpoints" class="section">
+    <h2>Analytics</h2>
+    <p>System analytics and insights. Admin or SuperAdmin only.</p>
+
+    <div id="analytics-dashboard" class="endpoint">
+        <div class="endpoint-header" onclick="toggleEndpoint(this)">
+            <span class="method get">GET</span>
+            <span class="endpoint-path">/api/analytics/dashboard</span>
+            <span>Dashboard statistics</span>
+        </div>
+        <div class="endpoint-body">
+            <p>Get comprehensive dashboard statistics.</p>
+            <div class="code-block">curl -X GET http://localhost:5000/api/analytics/dashboard \
+  -H "Authorization: Bearer YOUR_TOKEN"</div>
+            <h4>Response (200 OK)</h4>
+            <div class="code-block">{
+  "success": true,
+  "stats": {
+    "users": {
+      "total": 150,
+      "active": 142,
+      "new": 12
+    },
+    "content": {
+      "total": 450,
+      "published": 380,
+      "draft": 70
+    },
+    "images": {
+      "total": 1250,
+      "size": 5242880000
+    },
+    "files": {
+      "total": 320,
+      "size": 2147483648
+    }
+  }
+}</div>
+        </div>
+    </div>
+
+    <div id="analytics-users" class="endpoint">
+        <div class="endpoint-header" onclick="toggleEndpoint(this)">
+            <span class="method get">GET</span>
+            <span class="endpoint-path">/api/analytics/users</span>
+            <span>User activity analytics</span>
+        </div>
+        <div class="endpoint-body">
+            <p>Get user activity and engagement metrics.</p>
+            <h4>Query Parameters</h4>
+            <table class="param-table">
+                <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
+                <tr><td>startDate</td><td>date</td><td>Start date (ISO format)</td></tr>
+                <tr><td>endDate</td><td>date</td><td>End date (ISO format)</td></tr>
+            </table>
+            <div class="code-block">curl -X GET "http://localhost:5000/api/analytics/users?startDate=2024-01-01" \
+  -H "Authorization: Bearer YOUR_TOKEN"</div>
+            <h4>Response (200 OK)</h4>
+            <div class="code-block">{
+  "success": true,
+  "analytics": {
+    "activeUsers": 142,
+    "newUsers": 12,
+    "topUsers": [
+      {
+        "userId": "678c9b7b2201c52b170dc067",
+        "username": "superadmin",
+        "activityCount": 245
+      }
+    ],
+    "activityByDay": [
+      {
+        "date": "2024-01-15",
+        "count": 45
+      }
+    ]
+  }
+}</div>
+        </div>
+    </div>
+</section>

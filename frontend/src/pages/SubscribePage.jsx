@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Layout from '../components/shared/Layout.jsx';
 
 const SubscribePage = () => {
+  const navigate = useNavigate();
   const [prices, setPrices] = useState({ Monthly: 10, Yearly: 100 });
   const [loading, setLoading] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState(null);
@@ -11,6 +13,7 @@ const SubscribePage = () => {
 
   useEffect(() => {
     fetchPrices();
+    fetchSubscriptionStatus();
   }, []);
 
   const fetchPrices = async () => {
@@ -77,7 +80,41 @@ const SubscribePage = () => {
         description: `${subtype} Subscription`,
         order_id: orderData.data.order.id,
         handler: async function (response) {
-          setLoading(false);
+          try {
+            const verifyResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/subscription/verify-payment`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                subtype: subtype
+              })
+            });
+
+            const verifyData = await verifyResponse.json();
+            
+            if (verifyData.success) {
+              alert('✅ Payment successful! Subscription activated.');
+              const userRole = user.role?.toLowerCase();
+              if (userRole === 'superadmin') {
+                navigate('/superadmin/profile');
+              } else if (userRole === 'admin') {
+                navigate('/admin/profile');
+              } else {
+                navigate('/user/profile');
+              }
+            } else {
+              alert('❌ Payment verification failed: ' + verifyData.message);
+            }
+          } catch (error) {
+            alert('❌ Error verifying payment: ' + error.message);
+          } finally {
+            setLoading(false);
+          }
         },
 
         prefill: {
@@ -128,6 +165,18 @@ const SubscribePage = () => {
 
 
 
+          {subscriptionStatus?.hasActiveSubscription && subscriptionStatus?.subscription && (
+            <div className="mb-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h3 className="text-lg font-semibold text-blue-900 mb-2">Current Plan</h3>
+              <p className="text-blue-700">
+                You are currently subscribed to the <strong>{subscriptionStatus.subscription.subscriptionType}</strong> plan.
+                {subscriptionStatus.subscription.endDate && (
+                  <span> Valid until {new Date(subscriptionStatus.subscription.endDate).toLocaleDateString('en-GB')}</span>
+                )}
+              </p>
+            </div>
+          )}
+
           <div className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Available Plans</h2>
           </div>
@@ -162,10 +211,10 @@ const SubscribePage = () => {
                 </ul>
                 <button
                   onClick={() => handleSubscribe('Monthly')}
-                  disabled={loading}
+                  disabled={loading || (subscriptionStatus?.subscription?.subscriptionType === 'Monthly')}
                   className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {loading ? 'Processing...' : 'Subscribe Monthly'}
+                  {subscriptionStatus?.subscription?.subscriptionType === 'Monthly' ? 'Current Plan' : loading ? 'Processing...' : 'Subscribe Monthly'}
                 </button>
               </div>
             </div>
@@ -206,10 +255,10 @@ const SubscribePage = () => {
                 </ul>
                 <button
                   onClick={() => handleSubscribe('Yearly')}
-                  disabled={loading}
+                  disabled={loading || (subscriptionStatus?.subscription?.subscriptionType === 'Yearly')}
                   className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {loading ? 'Processing...' : 'Subscribe Yearly'}
+                  {subscriptionStatus?.subscription?.subscriptionType === 'Yearly' ? 'Current Plan' : loading ? 'Processing...' : 'Subscribe Yearly'}
                 </button>
               </div>
             </div>

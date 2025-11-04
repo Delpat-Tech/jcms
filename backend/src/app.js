@@ -27,6 +27,10 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Serve public files for Cloudflare Tunnel
 app.use('/public', express.static(path.join(__dirname, '../public')));
+
+// Serve API documentation
+app.use('/docs', express.static(path.join(__dirname, '../docs')));
+
 app.use(express.urlencoded({ extended: true }));
 
 // Serve the main HTML file at root route
