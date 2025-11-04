@@ -250,16 +250,19 @@ exports.handleWebhook = async (req, res) => {
       });
     }
 
+    // Timing-safe comparison to prevent timing attacks
     const expectedSignature = crypto
       .createHmac('sha256', webhookSecret)
       .update(JSON.stringify(req.body))
       .digest('hex');
 
-    if (expectedSignature !== webhookSignature) {
-      logger.warn('Invalid webhook signature', {
-        expected: expectedSignature,
-        received: webhookSignature
-      });
+    const isValidSignature = crypto.timingSafeEqual(
+      Buffer.from(expectedSignature, 'hex'),
+      Buffer.from(webhookSignature, 'hex')
+    );
+
+    if (!isValidSignature) {
+      logger.warn('Invalid webhook signature');
       return res.status(400).json({
         success: false,
         message: 'Invalid webhook signature'

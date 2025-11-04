@@ -11,7 +11,6 @@ const SubscribePage = () => {
 
   useEffect(() => {
     fetchPrices();
-    fetchSubscriptionStatus();
   }, []);
 
   const fetchPrices = async () => {
@@ -78,43 +77,9 @@ const SubscribePage = () => {
         description: `${subtype} Subscription`,
         order_id: orderData.data.order.id,
         handler: async function (response) {
-          try {
-            const verifyResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/subscription/verify-payment`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-              },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                subtype: subtype
-              })
-            });
-            
-            const verifyData = await verifyResponse.json();
-            
-            if (verifyData.success) {
-              const newEndDate = new Date(verifyData.data.subscription.endDate).toLocaleDateString('en-GB');
-              alert(`✅ Payment Successful!\n\nYour ${subtype} subscription is now active.\nExpires: ${newEndDate}`);
-              setTimeout(() => fetchSubscriptionStatus(), 1000);
-            } else if (verifyData.message && verifyData.message.includes('already processed')) {
-              alert('✅ Payment Successful!\n\nYour subscription has been activated via webhook.');
-              setTimeout(() => fetchSubscriptionStatus(), 1000);
-            } else {
-              alert('❌ Payment Verification Failed\n\n' + verifyData.message);
-            }
-          } catch (error) {
-            alert('⚠️ Payment Completed\n\nVerification failed. Please contact support with your payment ID.');
-          }
+          setLoading(false);
         },
-        modal: {
-          ondismiss: function() {
-            alert('❌ Payment Cancelled\n\nYou closed the payment window.');
-            setLoading(false);
-          }
-        },
+
         prefill: {
           name: user.username || user.name,
           email: user.email
@@ -138,6 +103,12 @@ const SubscribePage = () => {
         setLoading(false);
       });
       
+      // Handle modal dismiss
+      rzp.on('payment.cancel', function() {
+        alert('❌ Payment Cancelled\n\nYou closed the payment window.');
+        setLoading(false);
+      });
+      
     } catch (error) {
       alert('❌ Error: ' + error.message);
       setLoading(false);
@@ -157,30 +128,7 @@ const SubscribePage = () => {
             </p>
           </div>
 
-          {/* Current Subscription Status */}
-          <div className="mb-8 p-6 bg-white rounded-lg shadow-md">
-            <h2 className="text-2xl font-semibold mb-4">Current Subscription</h2>
-            {subscriptionStatus?.hasActiveSubscription ? (
-              <div className="text-green-600">
-                <p className="font-medium">✅ Active Subscription</p>
-                <p>Plan: {subscriptionStatus.subscription?.subscriptionType || 'N/A'}</p>
-                <p>Active: {subscriptionStatus.subscription?.isActive ? 'Yes' : 'No'}</p>
-                <p>Expires: {subscriptionStatus.subscription?.endDate ? new Date(subscriptionStatus.subscription.endDate).toLocaleDateString('en-GB') : 'N/A'}</p>
-                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
-                  <p className="text-blue-800 text-sm">
-                    ℹ️ New subscription will start after your current subscription expires
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="text-red-600">
-                <p className="font-medium">❌ No Active Subscription</p>
-                <p>Plan: None</p>
-                <p>Active: No</p>
-                <p>Subscribe now to access premium features</p>
-              </div>
-            )}
-          </div>
+
 
           <div className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Available Plans</h2>

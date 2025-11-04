@@ -79,8 +79,8 @@ export default function SubscriptionPage() {
                   <div className="mb-2"><span className="font-semibold">Plan:</span> {status.subscription.subscriptionType}</div>
                   <div className="mb-2"><span className="font-semibold">Active:</span> {String(status.subscription.isActive && !status.subscription.isExpired)}</div>
                   <div className="mb-2"><span className="font-semibold">Amount:</span> ₹{status.subscription.amount}</div>
-                  <div className="mb-2"><span className="font-semibold">Start Date:</span> {new Date(status.subscription.startDate).toLocaleDateString()}</div>
-                  <div className="mb-2"><span className="font-semibold">End Date:</span> {new Date(status.subscription.endDate).toLocaleDateString()}</div>
+                  <div className="mb-2"><span className="font-semibold">Start Date:</span> {new Date(status.subscription.startDate).toLocaleDateString('en-GB')}</div>
+                  <div className="mb-2"><span className="font-semibold">End Date:</span> {new Date(status.subscription.endDate).toLocaleDateString('en-GB')}</div>
                   {status.subscription.paymentStatus && (
                     <div className="mb-2"><span className="font-semibold">Payment:</span> {status.subscription.paymentStatus}</div>
                   )}

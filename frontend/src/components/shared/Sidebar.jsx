@@ -76,11 +76,20 @@ const NavItem = ({ href, label, icon, isActiveCheck, isTextHidden, onLinkClick }
   const isActive = isActiveCheck ? isActiveCheck(pathname, href) : defaultIsActiveCheck(pathname, href);
   const renderedIcon = icon || <FeatherIcon name={label || href} active={isActive} />;
 
+  const handleClick = (e) => {
+    if (href === '/subscription') {
+      e.preventDefault();
+      window.location.href = '/subscription';
+    } else {
+      onLinkClick && onLinkClick();
+    }
+  };
+
   return (
     <li>
       <Link
         to={href}
-        onClick={onLinkClick}
+        onClick={handleClick}
         className={`relative flex items-center px-3 py-2.5 text-sm rounded-lg transition-all duration-150 ease-in-out group w-full h-[40px] ${
           isActive
             ? "bg-indigo-50 text-indigo-700 shadow-inner"
