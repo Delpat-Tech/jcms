@@ -1,192 +1,74 @@
-// src/routes/imagesRoutes.js
 const express = require('express');
-const {
-  createImage,
-  getImages,
-  getImageById,
-  updateImage,
-  deleteImage,
-  patchImage,
-} = require('../controllers/imageController');
-const { authenticate, requireAdminOrAbove } = require('../middlewares/auth');
 const upload = require('../middlewares/upload');
+const { authenticate, requireActiveUser } = require('../middlewares/auth');
 const { logActivity } = require('../middlewares/activityLogger');
 const { checkSubscriptionLimits } = require('../middlewares/subscriptionLimits');
-const { addMissingImageFields } = require('../utils/fixImageModel');
+const auth = authenticate;
+
+// --- Imports Updated ---
+// We now import from the enhancedImageController
+const {
+  uploadImages,
+  getContentPageImages,
+  getImageById,
+  updateImageMetadata,
+  deleteImages, // This is the new bulk-delete function
+  getR2Status,
+  getImageAnalytics
+} = require('../controllers/enhancedImageController');
+
+// This import remains the same
+const {
+  generateSizes,
+  generateSpecificSize,
+  convertFormat,
+  streamSize
+} = require('../controllers/imageProcessingController');
+
 const router = express.Router();
 
-// Unified Image Management Routes for All Roles (permissions handled in controller)
-router.post('/', authenticate, checkSubscriptionLimits, logActivity('image_upload', 'image'), upload.single('image'), addMissingImageFields, createImage);
-router.get('/', authenticate, getImages); // Supports ?own=true to see only user's images
-router.get('/:id', authenticate, getImageById);
-router.put('/:id', authenticate, logActivity('image_update', 'image'), upload.single('image'), updateImage);
-router.delete('/:id', authenticate, logActivity('image_delete', 'image'), deleteImage);
-router.patch('/:id', authenticate, logActivity('image_update', 'image'), upload.single('image'), patchImage);
+// --- Routes Updated ---
 
-// Retrieve specific size variant (generates on-demand if missing)
-const { streamSize } = require('../controllers/imageProcessingController');
-router.get('/:id/size/:size', authenticate, streamSize);
+// POST /
+// Uses 'uploadImages' and 'upload.array' for multi-file upload
+router.post('/', auth, requireActiveUser, checkSubscriptionLimits, logActivity('image_upload', 'image'), upload.array('images', 10), uploadImages);
 
-// Public image resize endpoints (no auth required)
-router.get('/:id/public/thumbnail', async (req, res) => {
-  try {
-    const Image = require('../models/image');
-    const sharp = require('sharp');
-    const fs = require('fs');
-    const path = require('path');
-    
-    const image = await Image.findById(req.params.id);
-    if (!image || image.visibility !== 'public') {
-      return res.status(404).json({ success: false, message: 'Public image not found' });
-    }
-    
-    const imagePath = path.join(__dirname, '..', '..', image.internalPath);
-    if (!fs.existsSync(imagePath)) {
-      return res.status(404).json({ success: false, message: 'Image file not found' });
-    }
-    
-    const resizedBuffer = await sharp(imagePath)
-      .resize(150, 150, { fit: 'cover' })
-      .jpeg({ quality: 80 })
-      .toBuffer();
-    
-    res.set({
-      'Content-Type': 'image/jpeg',
-      'Cache-Control': 'public, max-age=86400'
-    });
-    res.send(resizedBuffer);
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
+// GET /
+// Uses 'getContentPageImages' which handles filtering, pagination, etc.
+router.get('/', auth, getContentPageImages);
 
-router.get('/:id/public/medium', async (req, res) => {
-  try {
-    const Image = require('../models/image');
-    const sharp = require('sharp');
-    const fs = require('fs');
-    const path = require('path');
-    
-    const image = await Image.findById(req.params.id);
-    if (!image || image.visibility !== 'public') {
-      return res.status(404).json({ success: false, message: 'Public image not found' });
-    }
-    
-    const imagePath = path.join(__dirname, '..', '..', image.internalPath);
-    if (!fs.existsSync(imagePath)) {
-      return res.status(404).json({ success: false, message: 'Image file not found' });
-    }
-    
-    const resizedBuffer = await sharp(imagePath)
-      .resize(800, 600, { fit: 'inside', withoutEnlargement: true })
-      .jpeg({ quality: 85 })
-      .toBuffer();
-    
-    res.set({
-      'Content-Type': 'image/jpeg',
-      'Cache-Control': 'public, max-age=86400'
-    });
-    res.send(resizedBuffer);
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
+// GET /analytics
+// New route for the analytics function
+router.get('/analytics', auth, getImageAnalytics);
 
-// Image resize endpoints for download (authenticated)
-router.get('/:id/thumbnail', authenticate, async (req, res) => {
-  try {
-    const Image = require('../models/image');
-    const sharp = require('sharp');
-    const fs = require('fs');
-    const path = require('path');
-    
-    const image = await Image.findById(req.params.id);
-    if (!image) {
-      return res.status(404).json({ success: false, message: 'Image not found' });
-    }
-    
-    const imagePath = path.join(__dirname, '..', '..', image.internalPath);
-    if (!fs.existsSync(imagePath)) {
-      return res.status(404).json({ success: false, message: 'Image file not found' });
-    }
-    
-    const resizedBuffer = await sharp(imagePath)
-      .resize(150, 150, { fit: 'cover' })
-      .jpeg({ quality: 80 })
-      .toBuffer();
-    
-    res.set({
-      'Content-Type': 'image/jpeg',
-      'Content-Disposition': `attachment; filename="${image.title || 'image'}_thumbnail.jpg"`
-    });
-    res.send(resizedBuffer);
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
+// GET /r2status
+// New route to check R2 configuration
+router.get('/r2status', auth, getR2Status);
 
-router.get('/:id/medium', authenticate, async (req, res) => {
-  try {
-    const Image = require('../models/image');
-    const sharp = require('sharp');
-    const fs = require('fs');
-    const path = require('path');
-    
-    const image = await Image.findById(req.params.id);
-    if (!image) {
-      return res.status(404).json({ success: false, message: 'Image not found' });
-    }
-    
-    const imagePath = path.join(__dirname, '..', '..', image.internalPath);
-    if (!fs.existsSync(imagePath)) {
-      return res.status(404).json({ success: false, message: 'Image file not found' });
-    }
-    
-    const resizedBuffer = await sharp(imagePath)
-      .resize(800, 600, { fit: 'inside', withoutEnlargement: true })
-      .jpeg({ quality: 85 })
-      .toBuffer();
-    
-    res.set({
-      'Content-Type': 'image/jpeg',
-      'Content-Disposition': `attachment; filename="${image.title || 'image'}_medium.jpg"`
-    });
-    res.send(resizedBuffer);
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
+// Image processing routes (these are good, no changes)
+router.post('/process/:id/sizes', auth, requireActiveUser, logActivity('image_process', 'image'), generateSizes);
+router.post('/process/:id/size', auth, requireActiveUser, logActivity('image_process', 'image'), generateSpecificSize);
+router.post('/process/:id/convert', auth, requireActiveUser, logActivity('image_convert', 'image'), convertFormat);
 
-router.get('/:id/large', authenticate, async (req, res) => {
-  try {
-    const Image = require('../models/image');
-    const sharp = require('sharp');
-    const fs = require('fs');
-    const path = require('path');
-    
-    const image = await Image.findById(req.params.id);
-    if (!image) {
-      return res.status(404).json({ success: false, message: 'Image not found' });
-    }
-    
-    const imagePath = path.join(__dirname, '..', '..', image.internalPath);
-    if (!fs.existsSync(imagePath)) {
-      return res.status(404).json({ success: false, message: 'Image file not found' });
-    }
-    
-    const resizedBuffer = await sharp(imagePath)
-      .resize(1920, 1080, { fit: 'inside', withoutEnlargement: true })
-      .jpeg({ quality: 90 })
-      .toBuffer();
-    
-    res.set({
-      'Content-Type': 'image/jpeg',
-      'Content-Disposition': `attachment; filename="${image.title || 'image'}_large.jpg"`
-    });
-    res.send(resizedBuffer);
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
+// GET /:id/:size
+// Good, no changes
+router.get('/:id/:size', auth, streamSize);
+
+// GET /:id
+// Good, no changes
+router.get('/:id', auth, getImageById);
+
+// PUT /:id
+// Uses 'updateImageMetadata' and removes 'upload' middleware, as it only updates text data
+router.put('/:id', auth, requireActiveUser, logActivity('image_update', 'image'), updateImageMetadata);
+
+// DELETE /:id
+// This route now uses a small wrapper to adapt the single-ID delete (/:id)
+// to the new 'deleteImages' controller, which expects an array.
+const deleteSingleImage = (req, res, next) => {
+  req.body.imageIds = [req.params.id];
+  return deleteImages(req, res, next);
+};
+router.delete('/:id', auth, requireActiveUser, logActivity('image_delete', 'image'), deleteSingleImage);
 
 module.exports = router;

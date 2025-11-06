@@ -1,4 +1,4 @@
-// routes/analyticsRoutes.js
+// src/routes/analyticsRoutes.js
 const express = require('express');
 const {
   getDashboardStats,

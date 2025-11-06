@@ -6,50 +6,26 @@ const File = require('../models/file');
 const getDashboardStats = async (req, res) => {
   try {
     const tenantFilter = req.tenantFilter || {};
-    const [
-      totalUsers,
-      totalFiles,
-      recentImages,
-      recentFiles,
-      usersByRole,
-      uploadsByDay
-    ] = await Promise.all([
+    const thirtyDaysAgo = new Date(Date.now() - 30*24*60*60*1000);
+
+    const [totalUsers, totalFiles, usersByRole, uploadsByDay, recentUploads] = await Promise.all([
       User.countDocuments(tenantFilter),
-      File.countDocuments(tenantFilter),
-      Image.find(tenantFilter).sort({ createdAt: -1 }).limit(10).populate('user', 'username'),
-      File.find(tenantFilter).sort({ createdAt: -1 }).limit(10).populate('user', 'username'),
+      Image.countDocuments(tenantFilter),
       User.aggregate([
-        { $lookup: { from: 'roles', localField: 'role', foreignField: '_id', as: 'role' } },
-        { $unwind: '$role' },
         ...(tenantFilter.tenant ? [{ $match: { tenant: tenantFilter.tenant } }] : []),
-        { $group: { _id: '$role.name', count: { $sum: 1 } } }
+        { $group: { _id: '$role', count: { $sum: 1 } } }
       ]),
       Image.aggregate([
-        ...(tenantFilter.tenant ? [{ $match: { tenant: tenantFilter.tenant } }] : []),
-        { $group: { 
-          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-          count: { $sum: 1 }
-        }},
-        { $sort: { _id: -1 } },
-        { $limit: 7 }
-      ])
+        { $match: { createdAt: { $gte: thirtyDaysAgo }, ...tenantFilter } },
+        { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }, count: { $sum: 1 } } },
+        { $sort: { '_id': 1 } }
+      ]),
+      Image.find(tenantFilter).sort({ createdAt: -1 }).limit(10).populate('user', 'username')
     ]);
-
-    // Combine and sort recent uploads (images + files)
-    const allUploads = [
-      ...recentImages.map(img => ({ ...img.toObject(), type: 'image' })),
-      ...recentFiles.map(file => ({ ...file.toObject(), type: 'file' }))
-    ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 10);
 
     res.json({
       success: true,
-      data: {
-        totalUsers,
-        totalFiles,
-        recentUploads: allUploads,
-        usersByRole,
-        uploadsByDay
-      }
+      data: { totalUsers, totalFiles, usersByRole, uploadsByDay, recentUploads }
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

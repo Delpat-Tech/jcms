@@ -29,7 +29,10 @@ const jsonDocumentSchema = new mongoose.Schema({
     type: Number,
     required: true
   }
-}, { timestamps: true });
+}, { 
+  timestamps: true,
+  suppressReservedKeysWarning: true // <-- This line is added to remove the warning
+});
 
 jsonDocumentSchema.index({ sourceFile: 1, index: 1 });
 

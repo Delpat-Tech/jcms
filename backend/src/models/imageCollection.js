@@ -73,7 +73,7 @@ const imageCollectionSchema = new mongoose.Schema({
 
 // Indexes
 imageCollectionSchema.index({ user: 1, tenant: 1, visibility: 1 });
-imageCollectionSchema.index({ slug: 1 });
+// imageCollectionSchema.index({ slug: 1 }); // <-- This line is removed to fix the duplicate index warning
 imageCollectionSchema.index({ tenant: 1, visibility: 1, createdAt: -1 });
 imageCollectionSchema.index({ tags: 1 });
 

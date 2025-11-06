@@ -1,23 +1,23 @@
-// routes/imageRoutes.js
+// src/routes/imagesRoutes.js
 const express = require('express');
 const upload = require('../middlewares/upload');
-const { authenticate, requireActiveUser } = require('../middlewares/auth');
+const { authenticate, requireActiveUser, requireEditorOrAbove } = require('../middlewares/auth');
 const { logActivity } = require('../middlewares/activityLogger');
 const { checkSubscriptionLimits } = require('../middlewares/subscriptionLimits');
 const auth = authenticate;
 
+// --- Imports Updated ---
 const {
-  createImage,
-  getImages,
+  uploadImages,
+  getContentPageImages,
   getImageById,
-  updateImage,
-  deleteImage,
-  patchImage,
-  getBulkImages,
-  getRawImages,
-  getRawImageById
-} = require('../controllers/imageController');
+  updateImageMetadata,
+  deleteImages,
+  getR2Status,
+  getImageAnalytics
+} = require('../controllers/enhancedImageController');
 
+// --- Routes from imageProcessingController ---
 const {
   generateSizes,
   generateSpecificSize,
@@ -27,23 +27,25 @@ const {
 
 const router = express.Router();
 
-router.post('/', auth, requireActiveUser, checkSubscriptionLimits, logActivity('image_upload', 'image'), upload.single('image'), createImage);
-router.get('/', auth, getImages);
-router.get('/bulk', auth, getBulkImages);
-
-// Image processing routes (before /:id to avoid conflicts)
-router.post('/process/:id/sizes', auth, requireActiveUser, logActivity('image_process', 'image'), generateSizes);
-router.post('/process/:id/size', auth, requireActiveUser, logActivity('image_process', 'image'), generateSpecificSize);
-router.post('/process/:id/convert', auth, requireActiveUser, logActivity('image_convert', 'image'), convertFormat);
-
-router.get('/:id/:size', auth, streamSize);
+// --- Image Management Routes ---
+router.post('/', auth, requireActiveUser, checkSubscriptionLimits, logActivity('image_upload', 'image'), upload.array('images', 10), uploadImages);
+router.get('/', auth, getContentPageImages);
+router.get('/analytics', auth, getImageAnalytics);
+router.get('/r2status', auth, getR2Status);
 router.get('/:id', auth, getImageById);
-router.put('/:id', auth, requireActiveUser, logActivity('image_update', 'image'), upload.single('image'), updateImage);
-router.patch('/:id', auth, requireActiveUser, logActivity('image_update', 'image'), patchImage);
-router.delete('/:id', auth, requireActiveUser, logActivity('image_delete', 'image'), deleteImage);
+router.put('/:id', auth, requireActiveUser, logActivity('image_update', 'image'), updateImageMetadata);
 
-// Raw JSON routes
-router.get('/raw', auth, getRawImages);
-router.get('/:id/raw', auth, getRawImageById);
+// --- Image Processing Routes (Merged) ---
+router.post('/process/:id/sizes', auth, requireEditorOrAbove, logActivity('image_process', 'image'), generateSizes);
+router.post('/process/:id/size', auth, requireEditorOrAbove, logActivity('image_process', 'image'), generateSpecificSize);
+router.post('/process/:id/convert', auth, requireEditorOrAbove, logActivity('image_convert', 'image'), convertFormat);
+router.get('/:id/:size', auth, streamSize); // Stream a specific size
+
+// --- Delete Route ---
+const deleteSingleImage = (req, res, next) => {
+  req.body.imageIds = [req.params.id];
+  return deleteImages(req, res, next);
+};
+router.delete('/:id', auth, requireActiveUser, logActivity('image_delete', 'image'), deleteSingleImage);
 
 module.exports = router;

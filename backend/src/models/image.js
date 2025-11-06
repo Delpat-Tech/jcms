@@ -102,7 +102,10 @@ const imageSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   }
-}, { timestamps: true });
+}, { 
+  timestamps: true,
+  suppressReservedKeysWarning: true // <-- This line is added to remove the warning
+});
 
 // Indexes for performance
 imageSchema.index({ user: 1, tenant: 1, visibility: 1 });

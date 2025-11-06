@@ -61,7 +61,10 @@ const fileSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   }
-}, { timestamps: true });
+}, { 
+  timestamps: true,
+  suppressReservedKeysWarning: true // <-- This line is added to remove the warning
+});
 
 // Indexes for performance
 fileSchema.index({ expiresAt: 1, isExpired: 1 }); // Index for expiration cleanup

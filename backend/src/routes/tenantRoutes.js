@@ -1,4 +1,4 @@
-// routes/tenantRoutes.js
+// src/routes/tenantRoutes.js
 const express = require('express');
 const { 
   createTenant, 
@@ -17,9 +17,11 @@ const {
   bulkUpdateTenantUsers,
   bulkDeleteTenantUsers,
   getTenantStats,
-  exportTenantUsers,
-  uploadTenantLogo
+  exportTenantUsers
 } = require('../controllers/tenantController');
+
+// Correct import for uploadTenantLogo
+const { uploadTenantLogo } = require('../controllers/tenantBrandingController');
 const { authenticate, requireSuperAdmin, requireAdminOrAbove } = require('../middlewares/auth');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
@@ -27,19 +29,14 @@ const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
 
 // Tenant CRUD (superadmin only)
-router.post('/', authenticate, requireSuperAdmin, createTenant); // legacy combined creation
-router.post('/create', authenticate, requireSuperAdmin, createTenantOnly); // tenant only
-router.post('/:tenantId/admin', authenticate, requireSuperAdmin, createTenantAdmin); // create admin for existing tenant
-router.post('/register', registerTenantWithAdmin); // public registration (guard with env code)
+router.post('/', authenticate, requireSuperAdmin, createTenant);
+router.post('/create', authenticate, requireSuperAdmin, createTenantOnly);
+router.post('/:tenantId/admin', authenticate, requireSuperAdmin, createTenantAdmin);
+router.post('/register', registerTenantWithAdmin);
 router.get('/', authenticate, requireSuperAdmin, getTenants);
 router.get('/:id', authenticate, requireSuperAdmin, getTenantById);
 router.put('/:id', authenticate, requireSuperAdmin, updateTenant);
 router.delete('/:id', authenticate, requireSuperAdmin, deleteTenant);
-
-// Test route
-router.get('/test', (req, res) => {
-  res.json({ success: true, message: 'Tenant routes working' });
-});
 
 // Tenant user management
 router.post('/:tenantId/users', authenticate, requireAdminOrAbove, createTenantUser);
@@ -55,11 +52,6 @@ router.delete('/:tenantId/users/bulk', authenticate, requireAdminOrAbove, bulkDe
 // Tenant analytics and reporting
 router.get('/:tenantId/stats', authenticate, requireAdminOrAbove, getTenantStats);
 router.get('/:tenantId/users/export', authenticate, requireAdminOrAbove, exportTenantUsers);
-
-// Test route for debugging
-router.get('/:tenantId/test-logo', (req, res) => {
-  res.json({ success: true, message: 'Logo route accessible', tenantId: req.params.tenantId });
-});
 
 // Tenant branding
 router.post('/:tenantId/logo', authenticate, upload.single('logo'), uploadTenantLogo);
