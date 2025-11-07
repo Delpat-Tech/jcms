@@ -30,8 +30,22 @@ const router = express.Router();
 // --- Routes Updated ---
 
 // POST /
-// Uses 'uploadImages' and 'upload.array' for multi-file upload
-router.post('/', auth, requireActiveUser, checkSubscriptionLimits, logActivity('image_upload', 'image'), upload.array('images', 10), uploadImages);
+// Uses 'uploadImages' and accepts any field name for compatibility
+router.post('/', auth, requireActiveUser, checkSubscriptionLimits, logActivity('image_upload', 'image'), 
+  (req, res, next) => {
+    upload.any()(req, res, (err) => {
+      if (err) return next(err);
+      if (req.files) {
+        req.files = req.files.map(file => {
+          file.fieldname = 'images';
+          return file;
+        });
+      }
+      next();
+    });
+  },
+  uploadImages
+);
 
 // GET /
 // Uses 'getContentPageImages' which handles filtering, pagination, etc.

@@ -1,7 +1,6 @@
 // components/common/TenantSelector.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { tenantSwitchingApi } from '../../api';
-import './TenantSelector.css';
 import TrioLoader from '../ui/TrioLoader';
 
 const TenantSelector = ({ 

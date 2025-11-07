@@ -1,4 +1,3 @@
-// src/app.js
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
@@ -8,38 +7,33 @@ const logger = require('./config/logger');
 const app = express();
 
 // --- CORS Configuration ---
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5000,http://127.0.0.1:5000,http://localhost:3000,http://127.0.0.1:3000,https://jackson-intellectual-native-assembly.trycloudflare.com,https://chemicals-happy-vinyl-presented.trycloudflare.com')
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5000,http://localhost:3000')
   .split(',')
   .map(o => o.trim())
   .filter(Boolean);
 
 const corsOptions = {
-  // Use a function to dynamically check the origin
   origin: (origin, callback) => {
-    // Allow requests with no origin (like Postman or mobile apps)
     if (!origin) return callback(null, true);
-    
-    // Check if the origin is in our allowed list
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    if (allowedOrigins.includes(origin)) {
       return callback(null, true);
-    } else {
-      return callback(new Error('Not allowed by CORS'));
     }
+    return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
-  methods: ['GET','HEAD','PUT','PATCH','POST','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type','Authorization','X-Requested-With'],
+  methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // --- Static Asset Serving ---
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use('/public', express.static(path.join(__dirname, '../public')));
 app.use('/docs', express.static(path.join(__dirname, '../docs')));
-app.use(express.urlencoded({ extended: true }));
 
 
 // --- Public API Routes (No Auth Required) ---
@@ -77,9 +71,11 @@ app.use('/api/cleanup', require('./routes/cleanupRoutes'));
 // --- Health Check ---
 app.get("/api/health", (req, res) => {
   res.status(200).json({ 
+    success: true,
     message: "Server is running", 
     port: process.env.PORT || 5000, 
-    timestamp: new Date() 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 
@@ -95,26 +91,26 @@ app.get('/api/settings', async (req, res) => {
 });
 
 
-// --- CORRECTED: Catch-all route for SPA (React Router) ---
-// Using a regex /.*/ to match all paths and avoid the PathError
-app.get(/.*/, (req, res, next) => {
+// --- SPA Catch-all (must be last) ---
+app.use((req, res, next) => {
   if (req.path.startsWith('/api/')) {
-    // Let 404 errors for API routes be handled by the error handler
-    return next();
+    return res.status(404).json({
+      success: false,
+      message: 'API endpoint not found',
+      path: req.path
+    });
   }
-  // For all other routes, send the main HTML file
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 
 // --- Global Error Handler ---
 app.use((err, req, res, next) => {
-  // Handle CORS errors specifically
   if (err.message === 'Not allowed by CORS') {
     logger.warn('CORS Error', { origin: req.header('Origin') });
     return res.status(403).json({
       success: false,
-      message: 'CORS: This origin is not allowed to access resources.'
+      message: 'CORS: Origin not allowed'
     });
   }
   
@@ -122,24 +118,26 @@ app.use((err, req, res, next) => {
     if (err.code === "LIMIT_FILE_SIZE") {
       return res.status(400).json({
         success: false,
-        message: "File too large. Check subscription limits."
+        message: "File too large"
       });
     }
     return res.status(400).json({ success: false, message: err.message });
-  } else if (err.message.includes("File type not supported")) {
+  }
+
+  if (err.message?.includes("File type not supported")) {
     return res.status(400).json({ success: false, message: err.message });
   }
 
-  logger.error('Unhandled server error', { 
+  logger.error('Server error', { 
     error: err.message, 
-    stack: err.stack,
-    url: req?.url, 
-    method: req?.method 
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+    url: req.url, 
+    method: req.method 
   });
-  res.status(500).json({
+  
+  res.status(err.status || 500).json({
     success: false,
-    message: "Server error",
-    error: err.message
+    message: process.env.NODE_ENV === 'production' ? 'Server error' : err.message
   });
 });
 

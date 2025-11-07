@@ -52,7 +52,20 @@ router.post('/upload',
   (req, res, next) => {
     const maxFileSize = req.subscriptionLimits?.maxFileSize || 10 * 1024 * 1024;
     const dynamicUpload = createUpload(maxFileSize);
-    dynamicUpload.array('images', 10)(req, res, next);
+    
+    // Try multiple field names for compatibility
+    dynamicUpload.any()(req, res, (err) => {
+      if (err) return next(err);
+      
+      // Normalize field names to 'images'
+      if (req.files) {
+        req.files = req.files.map(file => {
+          file.fieldname = 'images';
+          return file;
+        });
+      }
+      next();
+    });
   },
   enhancedImageController.uploadImages
 );
@@ -196,6 +209,13 @@ router.use((error, req, res, next) => {
       return res.status(400).json({
         success: false,
         message: 'Too many files. Maximum is 10 files per upload.'
+      });
+    }
+    if (error.code === 'LIMIT_UNEXPECTED_FILE') {
+      return res.status(400).json({
+        success: false,
+        message: `Unexpected field. Please use 'images' as the field name for image uploads.`,
+        field: error.field
       });
     }
   }

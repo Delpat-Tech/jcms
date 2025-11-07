@@ -354,23 +354,27 @@ const getRawFileById = async (req, res) => {
 
 const updateFile = async (req, res) => {
   try {
+    console.log('Update file request:', { id: req.params.id, hasFile: !!req.file, body: req.body });
+    
     const file = await File.findById(req.params.id);
     if (!file) {
       return res.status(404).json({ success: false, message: 'File not found' });
     }
     
-    // Check tenant permissions
-    if (req.user.role.name !== 'superadmin') {
-      const userTenant = req.user.tenant?._id ? req.user.tenant._id.toString() : null;
-      const fileTenant = file.tenant ? file.tenant.toString() : null;
-      
-      if (userTenant !== fileTenant) {
-        return res.status(403).json({ success: false, message: 'Access denied. You can only update files from your tenant.' });
-      }
-      
-      if (req.user.role.name !== 'admin' && file.user.toString() !== req.user.id) {
-        return res.status(403).json({ success: false, message: 'Access denied. You can only update your own files.' });
-      }
+    // Check permissions
+    const userRole = req.user.role?.name || req.user.role;
+    const isSuperAdmin = userRole === 'superadmin';
+    const isAdmin = userRole === 'admin';
+    const userTenant = req.user.tenant?._id ? req.user.tenant._id.toString() : null;
+    const fileTenant = file.tenant ? file.tenant.toString() : null;
+    const fileUserId = file.user?._id ? file.user._id.toString() : file.user.toString();
+    const currentUserId = req.user.id.toString();
+    const isOwner = fileUserId === currentUserId;
+    
+    console.log('Permission debug:', { userRole, isSuperAdmin, isAdmin, isOwner, fileUserId, currentUserId });
+    
+    if (!isSuperAdmin && !isAdmin && !isOwner) {
+      return res.status(403).json({ success: false, message: 'Access denied. Admins and file owners can edit files.' });
     }
 
     // Handle file content update for JSON files
@@ -409,6 +413,7 @@ const updateFile = async (req, res) => {
     
     res.json({ success: true, message: 'File updated successfully', file: fileWithFullUrl });
   } catch (error) {
+    console.error('Update file error:', error);
     // Clean up temp file on error
     if (req.file && fs.existsSync(req.file.path)) {
       fs.unlinkSync(req.file.path);

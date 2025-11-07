@@ -1,0 +1,25 @@
+{
+  "name": "jcms-full",
+  "version": "1.0.0",
+  "description": "JCMS - Complete Content Management System (Backend + Frontend)",
+  "author": "",
+  "license": "ISC",
+  "private": true,
+  "scripts": {
+    "install-all": "npm run install-backend && npm run install-frontend",
+    "install-backend": "cd backend && npm install",
+    "install-frontend": "cd frontend && npm install",
+    "start-backend": "cd backend && npm start",
+    "start-frontend": "cd frontend && npm start",
+    "dev-backend": "cd backend && npm run dev",
+    "dev-frontend": "cd frontend && npm start",
+    "setup": "cd backend && npm run setup",
+    "seed": "cd backend && npm run seed",
+    "cleanup": "node scripts/cleanup-project.js",
+    "cleanup:dry-run": "node scripts/cleanup-project.js --dry-run"
+  },
+  "workspaces": [
+    "backend",
+    "frontend"
+  ]
+}

@@ -58,13 +58,18 @@ const EnhancedMediaDashboard = () => {
       if (filterType === 'all' || filterType === 'image') {
         const imageResponse = await imageApi.getAll(ownerFilter === 'mine');
         const imageResult = await imageResponse.json();
-        if (imageResult?.success && Array.isArray(imageResult.data)) {
-          const images = imageResult.data.map(img => ({
-            ...img,
-            type: 'image',
-            fullUrl: toAbsoluteUrl(img.fileUrl || img.publicUrl),
-            filename: img.title || img.filename || 'Untitled'
-          }));
+        const imageData = imageResult?.data?.images || imageResult?.data || [];
+        if (imageResult?.success && Array.isArray(imageData)) {
+          const images = imageData.map(img => {
+            const fullUrl = toAbsoluteUrl(img.fileUrl || img.publicUrl);
+            console.log('Image URL:', { title: img.title, fileUrl: img.fileUrl, fullUrl });
+            return {
+              ...img,
+              type: 'image',
+              fullUrl,
+              filename: img.title || img.filename || 'Untitled'
+            };
+          });
           allFiles = [...allFiles, ...images];
         }
       }

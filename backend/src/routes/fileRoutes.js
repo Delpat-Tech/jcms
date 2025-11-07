@@ -23,7 +23,12 @@ router.get('/type/:type', authenticate, (req, res, next) => {
 }, getFilesByType);
 
 router.put('/:id/convert', authenticate, requireActiveUser, logActivity('file_convert', 'file'), convertFileFormat);
-router.put('/:id', authenticate, requireActiveUser, logActivity('file_update', 'file'), upload.single('file'), updateFile);
+router.put('/:id', authenticate, requireActiveUser, logActivity('file_update', 'file'), (req, res, next) => {
+  upload.single('file')(req, res, (err) => {
+    if (err) return next(err);
+    next();
+  });
+}, updateFile);
 router.delete('/:id', authenticate, requireActiveUser, logActivity('file_delete', 'file'), deleteFile);
 
 // Raw JSON routes

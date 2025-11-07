@@ -1,5 +1,3 @@
-# Root .gitignore for JCMS project
-
 # Environment files
 .env
 .env.local
@@ -32,11 +30,22 @@ Thumbs.db
 *.temp
 temp/
 
-# Test files (keep only necessary ones)
-test-*.js
-debug-*.js
-create-*.js
-
 # Uploads (keep structure but ignore content)
 uploads/
 !uploads/.gitkeep
+
+# Test files
+test-*.js
+test-*.html
+debug-*.js
+debug-*.html
+create-*.js
+fix-*.js
+
+# Backup files
+backup/
+*.backup
+
+# Coverage
+coverage/
+.nyc_output/

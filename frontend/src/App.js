@@ -23,17 +23,17 @@ import AdminOverview from "./admin/overview/page.tsx";
 import AdminUsers from "./admin/users/page.tsx";
 import AdminContent from "./admin/content/page.tsx";
 import AdminMedia from "./admin/media/page.tsx";
-import AdminAnalytics from "./admin/analytics/page.jsx";
+import AdminAnalytics from "./admin/analytics/page.tsx";
 import AdminProfile from "./admin/profile/page.tsx";
 import AdminSubscriptions from "./admin/subscriptions/page.jsx";
 
 // User/Editor Pages
-import EditorOverview from "./editor/overview/page.jsx";
+import EditorOverview from "./editor/overview/page.tsx";
 import EditorContent from "./editor/content/page.jsx";
-import EditorMedia from "./editor/media/page.jsx";
+import EditorMedia from "./editor/media/page.tsx";
 
 import EditorProfile from "./editor/profile/page.jsx";
-import EditorHelp from "./editor/help/page.jsx";
+import EditorHelp from "./editor/help/page.tsx";
 import SubscriptionPage from "./pages/SubscriptionDashboard.jsx";
 import PublicContentPage from "./pages/PublicContent.jsx";
 import SubscribePage from "./pages/SubscribePage.jsx";

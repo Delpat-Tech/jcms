@@ -174,6 +174,8 @@ const getContentPageImages = async (req, res) => {
       pagination
     );
 
+    console.log('GET Images:', { count: result.images?.length || 0, total: result.pagination?.total || 0 });
+
     res.json({
       success: true,
       data: result
