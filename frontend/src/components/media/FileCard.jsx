@@ -149,7 +149,10 @@ const FileCard = ({ file, viewMode, selected, onSelect, onPreview, onDelete, onD
         
         <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mr-4">
           {(file.publicUrl || file.fileUrl || file.fullUrl) && file.type === 'image' ? (
-            <img src={file.publicUrl || file.fileUrl || file.fullUrl} alt={file.title || file.filename} className="w-full h-full object-cover rounded-lg" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+            <img src={(() => {
+              const url = file.publicUrl || file.fileUrl || file.fullUrl;
+              return url?.startsWith('/') ? `http://localhost:5000${url}` : url;
+            })()} alt={file.title || file.filename} className="w-full h-full object-cover rounded-lg" onError={(e) => { console.log('List view image failed to load:', e.target.src); }} />
           ) : (
             getFileIcon(file.type)
           )}
@@ -223,11 +226,14 @@ const FileCard = ({ file, viewMode, selected, onSelect, onPreview, onDelete, onD
         
         {(file.publicUrl || file.fileUrl || file.fullUrl) && file.type === 'image' ? (
           <img 
-            src={file.publicUrl || file.fileUrl || file.fullUrl} 
+            src={(() => {
+              const url = file.publicUrl || file.fileUrl || file.fullUrl;
+              return url?.startsWith('/') ? `http://localhost:5000${url}` : url;
+            })()} 
             alt={file.title || file.filename}
             className="w-full h-full object-cover cursor-pointer"
             onClick={() => onPreview(file)}
-            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+            onError={(e) => { console.log('Image failed to load:', e.target.src); }}
           />
         ) : (
           <div 

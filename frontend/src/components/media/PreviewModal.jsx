@@ -130,9 +130,13 @@ const PreviewModal = ({ file, onClose, onNext, onPrev, onDelete, onDownload }) =
 
   const renderPreview = () => {
     if ((file.publicUrl || file.fileUrl || file.fullUrl) && file.type === 'image') {
+      const imageUrl = (() => {
+        const url = file.publicUrl || file.fileUrl || file.fullUrl;
+        return url?.startsWith('/') ? `http://localhost:5000${url}` : url;
+      })();
       return (
         <img 
-          src={file.publicUrl || file.fileUrl || file.fullUrl} 
+          src={imageUrl} 
           alt={file.title || file.filename}
           className="max-w-full max-h-full object-contain"
           onError={(e) => { e.currentTarget.replaceWith(document.createTextNode('Preview not available')); }}
