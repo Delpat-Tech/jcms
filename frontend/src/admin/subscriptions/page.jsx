@@ -1,3 +1,6 @@
+//frontend
+
+
 import React, { useState, useEffect } from 'react';
 import Layout from '../layout.tsx';
 
@@ -50,13 +53,13 @@ const AdminSubscriptionsPage = () => {
       const data = await response.json();
       
       if (data.success) {
-        alert('Subscription cancelled successfully');
+        console.log('Subscription cancelled successfully');
         fetchSubscriptions();
       } else {
-        alert('Error: ' + data.message);
+        console.log('Error: ' + data.message);
       }
     } catch (error) {
-      alert('Failed to cancel subscription');
+      console.log('Failed to cancel subscription');
       console.error('Error:', error);
     }
   };

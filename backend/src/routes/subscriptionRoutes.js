@@ -1,3 +1,5 @@
+//subscriptionRoutes
+
 const express = require('express');
 const subscriptionController = require('../controllers/subscriptionController');
 const { authenticate } = require('../middlewares/auth');

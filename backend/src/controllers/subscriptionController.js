@@ -1,3 +1,4 @@
+//SubscriptionController
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const Subscription = require('../models/subscription');
@@ -124,109 +125,13 @@ exports.verifyPayment = async (req, res) => {
       });
     }
     
-    if (!tenantId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Tenant ID is required'
-      });
-    }
-
-    // Verify tenant exists
-    const tenant = await Tenant.findById(tenantId);
-    if (!tenant) {
-      return res.status(404).json({
-        success: false,
-        message: 'Tenant not found'
-      });
-    }
-
-    if (!['Yearly', 'Monthly'].includes(subtype)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid subscription type. Allowed types: 'Yearly', 'Monthly'."
-      });
-    }
-
-    // Verify signature
-    const body = razorpay_order_id + '|' + razorpay_payment_id;
-    const expectedSignature = crypto
-      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
-      .update(body.toString())
-      .digest('hex');
-
-    if (expectedSignature !== razorpay_signature) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid payment signature'
-      });
-    }
-
-    const amount = SUBSCRIPTION_PRICES[subtype];
-    const currentDate = new Date();
-    let startDate = currentDate;
-    let endDate;
-
-    // Check if tenant has existing active subscription
-    const existingSubscription = await Subscription.findOne({
-      tenant: tenantId,
-      isActive: true,
-      isExpired: false
+    // SECURITY: Only allow client-side verification if webhook processing failed
+    // This prevents bypassing webhook signature verification
+    return res.status(400).json({
+      success: false,
+      message: 'Payment must be processed via webhook for security. Please contact support if payment was successful but subscription not activated.'
     });
 
-    if (existingSubscription && existingSubscription.endDate > currentDate) {
-      // Extend from current expiry date
-      startDate = existingSubscription.endDate;
-    }
-
-    // Calculate end date based on subscription type
-    if (subtype === 'Yearly') {
-      endDate = new Date(startDate);
-      endDate.setFullYear(endDate.getFullYear() + 1);
-    } else {
-      endDate = new Date(startDate);
-      endDate.setMonth(endDate.getMonth() + 1);
-    }
-
-    // Always deactivate existing subscriptions when creating new one
-    await Subscription.updateMany(
-      { tenant: tenantId },
-      { $set: { isActive: false } }
-    );
-
-    // Create new subscription
-    const newSubscription = await Subscription.create({
-      tenant: tenantId,
-      subscriptionType: subtype,
-      startDate,
-      endDate,
-      razorpayOrderId: razorpay_order_id,
-      razorpayPaymentId: razorpay_payment_id,
-      amount,
-      isActive: true,
-      isExpired: false
-    });
-
-    // Remove expiration dates from existing files
-    try {
-      await subscriptionService.activateSubscriptionBenefits(tenantId);
-    } catch (error) {
-      logger.warn('Failed to activate subscription benefits', { error: error.message });
-    }
-
-    logger.info('Subscription created successfully', {
-      subscriptionId: newSubscription._id,
-      tenantId,
-      subscriptionType: subtype,
-      endDate
-    });
-
-    res.status(200).json({
-      success: true,
-      message: 'Payment verified and subscription updated successfully',
-      data: {
-        subscription: newSubscription
-      }
-    });
   } catch (error) {
     logger.error('Error verifying payment:', error);
     res.status(500).json({
@@ -262,10 +167,10 @@ exports.handleWebhook = async (req, res) => {
     );
 
     if (!isValidSignature) {
-      logger.warn('Invalid webhook signature');
-      return res.status(400).json({
+      logger.warn('Invalid webhook signature detected');
+      return res.status(401).json({
         success: false,
-        message: 'Invalid webhook signature'
+        message: 'Unauthorized: Invalid webhook signature'
       });
     }
 

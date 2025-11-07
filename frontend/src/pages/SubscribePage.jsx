@@ -4,7 +4,8 @@ import Layout from '../components/shared/Layout.jsx';
 
 const SubscribePage = () => {
   const navigate = useNavigate();
-  const [prices, setPrices] = useState({ Monthly: 10, Yearly: 100 });
+  // Remove hard-coded defaults; values will be provided by the controller via API
+  const [prices, setPrices] = useState({});
   const [loading, setLoading] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState(null);
 
@@ -48,7 +49,6 @@ const SubscribePage = () => {
 
   const handleSubscribe = async (subtype) => {
     if (!token) {
-      alert('Please login first');
       return;
     }
 
@@ -67,7 +67,6 @@ const SubscribePage = () => {
       const orderData = await orderResponse.json();
       
       if (!orderData.success) {
-        alert('❌ ' + orderData.message);
         setLoading(false);
         return;
       }
@@ -98,7 +97,6 @@ const SubscribePage = () => {
             const verifyData = await verifyResponse.json();
             
             if (verifyData.success) {
-              alert('✅ Payment successful! Subscription activated.');
               const userRole = user.role?.toLowerCase();
               if (userRole === 'superadmin') {
                 navigate('/superadmin/profile');
@@ -107,11 +105,9 @@ const SubscribePage = () => {
               } else {
                 navigate('/user/profile');
               }
-            } else {
-              alert('❌ Payment verification failed: ' + verifyData.message);
             }
           } catch (error) {
-            alert('❌ Error verifying payment: ' + error.message);
+            console.error('Error verifying payment:', error);
           } finally {
             setLoading(false);
           }
@@ -145,7 +141,7 @@ const SubscribePage = () => {
       });
       
     } catch (error) {
-      alert('❌ Error: ' + error.message);
+      console.error('Subscription error:', error);
       setLoading(false);
     }
   };
@@ -188,7 +184,7 @@ const SubscribePage = () => {
               <div className="text-center">
                 <h3 className="text-2xl font-bold text-gray-900 mb-4">Monthly Plan</h3>
                 <div className="mb-6">
-                  <span className="text-4xl font-bold text-blue-600">₹{prices.Monthly}</span>
+                  <span className="text-4xl font-bold text-blue-600">₹{prices.Monthly ?? '-'}</span>
                   <span className="text-gray-600">/month</span>
                 </div>
                 <ul className="text-left space-y-3 mb-8">
@@ -211,10 +207,10 @@ const SubscribePage = () => {
                 </ul>
                 <button
                   onClick={() => handleSubscribe('Monthly')}
-                  disabled={loading || (subscriptionStatus?.subscription?.subscriptionType === 'Monthly')}
+                  disabled={loading}
                   className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {subscriptionStatus?.subscription?.subscriptionType === 'Monthly' ? 'Current Plan' : loading ? 'Processing...' : 'Subscribe Monthly'}
+                  {loading ? 'Processing...' : subscriptionStatus?.subscription?.subscriptionType === 'Monthly' ? 'Renew Monthly' : 'Subscribe Monthly'}
                 </button>
               </div>
             </div>
@@ -229,10 +225,10 @@ const SubscribePage = () => {
               <div className="text-center">
                 <h3 className="text-2xl font-bold text-gray-900 mb-4">Yearly Plan</h3>
                 <div className="mb-6">
-                  <span className="text-4xl font-bold text-green-600">₹{prices.Yearly}</span>
+                  <span className="text-4xl font-bold text-green-600">₹{prices.Yearly ?? '-'}</span>
                   <span className="text-gray-600">/year</span>
                   <div className="text-sm text-green-600 font-medium">
-                    Save ₹{(prices.Monthly * 12) - prices.Yearly} per year!
+                    Save ₹{((prices.Monthly ?? 0) * 12) - (prices.Yearly ?? 0)} per year!
                   </div>
                 </div>
                 <ul className="text-left space-y-3 mb-8">
@@ -255,10 +251,10 @@ const SubscribePage = () => {
                 </ul>
                 <button
                   onClick={() => handleSubscribe('Yearly')}
-                  disabled={loading || (subscriptionStatus?.subscription?.subscriptionType === 'Yearly')}
+                  disabled={loading}
                   className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {subscriptionStatus?.subscription?.subscriptionType === 'Yearly' ? 'Current Plan' : loading ? 'Processing...' : 'Subscribe Yearly'}
+                  {loading ? 'Processing...' : subscriptionStatus?.subscription?.subscriptionType === 'Yearly' ? 'Renew Yearly' : 'Subscribe Yearly'}
                 </button>
               </div>
             </div>
