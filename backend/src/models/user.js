@@ -18,6 +18,9 @@ const userSchema = new mongoose.Schema({
     default: null // null for superadmin
   },
   isActive: { type: Boolean, default: true },
+  isTemporary: { type: Boolean, default: false },
+  sessionId: { type: String, default: null },
+  expiresAt: { type: Date, default: null },
   deactivatedAt: { type: Date, default: null },
   deactivatedBy: {
     type: mongoose.Schema.Types.ObjectId,

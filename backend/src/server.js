@@ -52,4 +52,8 @@ fileCleanupJob.start();
 const subscriptionExpirationJob = require('./jobs/subscriptionExpirationJob');
 subscriptionExpirationJob.start();
 
+// Initialize temporary user cleanup job
+const tempUserCleanupJob = require('./jobs/tempUserCleanupJob');
+tempUserCleanupJob.start();
+
 module.exports = app;

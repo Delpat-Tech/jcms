@@ -32,6 +32,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // --- Static Asset Serving ---
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/api-docs', express.static(path.join(__dirname, '../public/api-docs')));
 app.use('/public', express.static(path.join(__dirname, '../public')));
 app.use('/docs', express.static(path.join(__dirname, '../docs')));
 
@@ -99,6 +100,9 @@ app.use((req, res, next) => {
       message: 'API endpoint not found',
       path: req.path
     });
+  }
+  if (req.path.startsWith('/api-docs')) {
+    return next();
   }
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });

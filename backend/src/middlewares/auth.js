@@ -18,14 +18,25 @@ const authenticate = async (req, res, next) => {
     const user = await User.findById(decoded.user.id)
       .populate('role', 'name')
       .populate('tenant', 'name')
-      .select('username email role tenant isActive')
+      .select('username email role tenant isActive isTemporary expiresAt')
       .lean();
     if (!user) {
       // User not found
       return res.status(401).json({ message: 'User not found' });
     }
     
-    // User found and validated
+    // Check if temporary user has expired
+    if (user.isTemporary && user.expiresAt && new Date() > new Date(user.expiresAt)) {
+      const Tenant = require('../models/tenant');
+      const Subscription = require('../models/subscription');
+      
+      if (user.tenant) {
+        await Subscription.deleteMany({ tenant: user.tenant });
+        await Tenant.findByIdAndDelete(user.tenant);
+      }
+      await User.findByIdAndDelete(user._id);
+      return res.status(401).json({ message: 'Temporary session expired. Please register again.' });
+    }
     
     // Check if user is active
     if (!user.isActive) {

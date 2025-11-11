@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JCMS API Documentation</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 JCMS API Documentation</h1>
+            <p>Interactive REST API reference for the JCMS Content Management System</p>
+            <div class="header-actions">
+                <input type="text" id="searchInput" placeholder="Search endpoints..." />
+                <button id="darkModeToggle">🌙 Dark Mode</button>
+            </div>
+        </header>
+
+        <div class="auth-section">
+            <h3>🔑 Authentication</h3>
+            <input type="text" id="globalToken" placeholder="Enter your JWT token here (optional)" />
+            <button onclick="saveToken()">Save Token</button>
+            <small>Token will be auto-included in all "Try It" requests</small>
+        </div>
+
+        <nav class="sidebar">
+            <h3>Categories</h3>
+            <ul>
+                <li><a href="#auth">Authentication</a></li>
+                <li><a href="#users">User Management</a></li>
+                <li><a href="#content">Content</a></li>
+                <li><a href="#images">Images</a></li>
+                <li><a href="#files">Files</a></li>
+                <li><a href="#collections">Collections</a></li>
+                <li><a href="#tenants">Tenants</a></li>
+                <li><a href="#analytics">Analytics</a></li>
+                <li><a href="#notifications">Notifications</a></li>
+                <li><a href="#subscriptions">Subscriptions</a></li>
+            </ul>
+        </nav>
+
+        <main id="endpoints"></main>
+    </div>
+
+    <div id="tryItModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modalTitle"></h2>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Endpoint URL</label>
+                    <input type="text" id="modalUrl" readonly />
+                </div>
+                <div class="form-group">
+                    <label>Authorization Token</label>
+                    <input type="text" id="modalToken" placeholder="Bearer token (optional)" />
+                </div>
+                <div class="form-group" id="bodyGroup" style="display:none;">
+                    <label>Request Body (JSON)</label>
+                    <textarea id="modalBody" rows="10"></textarea>
+                </div>
+                <button onclick="sendRequest()" class="btn-primary">Send Request</button>
+                <div id="responseSection" style="display:none;">
+                    <h3>Response</h3>
+                    <div class="response-header">
+                        <span id="responseStatus"></span>
+                        <button onclick="copyResponse()">Copy</button>
+                    </div>
+                    <pre id="responseBody"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
