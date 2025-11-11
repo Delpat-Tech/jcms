@@ -120,6 +120,108 @@ router.post('/collections/:id/add-files',
   imageCollectionController.addFilesToCollection
 );
 
+router.get('/collections/:id/download-zip', async (req, res) => {
+  try {
+    const archiver = require('archiver');
+    const path = require('path');
+    const fs = require('fs');
+    const Image = require('../models/image');
+    const File = require('../models/file');
+    const ImageCollection = require('../models/imageCollection');
+    const logger = require('../config/logger');
+    const collectionId = req.params.id;
+    
+    const collection = await ImageCollection.findById(collectionId);
+    if (!collection) {
+      return res.status(404).json({ success: false, message: 'Collection not found' });
+    }
+    
+    const images = await Image.find({ 
+      $or: [{ collection: collectionId }, { collections: collectionId }]
+    });
+    
+    const files = await File.find({ 
+      $or: [{ collection: collectionId }, { collections: collectionId }]
+    });
+    
+    console.log('Download ZIP request:', { collectionId, imageCount: images.length, fileCount: files.length });
+    
+    if (images.length === 0 && files.length === 0) {
+      return res.status(400).json({ success: false, message: 'Collection is empty' });
+    }
+    
+    const zipFilename = `${collection.slug || collection.name.replace(/\s+/g, '-')}.zip`;
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="${zipFilename}"`);
+    
+    const archive = archiver('zip', { zlib: { level: 9 } });
+    
+    archive.on('error', (err) => {
+      console.error('Archive error:', err);
+      throw err;
+    });
+    
+    archive.pipe(res);
+    
+    let addedCount = 0;
+    const baseDir = path.join(__dirname, '..', '..');
+    
+    for (const image of images) {
+      try {
+        let filePath = image.internalPath;
+        if (!path.isAbsolute(filePath)) {
+          filePath = path.join(baseDir, filePath);
+        }
+        console.log('Checking image:', { filename: image.filename, internalPath: image.internalPath, resolvedPath: filePath, exists: fs.existsSync(filePath) });
+        if (fs.existsSync(filePath)) {
+          archive.file(filePath, { name: image.filename });
+          addedCount++;
+        } else {
+          console.warn('Image file not found:', filePath);
+        }
+      } catch (err) {
+        console.error('Error adding image to archive:', err);
+      }
+    }
+    
+    for (const file of files) {
+      try {
+        let filePath = file.internalPath;
+        if (!path.isAbsolute(filePath)) {
+          filePath = path.join(baseDir, filePath);
+        }
+        console.log('Checking file:', { filename: file.originalName, internalPath: file.internalPath, resolvedPath: filePath, exists: fs.existsSync(filePath) });
+        if (fs.existsSync(filePath)) {
+          archive.file(filePath, { name: file.originalName || file.filename });
+          addedCount++;
+        } else {
+          console.warn('File not found:', filePath);
+        }
+      } catch (err) {
+        console.error('Error adding file to archive:', err);
+      }
+    }
+    
+    console.log('Files added to ZIP:', addedCount);
+    
+    if (addedCount === 0) {
+      archive.abort();
+      return res.status(404).json({ success: false, message: 'No files found on disk' });
+    }
+    
+    archive.finalize();
+    
+    archive.on('end', () => {
+      console.log('Archive finalized successfully');
+    });
+  } catch (error) {
+    console.error('Download ZIP error:', error);
+    if (!res.headersSent) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+});
+
 // --- COLLECTION-SPECIFIC HELPERS ---
 router.post('/collections/:id/remove-images', async (req, res) => {
   try {

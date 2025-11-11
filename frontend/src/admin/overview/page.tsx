@@ -85,14 +85,14 @@ export default function AdminOverview() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Tenant Overview</h1>
-            <p className="text-gray-600">Welcome back, {user?.username}</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Tenant Overview</h1>
+            <p className="text-gray-600 dark:text-gray-400">Welcome back, {user?.username}</p>
           </div>
           <div className="flex items-center space-x-3">
             <button
               onClick={() => fetchDashboardData(true)}
               disabled={refreshing}
-              className="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 flex items-center space-x-2 disabled:opacity-50"
+              className="px-3 py-2 text-sm border dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center space-x-2 disabled:opacity-50"
             >
               {refreshing ? <TrioLoader size="16" color="#6b7280" /> : <RefreshCcw className="w-4 h-4 text-gray-500" />}
               <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
@@ -123,57 +123,57 @@ export default function AdminOverview() {
             {/* Overview Stats */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div 
-                className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-all duration-300 cursor-pointer hover:border-blue-300 hover:scale-105"
+                className="bg-white dark:bg-[#2C2C2E] rounded-lg shadow-sm border dark:border-gray-700 p-6 hover:shadow-lg transition-all duration-300 cursor-pointer hover:border-blue-300 dark:hover:border-blue-500 hover:scale-105"
                 onClick={() => navigate('/admin/users')}
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Tenant Users</p>
-                    <p className="text-3xl font-bold text-blue-600 mt-2">{dashboardData.overview?.totalUsers || 0}</p>
-                    <p className="text-sm text-gray-500 mt-1">{dashboardData.overview?.activeUsers || 0} active</p>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Tenant Users</p>
+                    <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-2">{dashboardData.overview?.totalUsers || 0}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{dashboardData.overview?.activeUsers || 0} active</p>
                   </div>
                   <UsersIcon className="w-12 h-12 text-blue-500 opacity-20 hover:opacity-40 transition-opacity" />
                 </div>
               </div>
 
               <div 
-                className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-all duration-300 cursor-pointer hover:border-green-300 hover:scale-105"
+                className="bg-white dark:bg-[#2C2C2E] rounded-lg shadow-sm border dark:border-gray-700 p-6 hover:shadow-lg transition-all duration-300 cursor-pointer hover:border-green-300 dark:hover:border-green-500 hover:scale-105"
                 onClick={() => navigate('/content')}
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Collections</p>
-                    <p className="text-3xl font-bold text-green-600 mt-2">{dashboardData.overview?.totalCollections || 0}</p>
-                    <p className="text-sm text-gray-500 mt-1">{dashboardData.overview?.publicCollections || 0} public</p>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Collections</p>
+                    <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-2">{dashboardData.overview?.totalCollections || 0}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{dashboardData.overview?.publicCollections || 0} public</p>
                   </div>
                   <Folder className="w-12 h-12 text-green-500 opacity-20 hover:opacity-40 transition-opacity" />
                 </div>
               </div>
 
               <div 
-                className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-all duration-300 cursor-pointer hover:border-purple-300 hover:scale-105"
+                className="bg-white dark:bg-[#2C2C2E] rounded-lg shadow-sm border dark:border-gray-700 p-6 hover:shadow-lg transition-all duration-300 cursor-pointer hover:border-purple-300 dark:hover:border-purple-500 hover:scale-105"
                 onClick={() => navigate('/admin/media')}
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Media Files</p>
-                    <p className="text-3xl font-bold text-purple-600 mt-2">{(dashboardData.overview?.totalImages || 0) + (dashboardData.overview?.totalFiles || 0)}</p>
-                    <p className="text-sm text-gray-500 mt-1">{dashboardData.overview?.totalStorage || 0}MB used</p>
-                    <p className="text-xs text-gray-400 mt-1">Images: {dashboardData.overview?.totalImages || 0}, Files: {dashboardData.overview?.totalFiles || 0}</p>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Media Files</p>
+                    <p className="text-3xl font-bold text-purple-600 dark:text-purple-400 mt-2">{(dashboardData.overview?.totalImages || 0) + (dashboardData.overview?.totalFiles || 0)}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{dashboardData.overview?.totalStorage || 0}MB used</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Images: {dashboardData.overview?.totalImages || 0}, Files: {dashboardData.overview?.totalFiles || 0}</p>
                   </div>
                   <ImageIcon className="w-12 h-12 text-purple-500 opacity-20 hover:opacity-40 transition-opacity" />
                 </div>
               </div>
 
               <div 
-                className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-all duration-300 cursor-pointer hover:border-orange-300 hover:scale-105"
+                className="bg-white dark:bg-[#2C2C2E] rounded-lg shadow-sm border dark:border-gray-700 p-6 hover:shadow-lg transition-all duration-300 cursor-pointer hover:border-orange-300 dark:hover:border-orange-500 hover:scale-105"
                 onClick={() => navigate('/admin/analytics')}
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Analytics</p>
-                    <BarChart3 className="w-10 h-10 text-orange-600 mt-2" />
-                    <p className="text-sm text-gray-500 mt-1">View insights</p>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Analytics</p>
+                    <BarChart3 className="w-10 h-10 text-orange-600 dark:text-orange-400 mt-2" />
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">View insights</p>
                   </div>
                   <LineChart className="w-12 h-12 text-orange-500 opacity-20 hover:opacity-40 transition-opacity" />
                 </div>
@@ -181,51 +181,51 @@ export default function AdminOverview() {
             </div>
 
             {/* Quick Actions */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+            <div className="bg-white dark:bg-[#2C2C2E] rounded-lg shadow-sm border dark:border-gray-700 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md" onClick={() => navigate('/admin/users')}>
+                <div className="p-4 border dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md" onClick={() => navigate('/admin/users')}>
                   <div className="flex items-center space-x-3">
-                    <UsersIcon className="w-6 h-6 text-gray-700" />
+                    <UsersIcon className="w-6 h-6 text-gray-700 dark:text-gray-300" />
                     <div>
-                      <h3 className="font-medium">Manage Users</h3>
-                      <p className="text-sm text-gray-500">Create editors & viewers</p>
+                      <h3 className="font-medium dark:text-white">Manage Users</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Create editors & viewers</p>
                     </div>
                   </div>
                 </div>
-                <div className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md" onClick={() => navigate('/admin/content')}>
+                <div className="p-4 border dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md" onClick={() => navigate('/admin/content')}>
                   <div className="flex items-center space-x-3">
-                    <FileText className="w-6 h-6 text-gray-700" />
+                    <FileText className="w-6 h-6 text-gray-700 dark:text-gray-300" />
                     <div>
-                      <h3 className="font-medium">Content Management</h3>
-                      <p className="text-sm text-gray-500">Create and publish content</p>
+                      <h3 className="font-medium dark:text-white">Content Management</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Create and publish content</p>
                     </div>
                   </div>
                 </div>
-                <div className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md" onClick={() => navigate('/admin/media')}>
+                <div className="p-4 border dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md" onClick={() => navigate('/admin/media')}>
                   <div className="flex items-center space-x-3">
-                    <Folder className="w-6 h-6 text-gray-700" />
+                    <Folder className="w-6 h-6 text-gray-700 dark:text-gray-300" />
                     <div>
-                      <h3 className="font-medium">Media Library</h3>
-                      <p className="text-sm text-gray-500">Upload and manage files</p>
+                      <h3 className="font-medium dark:text-white">Media Library</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Upload and manage files</p>
                     </div>
                   </div>
                 </div>
-                <div className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md" onClick={() => navigate('/admin/analytics')}>
+                <div className="p-4 border dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md" onClick={() => navigate('/admin/analytics')}>
                   <div className="flex items-center space-x-3">
-                    <BarChart3 className="w-6 h-6 text-gray-700" />
+                    <BarChart3 className="w-6 h-6 text-gray-700 dark:text-gray-300" />
                     <div>
-                      <h3 className="font-medium">Analytics</h3>
-                      <p className="text-sm text-gray-500">Tenant insights</p>
+                      <h3 className="font-medium dark:text-white">Analytics</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Tenant insights</p>
                     </div>
                   </div>
                 </div>
-                <div className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md" onClick={() => navigate('/admin/profile')}>
+                <div className="p-4 border dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md" onClick={() => navigate('/admin/profile')}>
                   <div className="flex items-center space-x-3">
-                    <SettingsIcon className="w-6 h-6 text-gray-700" />
+                    <SettingsIcon className="w-6 h-6 text-gray-700 dark:text-gray-300" />
                     <div>
-                      <h3 className="font-medium">Profile Settings</h3>
-                      <p className="text-sm text-gray-500">Update your profile</p>
+                      <h3 className="font-medium dark:text-white">Profile Settings</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Update your profile</p>
                     </div>
                   </div>
                 </div>
@@ -234,21 +234,21 @@ export default function AdminOverview() {
 
             {/* Stats & Activity */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">User Distribution</h3>
+              <div className="bg-white dark:bg-[#2C2C2E] rounded-lg shadow-sm border dark:border-gray-700 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">User Distribution</h3>
                 <div className="space-y-3">
                   {Object.entries(dashboardData.usersByRole || {}).map(([role, count]) => (
                     <div key={role} className="flex justify-between">
-                      <span className="text-sm text-gray-600 capitalize">{role}s</span>
-                      <span className="text-sm font-medium">{count}</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400 capitalize">{role}s</span>
+                      <span className="text-sm font-medium dark:text-white">{count}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div className="px-6 py-4 border-b">
-                  <h3 className="text-lg font-semibold text-gray-900">Recent Activity</h3>
+              <div className="bg-white dark:bg-[#2C2C2E] rounded-lg shadow-sm border dark:border-gray-700">
+                <div className="px-6 py-4 border-b dark:border-gray-700">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Activity</h3>
                 </div>
                 <div className="p-6">
                   {dashboardData.recentActivity && dashboardData.recentActivity.length > 0 ? (
@@ -256,8 +256,8 @@ export default function AdminOverview() {
                       {dashboardData.recentActivity.map((activity, index) => (
                         <div key={index} className="flex justify-between items-center">
                           <div>
-                            <p className="text-sm font-medium">{activity.username} {activity.action?.toLowerCase()} {activity.resource}</p>
-                            <p className="text-xs text-gray-500">{new Date(activity.createdAt).toLocaleString()}</p>
+                            <p className="text-sm font-medium dark:text-white">{activity.username} {activity.action?.toLowerCase()} {activity.resource}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(activity.createdAt).toLocaleString()}</p>
                           </div>
                         </div>
                       ))}

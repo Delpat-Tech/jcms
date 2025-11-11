@@ -6,7 +6,7 @@ import { Home, FileText, Image as ImageIcon, Users as UsersIcon, Settings, BarCh
 
 // Default Feather icons per route/label
 const FeatherIcon = ({ name, active }) => {
-  const cls = `h-5 w-5 ${active ? "text-indigo-700" : "text-gray-400 group-hover:text-indigo-700"}`;
+  const cls = `h-5 w-5 ${active ? "text-indigo-700 dark:text-indigo-400" : "text-gray-400 dark:text-gray-500 group-hover:text-indigo-700 dark:group-hover:text-indigo-400"}`;
   switch ((name || "").toLowerCase()) {
     case "overview":
       return <Home className={cls} />;
@@ -92,8 +92,8 @@ const NavItem = ({ href, label, icon, isActiveCheck, isTextHidden, onLinkClick }
         onClick={handleClick}
         className={`relative flex items-center px-3 py-2.5 text-sm rounded-lg transition-all duration-150 ease-in-out group w-full h-[40px] ${
           isActive
-            ? "bg-indigo-50 text-indigo-700 shadow-inner"
-            : "text-gray-700 hover:text-indigo-700 hover:bg-indigo-50/70"
+            ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 shadow-inner"
+            : "text-gray-700 dark:text-gray-300 hover:text-indigo-700 dark:hover:text-indigo-400 hover:bg-indigo-50/70 dark:hover:bg-indigo-900/20"
         } ${isTextHidden ? "justify-center" : "pl-4"}`}
         aria-current={isActive ? "page" : undefined}
         title={isTextHidden ? label : undefined}
@@ -180,7 +180,7 @@ const Sidebar = ({
 
   // Collapse toggle handled inline for simplicity on fixed sidebar
 
-  const sidebarBaseClasses = "z-50 bg-white/85 backdrop-blur supports-[backdrop-filter]:bg-white/75 border-r border-gray-200/70 flex flex-col transition-all duration-300 ease-in-out shadow-xl lg:rounded-r-2xl";
+  const sidebarBaseClasses = "z-50 bg-white dark:bg-[#1C1C1E] backdrop-blur border-r flex flex-col transition-all duration-300 ease-in-out shadow-xl lg:rounded-r-2xl";
   let sidebarDynamicClasses = "";
   if (isMobileView) {
     sidebarDynamicClasses = `fixed top-14 left-0 h-[calc(100vh-56px)] ${isOpen ? "w-[200px] translate-x-0" : "w-0 -translate-x-full border-transparent overflow-hidden"}`;
@@ -205,7 +205,7 @@ const Sidebar = ({
         {!isMobileView && (
           <button
             onClick={() => setIsDesktopCollapsed((prev) => !prev)}
-            className={`absolute top-1/2 -translate-y-1/2 -right-3 z-[71] bg-white hover:bg-indigo-50 text-gray-400 hover:text-indigo-700 border border-gray-200 w-7 h-7 flex items-center justify-center rounded-full shadow-lg transition-colors duration-200 ease-in-out transform ${isDesktopCollapsed ? "rotate-180" : "rotate-0"}`}
+            className={`absolute top-1/2 -translate-y-1/2 -right-3 z-[71] bg-white dark:bg-[#2C2C2E] hover:bg-indigo-50 dark:hover:bg-[#38383A] text-gray-400 hover:text-indigo-700 border w-7 h-7 flex items-center justify-center rounded-full shadow-lg transition-colors duration-200 ease-in-out transform ${isDesktopCollapsed ? "rotate-180" : "rotate-0"}`}
             aria-label={isDesktopCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             <svg className="h-4 w-4" width="20" height="20" fill="none" viewBox="0 0 20 20"><path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12.5 15l-5-5 5-5"/></svg>

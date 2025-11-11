@@ -54,11 +54,11 @@ function Header({ title = "JCMS", user, onMenuClick }) {
     const unreadCount = notifications?.filter?.(n => !n.read && n.status !== 'read')?.length || 0;
 
     return (
-        <header className="sticky lg:fixed top-0 z-[70] w-full border-b border-gray-200/70 bg-white/85 backdrop-blur supports-[backdrop-filter]:bg-white/75 shadow-sm">
+        <header className="sticky lg:fixed top-0 z-[70] w-full border-b bg-white dark:bg-[#1C1C1E] backdrop-blur shadow-sm">
             <div className="flex h-14 w-full items-center justify-between px-2 sm:px-3">
                 <div className="flex items-center gap-3 min-w-0">
                     <button
-                        className="lg:hidden inline-flex items-center justify-center w-9 h-9 rounded-md border text-gray-600 hover:text-indigo-700 hover:border-indigo-300"
+                        className="lg:hidden inline-flex items-center justify-center w-9 h-9 rounded-md border text-gray-600 dark:text-gray-400 hover:text-indigo-700 dark:hover:text-indigo-400 hover:border-indigo-300 dark:hover:border-indigo-500"
                         onClick={onMenuClick}
                         aria-label="Open menu"
                     >
@@ -84,7 +84,7 @@ function Header({ title = "JCMS", user, onMenuClick }) {
                     <div className="relative" ref={notifDropdownRef}>
                         <button
                             aria-label="Notifications"
-                            className="relative inline-flex items-center justify-center w-9 h-9 rounded-md border text-gray-600 hover:text-indigo-700 hover:border-indigo-300 shrink-0"
+                            className="relative inline-flex items-center justify-center w-9 h-9 rounded-md border text-gray-600 dark:text-gray-400 hover:text-indigo-700 dark:hover:text-indigo-400 hover:border-indigo-300 dark:hover:border-indigo-500 shrink-0"
                             onClick={async () => {
                                 const next = !showNotifDropdown;
                                 setShowNotifDropdown(next);
@@ -178,7 +178,7 @@ function ThemeToggle() {
     return (
         <button
             onClick={toggleTheme}
-            className="inline-flex items-center justify-center w-9 h-9 rounded-md border text-gray-600 hover:text-indigo-700 hover:border-indigo-300"
+            className="inline-flex items-center justify-center w-9 h-9 rounded-md border text-gray-600 dark:text-gray-400 hover:text-indigo-700 dark:hover:text-indigo-400 hover:border-indigo-300 dark:hover:border-indigo-500"
             title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
         >
             {isDarkMode ? (

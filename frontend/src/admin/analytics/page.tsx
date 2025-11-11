@@ -109,9 +109,9 @@ export default function AdminAnalyticsPage() {
         <Section title="Users by Role">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {(dashboard?.usersByRole || []).map((r: RoleStat) => (
-              <div key={r._id} className="p-4 rounded-lg border bg-white hover:shadow transition-shadow">
-                <div className="text-sm text-gray-500">{r._id}</div>
-                <div className="text-2xl font-bold">{r.count}</div>
+              <div key={r._id} className="p-4 rounded-lg border dark:border-gray-700 bg-white dark:bg-[#1C1C1E] hover:shadow transition-shadow">
+                <div className="text-sm text-gray-500 dark:text-gray-400">{r._id}</div>
+                <div className="text-2xl font-bold dark:text-white">{r.count}</div>
               </div>
             ))}
             {(!dashboard?.usersByRole || dashboard.usersByRole.length === 0) && (
@@ -125,7 +125,7 @@ export default function AdminAnalyticsPage() {
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
-                <tr className="text-left text-gray-600">
+                <tr className="text-left text-gray-600 dark:text-gray-400">
                   <th className="py-2 pr-4">File</th>
                   <th className="py-2 pr-4">User</th>
                   <th className="py-2 pr-4">Uploaded</th>
@@ -133,10 +133,10 @@ export default function AdminAnalyticsPage() {
               </thead>
               <tbody>
                 {(dashboard?.recentUploads || []).map((img: any) => (
-                  <tr key={img._id} className="border-t hover:bg-gray-50">
-                    <td className="py-2 pr-4">{img.originalName || img.title || img._id}</td>
-                    <td className="py-2 pr-4">{img.user?.username || '—'}</td>
-                    <td className="py-2 pr-4">{new Date(img.createdAt).toLocaleString()}</td>
+                  <tr key={img._id} className="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <td className="py-2 pr-4 dark:text-white">{img.originalName || img.title || img._id}</td>
+                    <td className="py-2 pr-4 dark:text-white">{img.user?.username || '—'}</td>
+                    <td className="py-2 pr-4 dark:text-white">{new Date(img.createdAt).toLocaleString()}</td>
                   </tr>
                 ))}
                 {(!dashboard?.recentUploads || dashboard.recentUploads.length === 0) && (
@@ -150,17 +150,17 @@ export default function AdminAnalyticsPage() {
         {/* System health and performance */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Section title="System Health">
-            <div className="text-sm text-gray-700 space-y-2">
-              <div><span className="text-gray-500">Uptime:</span> {system ? `${system.uptime}s` : '—'}</div>
-              <div><span className="text-gray-500">Memory Used:</span> {system ? `${system.memory.used} MB / ${system.memory.total} MB` : '—'}</div>
-              <div><span className="text-gray-500">Timestamp:</span> {system ? new Date(system.timestamp).toLocaleString() : '—'}</div>
+            <div className="text-sm text-gray-700 dark:text-gray-300 space-y-2">
+              <div><span className="text-gray-500 dark:text-gray-400">Uptime:</span> {system ? `${system.uptime}s` : '—'}</div>
+              <div><span className="text-gray-500 dark:text-gray-400">Memory Used:</span> {system ? `${system.memory.used} MB / ${system.memory.total} MB` : '—'}</div>
+              <div><span className="text-gray-500 dark:text-gray-400">Timestamp:</span> {system ? new Date(system.timestamp).toLocaleString() : '—'}</div>
             </div>
           </Section>
           <Section title="Performance">
-            <div className="text-sm text-gray-700 space-y-2">
-              <div><span className="text-gray-500">Avg Upload Time:</span> {performance?.avgUploadTime?.avgTime ?? '—'} s</div>
-              <div><span className="text-gray-500">Peak Hours:</span> {(performance?.peakUsageHours || []).map((h: any) => h._id).join(', ') || '—'}</div>
-              <div><span className="text-gray-500">Errors:</span> {performance ? `${performance.errorRates?.uploadErrors} upload, ${performance.errorRates?.conversionErrors} conversion, ${performance.errorRates?.authErrors} auth` : '—'}</div>
+            <div className="text-sm text-gray-700 dark:text-gray-300 space-y-2">
+              <div><span className="text-gray-500 dark:text-gray-400">Avg Upload Time:</span> {performance?.avgUploadTime?.avgTime ?? '—'} s</div>
+              <div><span className="text-gray-500 dark:text-gray-400">Peak Hours:</span> {(performance?.peakUsageHours || []).map((h: any) => h._id).join(', ') || '—'}</div>
+              <div><span className="text-gray-500 dark:text-gray-400">Errors:</span> {performance ? `${performance.errorRates?.uploadErrors} upload, ${performance.errorRates?.conversionErrors} conversion, ${performance.errorRates?.authErrors} auth` : '—'}</div>
             </div>
           </Section>
         </div>
@@ -168,17 +168,17 @@ export default function AdminAnalyticsPage() {
         {/* Security and predictions */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Section title="Security Insights">
-            <div className="text-sm text-gray-700 space-y-2">
-              <div><span className="text-gray-500">Failed Logins:</span> {(security?.failedLogins || []).length}</div>
-              <div><span className="text-gray-500">Suspicious Uploaders:</span> {(security?.suspiciousActivity || []).length}</div>
+            <div className="text-sm text-gray-700 dark:text-gray-300 space-y-2">
+              <div><span className="text-gray-500 dark:text-gray-400">Failed Logins:</span> {(security?.failedLogins || []).length}</div>
+              <div><span className="text-gray-500 dark:text-gray-400">Suspicious Uploaders:</span> {(security?.suspiciousActivity || []).length}</div>
             </div>
           </Section>
           <Section title="Predictions">
-            <div className="text-sm text-gray-700 space-y-2">
-              <div><span className="text-gray-500">Avg Daily Uploads:</span> {predictions?.avgDailyUploads ?? '—'}</div>
-              <div><span className="text-gray-500">Projected Monthly Growth:</span> {predictions?.projectedMonthlyGrowth ?? '—'}</div>
-              <div><span className="text-gray-500">Projected Storage Need:</span> {predictions?.projectedStorageNeed ? `${predictions.projectedStorageNeed} MB` : '—'}</div>
-              <div><span className="text-gray-500">Active Users Trend:</span> {predictions?.activeUsersTrend ?? '—'}</div>
+            <div className="text-sm text-gray-700 dark:text-gray-300 space-y-2">
+              <div><span className="text-gray-500 dark:text-gray-400">Avg Daily Uploads:</span> {predictions?.avgDailyUploads ?? '—'}</div>
+              <div><span className="text-gray-500 dark:text-gray-400">Projected Monthly Growth:</span> {predictions?.projectedMonthlyGrowth ?? '—'}</div>
+              <div><span className="text-gray-500 dark:text-gray-400">Projected Storage Need:</span> {predictions?.projectedStorageNeed ? `${predictions.projectedStorageNeed} MB` : '—'}</div>
+              <div><span className="text-gray-500 dark:text-gray-400">Active Users Trend:</span> {predictions?.activeUsersTrend ?? '—'}</div>
             </div>
           </Section>
         </div>
@@ -189,11 +189,11 @@ export default function AdminAnalyticsPage() {
 
 function Section({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white p-6 rounded-xl shadow border border-gray-100">
+    <div className="bg-white dark:bg-[#2C2C2E] p-6 rounded-xl shadow border dark:border-gray-700">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="font-semibold text-gray-900">{title}</h2>
-          {subtitle && <div className="text-xs text-gray-500">{subtitle}</div>}
+          <h2 className="font-semibold text-gray-900 dark:text-white">{title}</h2>
+          {subtitle && <div className="text-xs text-gray-500 dark:text-gray-400">{subtitle}</div>}
         </div>
       </div>
       {children}
@@ -203,18 +203,18 @@ function Section({ title, subtitle, children }: { title: string; subtitle?: stri
 
 function StatCard({ icon, label, value, loading, accent = 'indigo' }: { icon: string; label: string; value: any; loading: boolean; accent?: 'indigo' | 'blue' | 'purple' | 'emerald' }) {
   const accentMap: Record<string, string> = {
-    indigo: 'from-indigo-50 to-white text-indigo-700 border-indigo-100',
-    blue: 'from-blue-50 to-white text-blue-700 border-blue-100',
-    purple: 'from-purple-50 to-white text-purple-700 border-purple-100',
-    emerald: 'from-emerald-50 to-white text-emerald-700 border-emerald-100'
+    indigo: 'from-indigo-50 to-white dark:from-indigo-900/20 dark:to-[#2C2C2E] text-indigo-700 dark:text-indigo-400 border-indigo-100 dark:border-indigo-800',
+    blue: 'from-blue-50 to-white dark:from-blue-900/20 dark:to-[#2C2C2E] text-blue-700 dark:text-blue-400 border-blue-100 dark:border-blue-800',
+    purple: 'from-purple-50 to-white dark:from-purple-900/20 dark:to-[#2C2C2E] text-purple-700 dark:text-purple-400 border-purple-100 dark:border-purple-800',
+    emerald: 'from-emerald-50 to-white dark:from-emerald-900/20 dark:to-[#2C2C2E] text-emerald-700 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800'
   };
   return (
     <div className={`p-5 rounded-xl border shadow-sm bg-gradient-to-b ${accentMap[accent]} hover:shadow-md transition-shadow`}>
       <div className="flex items-center gap-3">
         <div className="text-xl">{icon}</div>
         <div>
-          <div className="text-xs uppercase tracking-wide text-gray-500">{label}</div>
-          <div className="text-2xl font-bold">{loading ? '…' : (value ?? '—')}</div>
+          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{label}</div>
+          <div className="text-2xl font-bold dark:text-white">{loading ? '…' : (value ?? '—')}</div>
         </div>
       </div>
     </div>

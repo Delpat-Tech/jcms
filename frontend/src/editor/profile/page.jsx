@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { User as UserIcon, CalendarDays, FileText, Eye, AlertTriangle, CheckCircle2, Lock, Save, BarChart3 } from 'lucide-react';
+import { User as UserIcon, CalendarDays, FileText, Eye, AlertTriangle, CheckCircle2, Lock, Save, BarChart3, Settings } from 'lucide-react';
 import UserLayout from '../layout.jsx';
 import TrioLoader from '../../components/ui/TrioLoader';
 import { profileApi } from '../../api';
+import { useTheme } from '../../contexts/ThemeContext.jsx';
 
 export default function UserProfilePage() {
   const [profile, setProfile] = useState(() => {
@@ -30,6 +31,9 @@ export default function UserProfilePage() {
   const [error, setError] = useState('');
   const [strength, setStrength] = useState(0);
   const [hint, setHint] = useState('');
+  
+  // Theme
+  const { isDarkMode, toggleTheme, settings: themeSettings } = useTheme();
 
   // Statistics
   const [stats, setStats] = useState({
@@ -261,7 +265,8 @@ export default function UserProfilePage() {
       <div className="flex space-x-1 mb-8 bg-gray-100 p-1 rounded-lg">
         {[
           { id: 'general', label: (<span className="inline-flex items-center gap-2"><UserIcon className="w-4 h-4" /> General</span>) },
-          { id: 'security', label: (<span className="inline-flex items-center gap-2"><Lock className="w-4 h-4" /> Security</span>) }
+          { id: 'security', label: (<span className="inline-flex items-center gap-2"><Lock className="w-4 h-4" /> Security</span>) },
+          { id: 'preferences', label: (<span className="inline-flex items-center gap-2"><Settings className="w-4 h-4" /> Preferences</span>) }
         ].map((tab) => (
           <button
             key={tab.id}
@@ -471,6 +476,36 @@ export default function UserProfilePage() {
                 >
                   {saving ? <TrioLoader size="16" color="white" /> : <span className="inline-flex items-center gap-2"><Lock className="w-4 h-4" /> Change Password</span>}
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Preferences Tab */}
+        {activeTab === 'preferences' && (
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center"><Settings className="w-4 h-4 mr-2" />Appearance</h3>
+              
+              <div className="space-y-6">
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div>
+                    <div className="font-medium text-gray-900">Dark Mode</div>
+                    <div className="text-sm text-gray-500 mt-1">Switch between light and dark theme</div>
+                  </div>
+                  <button
+                    onClick={toggleTheme}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                      isDarkMode ? 'bg-indigo-600' : 'bg-gray-300'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        isDarkMode ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
               </div>
             </div>
           </div>

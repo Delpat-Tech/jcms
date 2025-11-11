@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import AdminLayout from '../layout.tsx';
 import Button from '../../components/ui/Button.jsx';
 import { profileApi, subscriptionApi } from '../../api';
+import { useTheme } from '../../contexts/ThemeContext.jsx';
 
 export default function AdminProfilePage() {
   const [profile, setProfile] = useState(() => {
@@ -18,11 +19,14 @@ export default function AdminProfilePage() {
   const [error, setError] = useState('');
   const [strength, setStrength] = useState(0);
   const [hint, setHint] = useState('');
-  const [activeTab, setActiveTab] = useState<'info' | 'password' | 'subscription'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'password' | 'subscription' | 'preferences'>('info');
   
   // Subscription state
   const [subscriptionStatus, setSubscriptionStatus] = useState(null);
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
+  
+  // Theme
+  const { isDarkMode, toggleTheme, settings } = useTheme();
 
   const handleUpdateProfile = async () => {
     setSaving(true); setMessage(''); setError('');
@@ -140,6 +144,12 @@ export default function AdminProfilePage() {
           >
             Subscription
           </button>
+          <button
+            className={`px-4 py-2 -mb-px border-b-2 font-medium text-sm focus:outline-none ${activeTab === 'preferences' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+            onClick={() => { setActiveTab('preferences'); setMessage(''); setError(''); }}
+          >
+            Preferences
+          </button>
         </div>
 
         {message && <div className="text-sm text-green-600">{message}</div>}
@@ -211,6 +221,33 @@ export default function AdminProfilePage() {
                   <Button onClick={() => window.location.href = '/subscribe'}>View Plans</Button>
                 </div>
               </section>
+            </div>
+          )}
+
+          {activeTab === 'preferences' && (
+            <div className="bg-white p-6 rounded-lg border space-y-6 max-w-lg mx-auto">
+              <div className="text-lg font-semibold text-gray-900">Appearance</div>
+              
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-gray-900">Dark Mode</div>
+                    <div className="text-sm text-gray-500">Switch between light and dark theme</div>
+                  </div>
+                  <button
+                    onClick={toggleTheme}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                      isDarkMode ? 'bg-blue-600' : 'bg-gray-200'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        isDarkMode ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>

@@ -41,8 +41,8 @@ const CollectionSelectorModal = ({
   const loadCollections = async () => {
     try {
       setLoading(true);
-      const result = await apiCall('/api/image-management/migration/collections-with-counts');
-      setCollections(result.data.collections || []);
+      const result = await apiCall('/api/image-management/collections');
+      setCollections(result.data || []);
     } catch (error) {
       console.error('Failed to load collections:', error);
       setCollections([]);

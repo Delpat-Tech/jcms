@@ -85,7 +85,7 @@ function AddUserModal({ onClose, onUserAdded, users }) {
   return (
     <Modal open={true} onClose={onClose}>
       <div className="p-6 w-96">
-        <h2 className="text-lg font-semibold mb-4">Add New User</h2>
+        <h2 className="text-lg font-semibold mb-4 dark:text-white">Add New User</h2>
         
         {/* Subscription Status */}
         {subscriptionStatus && (
@@ -124,7 +124,7 @@ function AddUserModal({ onClose, onUserAdded, users }) {
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Username
             </label>
             <Input
@@ -136,7 +136,7 @@ function AddUserModal({ onClose, onUserAdded, users }) {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Email
             </label>
             <Input
@@ -148,7 +148,7 @@ function AddUserModal({ onClose, onUserAdded, users }) {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Password
             </label>
             <Input
@@ -160,13 +160,13 @@ function AddUserModal({ onClose, onUserAdded, users }) {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Role
             </label>
             <select
               value={formData.role}
               onChange={(e) => setFormData({...formData, role: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
             >
               <option value="editor">Editor</option>
               <option value="viewer">Viewer</option>
@@ -235,34 +235,34 @@ function UserDetailsModal({ user, onClose }) {
   return (
     <Modal open={true} onClose={onClose}>
       <div className="p-6 w-96">
-        <h2 className="text-lg font-semibold mb-4">User Details</h2>
+        <h2 className="text-lg font-semibold mb-4 dark:text-white">User Details</h2>
         
         {loading ? (
           <div className="text-center py-4">Loading...</div>
         ) : userDetails ? (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Username</label>
-              <p className="text-sm text-gray-900">{userDetails.username}</p>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
+              <p className="text-sm text-gray-900 dark:text-white">{userDetails.username}</p>
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700">Email</label>
-              <p className="text-sm text-gray-900">{userDetails.email}</p>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+              <p className="text-sm text-gray-900 dark:text-white">{userDetails.email}</p>
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700">Role</label>
-              <p className="text-sm text-gray-900">{userDetails.role?.name || userDetails.role}</p>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Role</label>
+              <p className="text-sm text-gray-900 dark:text-white">{userDetails.role?.name || userDetails.role}</p>
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700">Tenant</label>
-              <p className="text-sm text-gray-900">{userDetails.tenant?.name || 'No Tenant'}</p>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Tenant</label>
+              <p className="text-sm text-gray-900 dark:text-white">{userDetails.tenant?.name || 'No Tenant'}</p>
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700">Status</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
               <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                 userDetails.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
               }`}>
@@ -271,18 +271,18 @@ function UserDetailsModal({ user, onClose }) {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700">Images Uploaded</label>
-              <p className="text-sm text-gray-900">{userDetails.imageCount}</p>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Images Uploaded</label>
+              <p className="text-sm text-gray-900 dark:text-white">{userDetails.imageCount}</p>
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700">Files Uploaded</label>
-              <p className="text-sm text-gray-900">{userDetails.fileCount}</p>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Files Uploaded</label>
+              <p className="text-sm text-gray-900 dark:text-white">{userDetails.fileCount}</p>
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700">Created</label>
-              <p className="text-sm text-gray-900">{new Date(userDetails.createdAt).toLocaleString()}</p>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Created</label>
+              <p className="text-sm text-gray-900 dark:text-white">{new Date(userDetails.createdAt).toLocaleString()}</p>
             </div>
           </div>
         ) : (
@@ -389,7 +389,7 @@ export default function AdminUsersPage() {
     { key: 'username', label: 'Name', render: (user) => (
       <button 
         onClick={() => setSelectedUser(user)}
-        className="text-blue-600 hover:text-blue-800 hover:underline"
+        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline"
         title="Click to view user details"
       >
         {user.username}
@@ -437,10 +437,10 @@ export default function AdminUsersPage() {
     <AdminLayout title="User Management">
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">User Management</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">User Management</h1>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
             <div className="relative w-full sm:w-64">
-              <Search className="w-4 h-4 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Search className="w-4 h-4 text-gray-400 dark:text-gray-500 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
               <Input
                 type="text"
                 placeholder="Search users..."
@@ -455,7 +455,7 @@ export default function AdminUsersPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow overflow-x-auto">
+        <div className="bg-white dark:bg-[#2C2C2E] rounded-lg shadow overflow-x-auto">
           {loading ? (
             <div className="p-8 text-center">Loading users...</div>
           ) : (

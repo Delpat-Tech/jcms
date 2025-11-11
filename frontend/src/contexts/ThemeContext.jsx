@@ -18,7 +18,7 @@ export const ThemeProvider = ({ children }) => {
     secondaryColor: '#6B7280',
     darkModePrimaryColor: '#1F2937',
     darkModeSecondaryColor: '#374151',
-    darkModeEnabled: false
+    darkModeEnabled: true
   });
 
   useEffect(() => {
@@ -54,38 +54,41 @@ export const ThemeProvider = ({ children }) => {
 
   const applyTheme = () => {
     const root = document.documentElement;
-    const useDark = isDarkMode && settings.darkModeEnabled;
 
-    // Toggle a 'dark' class for frameworks/utilities that use it
-    root.classList.toggle('dark', useDark);
+    root.classList.toggle('dark', isDarkMode);
 
-    if (useDark) {
+    if (isDarkMode) {
       root.style.setProperty('--primary-color', settings.darkModePrimaryColor);
       root.style.setProperty('--secondary-color', settings.darkModeSecondaryColor);
-      root.style.setProperty('--bg-color', '#0B1220');
-      root.style.setProperty('--surface-color', settings.darkModePrimaryColor || '#111827');
-      root.style.setProperty('--card-bg', settings.darkModePrimaryColor || '#111827');
-      root.style.setProperty('--border-color', '#1F2937');
-      root.style.setProperty('--muted-bg', '#0F172A');
-      root.style.setProperty('--muted-bg-2', '#111827');
-      root.style.setProperty('--text-color', '#F9FAFB');
-      root.style.setProperty('--text-secondary', '#D1D5DB');
-      document.body.style.backgroundColor = '#111827';
-      document.body.style.color = '#F9FAFB';
+      root.style.setProperty('--bg-color', '#000000');
+      root.style.setProperty('--surface-color', '#1C1C1E');
+      root.style.setProperty('--card-bg', '#2C2C2E');
+      root.style.setProperty('--border-color', '#38383A');
+      root.style.setProperty('--muted-bg', '#1C1C1E');
+      root.style.setProperty('--muted-bg-2', '#2C2C2E');
+      root.style.setProperty('--text-color', '#FFFFFF');
+      root.style.setProperty('--text-secondary', '#EBEBF5');
+      root.style.setProperty('--text-tertiary', '#EBEBF599');
+      document.body.style.backgroundColor = '#000000';
+      document.body.style.color = '#FFFFFF';
+      document.body.style.transition = 'background-color 0.3s ease, color 0.3s ease';
       injectDarkOverrides();
     } else {
       root.style.setProperty('--primary-color', settings.primaryColor);
       root.style.setProperty('--secondary-color', settings.secondaryColor);
-      root.style.setProperty('--bg-color', '#F9FAFB');
+      root.style.setProperty('--bg-color', '#F2F2F7');
       root.style.setProperty('--surface-color', '#FFFFFF');
       root.style.setProperty('--card-bg', '#FFFFFF');
-      root.style.setProperty('--border-color', '#E5E7EB');
-      root.style.setProperty('--muted-bg', '#F3F4F6');
-      root.style.setProperty('--muted-bg-2', '#F9FAFB');
-      root.style.setProperty('--text-color', '#111827');
-      root.style.setProperty('--text-secondary', '#6B7280');
-      document.body.style.backgroundColor = '#F9FAFB';
-      document.body.style.color = '#111827';
+      root.style.setProperty('--border-color', '#E5E5EA');
+      root.style.setProperty('--muted-bg', '#F2F2F7');
+      root.style.setProperty('--muted-bg-2', '#FFFFFF');
+      root.style.setProperty('--text-color', '#000000');
+      root.style.setProperty('--text-secondary', '#3C3C43');
+      root.style.setProperty('--text-tertiary', '#3C3C4399');
+      document.body.style.backgroundColor = '#F2F2F7';
+      document.body.style.color = '#000000';
+      document.body.style.transition = 'background-color 0.3s ease, color 0.3s ease';
+      removeDarkOverrides();
     }
   };
 
@@ -99,33 +102,53 @@ export const ThemeProvider = ({ children }) => {
       document.head.appendChild(styleTag);
     }
     styleTag.textContent = `
+      * { transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease; }
       .dark .bg-white { background-color: var(--card-bg) !important; }
-      .dark .bg-gray-50 { background-color: var(--muted-bg-2) !important; }
-      .dark .bg-gray-100 { background-color: var(--muted-bg) !important; }
+      .dark .bg-gray-50 { background-color: var(--bg-color) !important; }
+      .dark .bg-gray-100 { background-color: var(--surface-color) !important; }
+      .dark .bg-gray-200 { background-color: var(--muted-bg-2) !important; }
       .dark .text-gray-900 { color: var(--text-color) !important; }
       .dark .text-gray-800 { color: var(--text-color) !important; }
       .dark .text-gray-700 { color: var(--text-secondary) !important; }
       .dark .text-gray-600 { color: var(--text-secondary) !important; }
-      .dark .text-gray-500 { color: var(--text-secondary) !important; }
+      .dark .text-gray-500 { color: var(--text-tertiary) !important; }
+      .dark .text-gray-400 { color: var(--text-tertiary) !important; }
       .dark .border-gray-200 { border-color: var(--border-color) !important; }
       .dark .border-gray-300 { border-color: var(--border-color) !important; }
-      .dark .shadow, .dark .shadow-sm, .dark .shadow-md { box-shadow: 0 1px 3px 0 rgba(0,0,0,0.5), 0 1px 2px -1px rgba(0,0,0,0.4) !important; }
+      .dark .border { border-color: var(--border-color) !important; }
+      .dark .shadow, .dark .shadow-sm { box-shadow: 0 1px 2px 0 rgba(255,255,255,0.05) !important; }
+      .dark .shadow-md { box-shadow: 0 4px 6px -1px rgba(255,255,255,0.05), 0 2px 4px -2px rgba(255,255,255,0.03) !important; }
+      .dark .shadow-lg { box-shadow: 0 10px 15px -3px rgba(255,255,255,0.05), 0 4px 6px -4px rgba(255,255,255,0.03) !important; }
       .dark .ring-1, .dark .ring-2 { --tw-ring-color: var(--border-color) !important; }
-      .dark input, .dark select, .dark textarea { background-color: var(--muted-bg) !important; color: var(--text-color) !important; border-color: var(--border-color) !important; }
-      .dark .hover\:bg-gray-50:hover { background-color: var(--muted-bg) !important; }
+      .dark input, .dark select, .dark textarea { 
+        background-color: var(--surface-color) !important; 
+        color: var(--text-color) !important; 
+        border-color: var(--border-color) !important; 
+      }
+      .dark input::placeholder, .dark textarea::placeholder { color: var(--text-tertiary) !important; }
+      .dark .hover\:bg-gray-50:hover { background-color: var(--surface-color) !important; }
+      .dark .hover\:bg-gray-100:hover { background-color: var(--muted-bg-2) !important; }
+      .dark ::-webkit-scrollbar { width: 12px; height: 12px; }
+      .dark ::-webkit-scrollbar-track { background: var(--bg-color); }
+      .dark ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 6px; }
+      .dark ::-webkit-scrollbar-thumb:hover { background: #48484A; }
+      .dark * { scrollbar-width: thin; scrollbar-color: var(--border-color) var(--bg-color); }
     `;
   };
 
-  const toggleTheme = () => {
-    if (settings.darkModeEnabled) {
-      setIsDarkMode(!isDarkMode);
+  const removeDarkOverrides = () => {
+    const styleTag = document.getElementById('dark-theme-overrides');
+    if (styleTag) {
+      styleTag.textContent = '';
     }
   };
 
+  const toggleTheme = () => {
+    setIsDarkMode(!isDarkMode);
+  };
+
   const setDarkMode = (value) => {
-    if (settings.darkModeEnabled) {
-      setIsDarkMode(Boolean(value));
-    }
+    setIsDarkMode(Boolean(value));
   };
 
   const value = {
