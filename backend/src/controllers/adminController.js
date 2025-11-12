@@ -31,18 +31,15 @@ const getDashboard = async (req, res) => {
 
     // Get tenant images
     const images = await Image.find({ tenant: tenantId });
-    console.log(`Found ${images.length} images for tenant ${tenantId}`);
 
     // Get tenant files
     const files = await File.find({ tenant: tenantId });
-    console.log(`Found ${files.length} files for tenant ${tenantId}`);
 
     // Get tenant content
     const content = await Content.find({ tenant: tenantId });
 
     // Get tenant collections
     const collections = await ImageCollection.find({ tenant: tenantId });
-    console.log(`Found ${collections.length} collections for tenant ${tenantId}`);
 
     // Get recent activity for tenant users
     const tenantUserIds = users.map(u => u._id);
@@ -52,8 +49,6 @@ const getDashboard = async (req, res) => {
       .populate('user', 'username')
       .sort({ createdAt: -1 })
       .limit(10);
-    
-    console.log(`Found ${recentActivity.length} activity logs for tenant users`);
 
     // Calculate stats
     const totalUsers = users.length;
@@ -84,13 +79,7 @@ const getDashboard = async (req, res) => {
       return acc;
     }, {});
 
-    console.log('Dashboard stats:', {
-      totalUsers,
-      totalImages,
-      totalFiles,
-      totalContent,
-      totalStorage
-    });
+
 
     const dashboardData = {
       overview: {

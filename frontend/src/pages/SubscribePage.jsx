@@ -4,7 +4,7 @@ import Layout from '../components/shared/Layout.jsx';
 
 const SubscribePage = () => {
   const navigate = useNavigate();
-  const [prices, setPrices] = useState({ Monthly: 10, Yearly: 100 });
+  const [prices, setPrices] = useState(null);
   const [loading, setLoading] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState(null);
 
@@ -48,7 +48,7 @@ const SubscribePage = () => {
 
   const handleSubscribe = async (subtype) => {
     if (!token) {
-      alert('Please login first');
+      navigate('/login');
       return;
     }
 
@@ -67,7 +67,7 @@ const SubscribePage = () => {
       const orderData = await orderResponse.json();
       
       if (!orderData.success) {
-        alert('❌ ' + orderData.message);
+        console.error('Order creation failed:', orderData.message);
         setLoading(false);
         return;
       }
@@ -80,40 +80,17 @@ const SubscribePage = () => {
         description: `${subtype} Subscription`,
         order_id: orderData.data.order.id,
         handler: async function (response) {
-          try {
-            const verifyResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/subscription/verify-payment`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-              },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                subtype: subtype
-              })
-            });
-
-            const verifyData = await verifyResponse.json();
-            
-            if (verifyData.success) {
-              alert('✅ Payment successful! Subscription activated.');
-              const userRole = user.role?.toLowerCase();
-              if (userRole === 'superadmin') {
-                navigate('/superadmin/profile');
-              } else if (userRole === 'admin') {
-                navigate('/admin/profile');
-              } else {
-                navigate('/user/profile');
-              }
-            } else {
-              alert('❌ Payment verification failed: ' + verifyData.message);
-            }
-          } catch (error) {
-            alert('❌ Error verifying payment: ' + error.message);
-          } finally {
-            setLoading(false);
+          // Payment completed - webhook will handle verification and activation
+          setLoading(false);
+          
+          // Redirect to profile (subscription benefits activated by webhook)
+          const userRole = user.role?.toLowerCase();
+          if (userRole === 'superadmin') {
+            navigate('/superadmin/profile');
+          } else if (userRole === 'admin') {
+            navigate('/admin/profile');
+          } else {
+            navigate('/user/profile');
           }
         },
 
@@ -145,7 +122,7 @@ const SubscribePage = () => {
       });
       
     } catch (error) {
-      alert('❌ Error: ' + error.message);
+      console.error('Subscription error:', error);
       setLoading(false);
     }
   };
@@ -188,7 +165,9 @@ const SubscribePage = () => {
               <div className="text-center">
                 <h3 className="text-2xl font-bold text-gray-900 mb-4">Monthly Plan</h3>
                 <div className="mb-6">
-                  <span className="text-4xl font-bold text-blue-600">₹{prices.Monthly}</span>
+                  <span className="text-4xl font-bold text-blue-600">
+                    {prices ? `₹${prices.Monthly}` : '₹---'}
+                  </span>
                   <span className="text-gray-600">/month</span>
                 </div>
                 <ul className="text-left space-y-3 mb-8">
@@ -211,10 +190,10 @@ const SubscribePage = () => {
                 </ul>
                 <button
                   onClick={() => handleSubscribe('Monthly')}
-                  disabled={loading || (subscriptionStatus?.subscription?.subscriptionType === 'Monthly')}
+                  disabled={loading}
                   className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {subscriptionStatus?.subscription?.subscriptionType === 'Monthly' ? 'Current Plan' : loading ? 'Processing...' : 'Subscribe Monthly'}
+                  {loading ? 'Processing...' : subscriptionStatus?.subscription?.subscriptionType === 'Monthly' ? 'Extend Monthly' : 'Subscribe Monthly'}
                 </button>
               </div>
             </div>
@@ -229,11 +208,15 @@ const SubscribePage = () => {
               <div className="text-center">
                 <h3 className="text-2xl font-bold text-gray-900 mb-4">Yearly Plan</h3>
                 <div className="mb-6">
-                  <span className="text-4xl font-bold text-green-600">₹{prices.Yearly}</span>
+                  <span className="text-4xl font-bold text-green-600">
+                    {prices ? `₹${prices.Yearly}` : '₹---'}
+                  </span>
                   <span className="text-gray-600">/year</span>
-                  <div className="text-sm text-green-600 font-medium">
-                    Save ₹{(prices.Monthly * 12) - prices.Yearly} per year!
-                  </div>
+                  {prices && (
+                    <div className="text-sm text-green-600 font-medium">
+                      Save ₹{(prices.Monthly * 12) - prices.Yearly} per year!
+                    </div>
+                  )}
                 </div>
                 <ul className="text-left space-y-3 mb-8">
                   <li className="flex items-center">
@@ -255,10 +238,10 @@ const SubscribePage = () => {
                 </ul>
                 <button
                   onClick={() => handleSubscribe('Yearly')}
-                  disabled={loading || (subscriptionStatus?.subscription?.subscriptionType === 'Yearly')}
+                  disabled={loading}
                   className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {subscriptionStatus?.subscription?.subscriptionType === 'Yearly' ? 'Current Plan' : loading ? 'Processing...' : 'Subscribe Yearly'}
+                  {loading ? 'Processing...' : subscriptionStatus?.subscription?.subscriptionType === 'Yearly' ? 'Extend Yearly' : 'Subscribe Yearly'}
                 </button>
               </div>
             </div>
